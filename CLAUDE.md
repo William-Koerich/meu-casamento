@@ -276,7 +276,7 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   cronograma e em `/app/exportar`.
 - **Cronograma — horário calculado, não digitado**: só o primeiro bloco tem
   horário editável; os demais são `dataCasamento_do_primeiro + soma das
-  durações anteriores`, recalculado e regravado em todas as linhas
+durações anteriores`, recalculado e regravado em todas as linhas
   (`recalcularHorarios` em `src/actions/timeline.ts`) a cada criação, edição
   de duração ou reordenação por drag (dnd-kit sortable). O componente de
   lista mantém uma cópia local só para refletir o novo horário na hora,
@@ -297,7 +297,7 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   `is_wedding_admin` (a policy de RLS já barra quem não é admin — a Server
   Action só precisa tratar o erro). Aceitar convite
   (`src/actions/members.ts#aceitarConvite`) roda `rls(callback,
-  { inviteToken })` batendo exatamente na policy
+{ inviteToken })` batendo exatamente na policy
   `wedding_members_aceitar_convite` da Fase 2. `/convite/[token]` é pública
   (fora do grupo `(app)`) e mostra "Entrar"/"Criar conta" com
   `?redirecionar=/convite/[token]` quando ninguém está logada — por isso
@@ -318,6 +318,35 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   mesmo não estando na lista original daquela fase — só existe conteúdo
   para exportar a partir desta fase, então o item de menu foi adicionado
   junto com a página.
+- **Busca por nome em `/c/[slug]/confirmar`**: a RLS de `guests` só libera
+  `anon` por código exato — não existe policy de "buscar por nome" porque
+  isso exigiria dar visibilidade de linha antes de qualquer prova de
+  identidade. Resolvido com uma função `security definer`
+  (`public.buscar_convidados_publico`, migration 0003) que devolve só
+  `{id, nome, codigo_rsvp}` de casamentos publicados; o fluxo usa esse
+  código para seguir pela policy normal de RSVP.
+- **Página pública só é visível com `publicado = true`, sem modo de
+  pré-visualização para a dona** — segue a spec ao pé da letra ("acessível
+  apenas com publicado = true"); se um dia quiserem que a dona veja a
+  própria página antes de publicar, é uma exceção a adicionar depois, não
+  implementada agora.
+- **Visitante autenticado de outro casamento não vê a vitrine pública**: a
+  policy `weddings_select_vitrine_publica` (Fase 2) só libera `anon`, não
+  `authenticated` — alguém logado que não é dona nem membro daquele
+  casamento recebe 404 em vez da vitrine. Corrigir isso exigiria uma view
+  `security definer` separada só para essa combinação rara (visitante
+  logado + casamento de outra pessoa); optamos por não criar essa segunda
+  via de acesso — o caso comum (visitante deslogado) e o caso da própria
+  equipe (via `weddings_select_membros`) já funcionam.
+- **Queries públicas sempre limitam `columns`**: como o grant de coluna de
+  `anon` (Fase 2) só libera um subconjunto de `weddings`/`guests`/`gifts`,
+  `src/db/queries/public-site.ts` sempre passa `columns: {...}` explícito
+  nessas tabelas — pedir uma coluna fora da lista faz a query falhar com
+  "permission denied" quando quem olha a página não está logada.
+- **Mapa embutido sem chave de API**: `/c/[slug]/local` usa
+  `https://www.google.com/maps?q=...&output=embed`, que não exige API key
+  nem variável de ambiente — suficiente para mostrar a localização, sem
+  gerenciar credenciais do Google Maps.
 
 ## Fases
 
@@ -341,7 +370,7 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
 - [x] **Fase 7 — Módulos restantes** (cronograma, inspirações, playlist,
       presentes, enxoval, lua de mel, documentos, equipe, configurações,
       exportar).
-- [ ] **Fase 8 — Página pública do casal** (`/c/[slug]`).
+- [x] **Fase 8 — Página pública do casal** (`/c/[slug]`).
 - [ ] **Fase 9 — Marketing e finalização**.
 
 ## Como rodar localmente
