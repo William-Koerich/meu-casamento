@@ -82,6 +82,25 @@ usado pelas duas policies públicas que não dependem de login (RSVP por
 código em `guests` e aceite de convite por token em `wedding_members` — ver
 "RLS — regras por tabela" abaixo).
 
+**Bug real encontrado só ao conectar num Postgres de verdade** (as Fases
+1–9 foram construídas e revisadas sem nenhum banco conectado — não havia
+credenciais ainda): o `rls()` original mandava `set_config(...); set_config(...);
+...; set local role ...;` como uma única query com `;` separando os
+comandos. Isso quebra porque o protocolo estendido do Postgres (usado
+sempre que a query tem parâmetro vinculado, como os `${valor}` do template)
+não aceita mais de um comando por vez — dava
+`cannot insert multiple commands into a prepared statement`,
+só em `authenticated`/`anon` (não afetava o client admin de
+`src/db/index.ts`, que não passa por `rls()`). Corrigido separando cada
+`set_config`/`set local role` em uma chamada própria a `tx.execute`. De
+brinde, o `finally` que tentava "desfazer" as claims no fim da transação
+também foi removido: com `true` (is_local) e "local", elas já revertem
+sozinhas no commit/rollback — e mantê-lo mascarava o erro real de qualquer
+query que desse errado (a transação já abortada fazia a query de limpeza
+falhar por cima, escondendo a causa). Moral: sem um banco real conectado,
+build/typecheck/lint não pegam bug de protocolo SQL — vale testar contra o
+Postgres de verdade assim que houver credenciais.
+
 ## Modelo de dados (Fase 2)
 
 Schema completo em `src/db/schema/*` (um arquivo por tabela/domínio, ver

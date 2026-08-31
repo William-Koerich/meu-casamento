@@ -52,23 +52,30 @@ export async function createDrizzleSupabaseClient() {
     contexto: RlsContext = {}
   ): Promise<T> {
     return db.transaction(async (tx) => {
-      try {
-        await tx.execute(sql`
-          select set_config('request.jwt.claims', ${JSON.stringify(claims)}, true);
-          select set_config('request.jwt.claim.sub', ${user?.id ?? ""}, true);
-          select set_config('request.guest_code', ${contexto.guestCode ?? ""}, true);
-          select set_config('request.invite_token', ${contexto.inviteToken ?? ""}, true);
-          set local role ${sql.raw(role)};
-        `)
-        return await callback(tx)
-      } finally {
-        await tx.execute(sql`
-          select set_config('request.jwt.claims', '', true);
-          select set_config('request.guest_code', '', true);
-          select set_config('request.invite_token', '', true);
-          reset role;
-        `)
-      }
+      // `true` (is_local) em set_config e o "local" de "set local role" já
+      // revertem sozinhos ao fim da transação (commit ou rollback) — não dá
+      // pra "desfazer" isso num finally: se a query de dentro falhar, a
+      // transação já fica abortada e uma query de limpeza aqui só troca o
+      // erro real por "current transaction is aborted", escondendo a causa.
+      //
+      // Cada `set_config` roda numa chamada própria (não junto num só
+      // `tx.execute` separado por ";") porque o protocolo estendido do
+      // Postgres não aceita várias instruções numa query com parâmetros
+      // vinculados — só "set local role", sem parâmetro, pode ir sozinho.
+      await tx.execute(
+        sql`select set_config('request.jwt.claims', ${JSON.stringify(claims)}, true)`
+      )
+      await tx.execute(
+        sql`select set_config('request.jwt.claim.sub', ${user?.id ?? ""}, true)`
+      )
+      await tx.execute(
+        sql`select set_config('request.guest_code', ${contexto.guestCode ?? ""}, true)`
+      )
+      await tx.execute(
+        sql`select set_config('request.invite_token', ${contexto.inviteToken ?? ""}, true)`
+      )
+      await tx.execute(sql`set local role ${sql.raw(role)}`)
+      return await callback(tx)
     })
   }
 

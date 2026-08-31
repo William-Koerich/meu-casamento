@@ -1,4 +1,4 @@
-import "dotenv/config"
+import "@/db/load-env"
 
 import { createClient } from "@supabase/supabase-js"
 import { addDays, format, subDays, subMonths } from "date-fns"
