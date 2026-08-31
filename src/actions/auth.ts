@@ -12,7 +12,22 @@ import { createClient } from "@/lib/supabase/server"
 
 type ResultadoAction = { erro: string } | { erro?: undefined; sucesso: true }
 
-export async function entrar(input: unknown): Promise<ResultadoAction> {
+// Só aceita caminho relativo (evita open redirect via URL absoluta).
+function destinoSeguro(redirecionarPara: string | undefined, padrao: string) {
+  if (
+    redirecionarPara &&
+    redirecionarPara.startsWith("/") &&
+    !redirecionarPara.startsWith("//")
+  ) {
+    return redirecionarPara
+  }
+  return padrao
+}
+
+export async function entrar(
+  input: unknown,
+  redirecionarPara?: string
+): Promise<ResultadoAction> {
   const dados = entrarSchema.safeParse(input)
   if (!dados.success) {
     return { erro: "Dados inválidos." }
@@ -28,11 +43,12 @@ export async function entrar(input: unknown): Promise<ResultadoAction> {
     return { erro: "E-mail ou senha incorretos." }
   }
 
-  redirect("/app")
+  redirect(destinoSeguro(redirecionarPara, "/app"))
 }
 
 export async function cadastrar(
-  input: unknown
+  input: unknown,
+  redirecionarPara?: string
 ): Promise<ResultadoAction & { precisaConfirmarEmail?: boolean }> {
   const dados = cadastroSchema.safeParse(input)
   if (!dados.success) {
@@ -59,7 +75,7 @@ export async function cadastrar(
     return { sucesso: true, precisaConfirmarEmail: true }
   }
 
-  redirect("/inicio")
+  redirect(destinoSeguro(redirecionarPara, "/inicio"))
 }
 
 export async function recuperarSenha(input: unknown): Promise<ResultadoAction> {

@@ -15,6 +15,13 @@
       "when": 1788187153432,
       "tag": "0001_rls_policies_and_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788205398152,
+      "tag": "0002_excluir_conta",
+      "breakpoints": true
     }
   ]
 }

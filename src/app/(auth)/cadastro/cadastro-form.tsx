@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { cadastroSchema, type CadastroInput } from "@/lib/validators/auth"
 
-export function CadastroForm() {
+export function CadastroForm({ redirecionarPara }: { redirecionarPara?: string }) {
   const [erro, setErro] = useState<string | null>(null)
   const [emailEnviado, setEmailEnviado] = useState(false)
   const [pendente, iniciarTransicao] = useTransition()
@@ -30,7 +30,7 @@ export function CadastroForm() {
   function onSubmit(dados: CadastroInput) {
     setErro(null)
     iniciarTransicao(async () => {
-      const resultado = await cadastrar(dados)
+      const resultado = await cadastrar(dados, redirecionarPara)
       if (resultado?.erro) {
         setErro(resultado.erro)
         return

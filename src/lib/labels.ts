@@ -1,10 +1,16 @@
 import type {
   categoriaEnum,
+  comodoEnxovalEnum,
   formatoMesaEnum,
   grupoConvidadoEnum,
   ladoConvidadoEnum,
+  momentoMusicaEnum,
+  papelMembroEnum,
+  permissaoMembroEnum,
+  prioridadeEnxovalEnum,
   statusFornecedorEnum,
   statusRsvpEnum,
+  tipoDocumentoEnum,
 } from "@/db/schema"
 
 type Categoria = (typeof categoriaEnum.enumValues)[number]
@@ -13,6 +19,12 @@ type GrupoConvidado = (typeof grupoConvidadoEnum.enumValues)[number]
 type LadoConvidado = (typeof ladoConvidadoEnum.enumValues)[number]
 type StatusRsvp = (typeof statusRsvpEnum.enumValues)[number]
 type FormatoMesa = (typeof formatoMesaEnum.enumValues)[number]
+type MomentoMusica = (typeof momentoMusicaEnum.enumValues)[number]
+type ComodoEnxoval = (typeof comodoEnxovalEnum.enumValues)[number]
+type PrioridadeEnxoval = (typeof prioridadeEnxovalEnum.enumValues)[number]
+type TipoDocumento = (typeof tipoDocumentoEnum.enumValues)[number]
+type PapelMembro = (typeof papelMembroEnum.enumValues)[number]
+type PermissaoMembro = (typeof permissaoMembroEnum.enumValues)[number]
 
 // Rótulos em português dos enums de domínio — únicos usados em toda a UI
 // (não duplicar essas listas em componentes).
@@ -67,4 +79,54 @@ export const FORMATO_MESA_LABELS: Record<FormatoMesa, string> = {
   redonda: "Redonda",
   retangular: "Retangular",
   imperial: "Imperial",
+}
+
+export const MOMENTO_LABELS: Record<MomentoMusica, string> = {
+  entrada_noivo: "Entrada do noivo",
+  entrada_padrinhos: "Entrada dos padrinhos",
+  entrada_noiva: "Entrada da noiva",
+  durante_cerimonia: "Durante a cerimônia",
+  saida: "Saída",
+  recepcao: "Recepção",
+  valsa: "Valsa",
+  festa: "Festa",
+  nunca_tocar: "Nunca tocar",
+}
+
+export const COMODO_LABELS: Record<ComodoEnxoval, string> = {
+  cozinha: "Cozinha",
+  sala: "Sala",
+  quarto: "Quarto",
+  banheiro: "Banheiro",
+  lavanderia: "Lavanderia",
+  area_externa: "Área externa",
+  outros: "Outros",
+}
+
+export const PRIORIDADE_LABELS: Record<PrioridadeEnxoval, string> = {
+  alta: "Alta",
+  media: "Média",
+  baixa: "Baixa",
+}
+
+export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
+  contrato: "Contrato",
+  certidao: "Certidão",
+  orcamento: "Orçamento",
+  recibo: "Recibo",
+  outro: "Outro",
+}
+
+export const PAPEL_MEMBRO_LABELS: Record<PapelMembro, string> = {
+  dona: "Dona do casamento",
+  noivo: "Noivo(a)",
+  familiar: "Familiar",
+  padrinho_madrinha: "Padrinho/madrinha",
+  cerimonialista: "Cerimonialista",
+}
+
+export const PERMISSAO_LABELS: Record<PermissaoMembro, string> = {
+  admin: "Administrador(a)",
+  editor: "Editor(a)",
+  leitor: "Leitor(a)",
 }

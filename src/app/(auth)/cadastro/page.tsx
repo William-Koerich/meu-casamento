@@ -8,7 +8,11 @@ import { CadastroForm } from "./cadastro-form"
 
 export const metadata: Metadata = { title: "Criar conta" }
 
-export default function CadastroPage() {
+export default async function CadastroPage({ searchParams }: PageProps<"/cadastro">) {
+  const { redirecionar } = await searchParams
+  const destino = typeof redirecionar === "string" ? redirecionar : undefined
+  const sufixo = destino ? `?redirecionar=${encodeURIComponent(destino)}` : ""
+
   return (
     <div className="space-y-6">
       <div className="space-y-1 text-center">
@@ -17,16 +21,16 @@ export default function CadastroPage() {
           Comece a planejar o seu casamento agora.
         </p>
       </div>
-      <GoogleButton />
+      <GoogleButton redirecionarPara={destino ?? "/inicio"} />
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
         <span className="text-muted-foreground text-xs">ou com e-mail</span>
         <Separator className="flex-1" />
       </div>
-      <CadastroForm />
+      <CadastroForm redirecionarPara={destino} />
       <p className="text-muted-foreground text-center text-sm">
         Já tem conta?{" "}
-        <Link href="/entrar" className="text-foreground underline">
+        <Link href={`/entrar${sufixo}`} className="text-foreground underline">
           Entrar
         </Link>
       </p>

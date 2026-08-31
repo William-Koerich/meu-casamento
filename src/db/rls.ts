@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server"
 const client = postgres(process.env.DATABASE_URL!, { prepare: false })
 const db = drizzle(client, { schema })
 
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
 // Contexto extra para os dois fluxos públicos por "token de posse" (sem
 // login): RSVP por código do convidado (`guests`) e visualização/aceite de

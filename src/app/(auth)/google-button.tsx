@@ -5,7 +5,11 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 
-export function GoogleButton() {
+export function GoogleButton({
+  redirecionarPara = "/app",
+}: {
+  redirecionarPara?: string
+}) {
   const [carregando, setCarregando] = useState(false)
 
   async function entrarComGoogle() {
@@ -14,7 +18,7 @@ export function GoogleButton() {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/app`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirecionarPara)}`,
       },
     })
   }

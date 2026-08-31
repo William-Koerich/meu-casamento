@@ -1,12 +1,12 @@
 import type { Metadata } from "next"
 
+import { ExportPdfButton } from "@/components/app/export-pdf-button"
 import {
   getConvidadosConfirmadosSemMesa,
   getTablesComConvidados,
 } from "@/db/queries/tables"
 import { getMinhaWedding } from "@/db/queries/weddings"
 
-import { ExportPdfButton } from "./export-pdf-button"
 import { SeatingEditor } from "./seating-editor"
 
 export const metadata: Metadata = { title: "Mesas" }

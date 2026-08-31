@@ -3,10 +3,10 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import { obterUrlAssinada } from "@/actions/storage"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { documents } from "@/db/schema"
-import { createClient } from "@/lib/supabase/server"
 import { documentoSchema } from "@/lib/validators/documents"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
@@ -54,11 +54,7 @@ export async function excluirDocumento(id: string): Promise<ResultadoAction> {
 export async function obterUrlAssinadaDocumento(
   caminho: string
 ): Promise<{ url: string } | { erro: string }> {
-  const supabase = await createClient()
-  const { data, error } = await supabase.storage
-    .from("documentos")
-    .createSignedUrl(caminho, 60)
-
-  if (error || !data) return { erro: "Não foi possível gerar o link do arquivo." }
-  return { url: data.signedUrl }
+  const url = await obterUrlAssinada("documentos", caminho)
+  if (!url) return { erro: "Não foi possível gerar o link do arquivo." }
+  return { url }
 }

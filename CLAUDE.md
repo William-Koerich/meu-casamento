@@ -272,8 +272,52 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
 - **Exportar mapa de mesas em PDF**: usa `window.print()` com classes
   `print:hidden` na sidebar/bottom nav/header em vez de uma lib de PDF nova
   — a pessoa usa "Salvar como PDF" do diálogo de impressão do navegador.
-  Mesmo padrão será reaproveitado no cronograma (Fase 7) e no exportar geral
-  (Fase 9).
+  Mesmo componente (`components/app/export-pdf-button.tsx`) reaproveitado no
+  cronograma e em `/app/exportar`.
+- **Cronograma — horário calculado, não digitado**: só o primeiro bloco tem
+  horário editável; os demais são `dataCasamento_do_primeiro + soma das
+  durações anteriores`, recalculado e regravado em todas as linhas
+  (`recalcularHorarios` em `src/actions/timeline.ts`) a cada criação, edição
+  de duração ou reordenação por drag (dnd-kit sortable). O componente de
+  lista mantém uma cópia local só para refletir o novo horário na hora,
+  sincronizada com os props via `useEffect` sempre que o Server Component
+  revalida.
+- **Buckets privados (`inspiracoes`, `documentos`) exigem signed URL**: como
+  não são públicos, toda leitura de imagem/arquivo passa por
+  `src/actions/storage.ts` (`obterUrlAssinada`/`obterUrlsAssinadas`, esta
+  última em lote via `createSignedUrls`) usando o client comum do Supabase
+  Auth — não o `rls()` do Postgres, que não fala com Storage. Buckets
+  públicos (`presentes`, `capas`) guardam a URL pública direto, sem essa
+  etapa.
+- **JSONB de lua de mel editado por índice**: `roteiro` e `checklist_mala`
+  são arrays JSONB únicos (Fase 2); adicionar/remover item lê o array
+  inteiro, modifica e regrava (sem tabela própria) — aceitável porque só a
+  dona edita, sem concorrência real.
+- **Equipe e convite**: convidar/revogar/mudar permissão exigem
+  `is_wedding_admin` (a policy de RLS já barra quem não é admin — a Server
+  Action só precisa tratar o erro). Aceitar convite
+  (`src/actions/members.ts#aceitarConvite`) roda `rls(callback,
+  { inviteToken })` batendo exatamente na policy
+  `wedding_members_aceitar_convite` da Fase 2. `/convite/[token]` é pública
+  (fora do grupo `(app)`) e mostra "Entrar"/"Criar conta" com
+  `?redirecionar=/convite/[token]` quando ninguém está logada — por isso
+  `entrar`/`cadastrar` (Fase 3) ganharam um segundo parâmetro
+  `redirecionarPara`, validado como caminho relativo para não virar open
+  redirect.
+- **Exclusão de conta sem service key**: migration `0002_excluir_conta.sql`
+  cria `public.excluir_minha_conta()` `security definer` que roda
+  `delete from auth.users where id = auth.uid()` — a usuária autenticada
+  chama via `supabase.rpc(...)`, nunca precisamos da service key no app. O
+  cascade das FKs (Fase 2) apaga o resto: se é dona, o casamento inteiro
+  some; se é só membro, some só a própria conta e o próprio vínculo.
+- **Slug em Configurações não usa sufixo aleatório**: diferente do slug
+  gerado no onboarding (Fase 3), aqui a pessoa escolhe o endereço; em caso
+  de colisão o Server Action devolve "esse endereço já está em uso" (mesmo
+  código `23505`) em vez de tentar de novo com outro sufixo.
+- **`/app/exportar` entrou na navegação da Fase 4** (`src/lib/nav-items.ts`)
+  mesmo não estando na lista original daquela fase — só existe conteúdo
+  para exportar a partir desta fase, então o item de menu foi adicionado
+  junto com a página.
 
 ## Fases
 
@@ -294,7 +338,7 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
       com 6 cards clicáveis, `Suspense` + skeleton e empty states.
 - [x] **Fase 5 — Checklist, orçamento e fornecedores**.
 - [x] **Fase 6 — Convidados, mesas e RSVP**.
-- [ ] **Fase 7 — Módulos restantes** (cronograma, inspirações, playlist,
+- [x] **Fase 7 — Módulos restantes** (cronograma, inspirações, playlist,
       presentes, enxoval, lua de mel, documentos, equipe, configurações,
       exportar).
 - [ ] **Fase 8 — Página pública do casal** (`/c/[slug]`).

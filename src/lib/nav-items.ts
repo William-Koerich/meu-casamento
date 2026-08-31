@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import {
   CalendarClock,
+  Download,
   FileText,
   Gift,
   Grid3x3,
@@ -41,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { rotulo: "Documentos", href: "/app/documentos", icone: FileText },
   { rotulo: "Equipe", href: "/app/equipe", icone: UserPlus },
   { rotulo: "Configurações", href: "/app/configuracoes", icone: Settings },
+  { rotulo: "Exportar", href: "/app/exportar", icone: Download },
 ]
 
 // Itens de maior uso diário, mostrados direto na barra inferior no mobile —

@@ -38,3 +38,28 @@ export const getMembrosAtribuiveis = cache(async function getMembrosAtribuiveis(
     return lista
   })
 })
+
+export async function getEquipe(weddingId: string) {
+  const { rls } = await createDrizzleSupabaseClient()
+  return rls((tx) =>
+    tx.query.weddingMembers.findMany({
+      where: eq(weddingMembers.weddingId, weddingId),
+      with: { profile: true },
+      orderBy: (membros, { asc }) => asc(membros.createdAt),
+    })
+  )
+}
+
+export type MembroEquipe = Awaited<ReturnType<typeof getEquipe>>[number]
+
+export async function getConvitePorToken(token: string) {
+  const { rls } = await createDrizzleSupabaseClient()
+  return rls(
+    (tx) =>
+      tx.query.weddingMembers.findFirst({
+        where: eq(weddingMembers.conviteToken, token),
+        with: { wedding: true },
+      }),
+    { inviteToken: token }
+  )
+}

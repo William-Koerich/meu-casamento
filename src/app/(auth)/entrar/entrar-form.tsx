@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { entrarSchema, type EntrarInput } from "@/lib/validators/auth"
 
-export function EntrarForm() {
+export function EntrarForm({ redirecionarPara }: { redirecionarPara?: string }) {
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
 
@@ -29,7 +29,7 @@ export function EntrarForm() {
   function onSubmit(dados: EntrarInput) {
     setErro(null)
     iniciarTransicao(async () => {
-      const resultado = await entrar(dados)
+      const resultado = await entrar(dados, redirecionarPara)
       if (resultado?.erro) {
         setErro(resultado.erro)
       }
