@@ -214,6 +214,19 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   de auth que o middleware **não** redireciona para `/app` quando já
   autenticado (as outras sim, para não deixar quem já tem conta ver
   `/entrar` de novo).
+- **`getMinhaWedding` com `React.cache`**: layout de `(app)/app`, a página
+  do dashboard e qualquer Server Component que precise do casamento atual
+  chamam a mesma função — `cache()` garante uma única query por requisição
+  em vez de repetir a leitura em cada camada.
+- **Navegação em `src/lib/nav-items.ts`**: lista única usada pela sidebar
+  (desktop) e pelo menu mobile (bottom nav + drawer "Mais") — os links já
+  apontam para as rotas dos módulos das Fases 5–7, que ainda não existem;
+  até lá dão 404 de propósito (a estrutura de navegação é entregue completa
+  na Fase 4, o conteúdo de cada módulo vem depois).
+- **Dashboard sem N+1**: `src/db/queries/dashboard.ts` roda todas as
+  agregações (checklist, orçamento, RSVP, alertas, próximas tarefas) dentro
+  de uma única chamada a `rls()` — nenhuma delas itera por linha do lado do
+  app, são somas/contagens agregadas no Postgres.
 
 ## Fases
 
@@ -229,8 +242,9 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
       (e-mail+senha e Google), callback OAuth/PKCE, wizard de 5 telas em
       `/inicio` com rascunho salvo no banco a cada passo, geração automática
       de categorias de orçamento e checklist de 68 tarefas ao concluir.
-- [ ] **Fase 4 — Layout e dashboard**: sidebar/bottom nav, header com
-      contagem regressiva, dashboard com cards e skeletons.
+- [x] **Fase 4 — Layout e dashboard**: sidebar (desktop) e bottom nav com
+      drawer (mobile), header com contagem regressiva compacta, dashboard
+      com 6 cards clicáveis, `Suspense` + skeleton e empty states.
 - [ ] **Fase 5 — Checklist, orçamento e fornecedores**.
 - [ ] **Fase 6 — Convidados, mesas e RSVP**.
 - [ ] **Fase 7 — Módulos restantes** (cronograma, inspirações, playlist,

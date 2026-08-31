@@ -1,0 +1,103 @@
+import { addDays, format } from "date-fns"
+import { and, asc, count, eq, gte, lte, sql } from "drizzle-orm"
+
+import { createDrizzleSupabaseClient } from "@/db/rls"
+import { budgetCategories, budgetItems, guests, payments, tasks } from "@/db/schema"
+
+export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>
+
+// Todas as consultas do dashboard rodam dentro de uma única transação
+// (uma chamada a `rls`) para evitar ida e volta repetida ao banco — nenhuma
+// delas itera por linha (sem N+1), são agregações de tamanho fixo.
+export async function getDashboardData(weddingId: string) {
+  const { rls } = await createDrizzleSupabaseClient()
+  const hoje = format(new Date(), "yyyy-MM-dd")
+  const em7dias = format(addDays(new Date(), 7), "yyyy-MM-dd")
+
+  return rls(async (tx) => {
+    const [checklist] = await tx
+      .select({
+        total: count(),
+        concluidas: sql<string>`count(*) filter (where ${tasks.concluida})`,
+      })
+      .from(tasks)
+      .where(eq(tasks.weddingId, weddingId))
+
+    const [previstoResult] = await tx
+      .select({
+        previsto: sql<string>`coalesce(sum(${budgetCategories.valorPrevisto}), 0)`,
+      })
+      .from(budgetCategories)
+      .where(eq(budgetCategories.weddingId, weddingId))
+
+    const [contratadoResult] = await tx
+      .select({
+        contratado: sql<string>`coalesce(sum(${budgetItems.valorContratado}), 0)`,
+      })
+      .from(budgetItems)
+      .where(eq(budgetItems.weddingId, weddingId))
+
+    const [pagoResult] = await tx
+      .select({ pago: sql<string>`coalesce(sum(${payments.valor}), 0)` })
+      .from(payments)
+      .where(and(eq(payments.weddingId, weddingId), eq(payments.pago, true)))
+
+    const proximasTarefas = await tx.query.tasks.findMany({
+      where: and(eq(tasks.weddingId, weddingId), eq(tasks.concluida, false)),
+      orderBy: asc(tasks.prazo),
+      limit: 5,
+    })
+
+    const [tarefasAtrasadas] = await tx
+      .select({ total: count() })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.weddingId, weddingId),
+          eq(tasks.concluida, false),
+          lte(tasks.prazo, hoje)
+        )
+      )
+
+    const [pagamentosVencendo] = await tx
+      .select({ total: count() })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.weddingId, weddingId),
+          eq(payments.pago, false),
+          gte(payments.vencimento, hoje),
+          lte(payments.vencimento, em7dias)
+        )
+      )
+
+    const rsvpPorStatus = await tx
+      .select({ status: guests.statusRsvp, total: count() })
+      .from(guests)
+      .where(eq(guests.weddingId, weddingId))
+      .groupBy(guests.statusRsvp)
+
+    const buscarTotalRsvp = (status: (typeof rsvpPorStatus)[number]["status"]) =>
+      rsvpPorStatus.find((linha) => linha.status === status)?.total ?? 0
+
+    return {
+      checklist: {
+        total: checklist?.total ?? 0,
+        concluidas: Number(checklist?.concluidas ?? 0),
+      },
+      orcamento: {
+        previsto: Number(previstoResult?.previsto ?? 0),
+        contratado: Number(contratadoResult?.contratado ?? 0),
+        pago: Number(pagoResult?.pago ?? 0),
+      },
+      proximasTarefas,
+      tarefasAtrasadas: tarefasAtrasadas?.total ?? 0,
+      pagamentosVencendo: pagamentosVencendo?.total ?? 0,
+      rsvp: {
+        confirmado: buscarTotalRsvp("confirmado"),
+        pendente: buscarTotalRsvp("pendente"),
+        recusado: buscarTotalRsvp("recusado"),
+      },
+    }
+  })
+}
