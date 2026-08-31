@@ -69,6 +69,7 @@ function DocumentRow({ documento }: { documento: DocumentoComFornecedor }) {
       )}
       <button
         type="button"
+        aria-label={`Excluir ${documento.nome}`}
         onClick={() =>
           iniciarTransicao(async () => {
             await excluirDocumento(documento.id)

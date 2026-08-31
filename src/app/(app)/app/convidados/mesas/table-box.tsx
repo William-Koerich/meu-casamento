@@ -80,6 +80,7 @@ export function TableBox({
             <AlertDialogTrigger asChild>
               <button
                 type="button"
+                aria-label={`Excluir ${mesa.nome}`}
                 className="text-muted-foreground hover:text-destructive"
               >
                 <Trash2 className="size-3.5" />
@@ -127,6 +128,7 @@ export function TableBox({
               <span className="truncate">{guest.nome}</span>
               <button
                 type="button"
+                aria-label={`Tirar ${guest.nome} da mesa`}
                 onClick={() =>
                   iniciarTransicao(async () => {
                     await atribuirConvidadoMesa(guest.id, null)

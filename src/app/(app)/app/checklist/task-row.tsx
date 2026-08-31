@@ -97,7 +97,11 @@ export function TaskRow({
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className="text-muted-foreground p-1">
+          <button
+            type="button"
+            aria-label={`Mais ações para ${tarefa.titulo}`}
+            className="text-muted-foreground p-1"
+          >
             <MoreVertical className="size-4" />
           </button>
         </DropdownMenuTrigger>

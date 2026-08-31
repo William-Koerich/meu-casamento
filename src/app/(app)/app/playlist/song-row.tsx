@@ -29,6 +29,7 @@ export function SongRow({ musica }: { musica: Song }) {
     >
       <button
         type="button"
+        aria-label={`Reordenar ${musica.titulo}`}
         {...attributes}
         {...listeners}
         className="text-muted-foreground shrink-0"
@@ -64,6 +65,7 @@ export function SongRow({ musica }: { musica: Song }) {
       />
       <button
         type="button"
+        aria-label={`Excluir ${musica.titulo}`}
         onClick={() =>
           iniciarTransicao(async () => {
             await excluirMusica(musica.id)

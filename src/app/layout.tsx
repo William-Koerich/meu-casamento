@@ -19,9 +19,18 @@ const fontSerif = Fraunces({
   style: ["normal", "italic"],
 })
 
+const urlBase = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+
 export const metadata: Metadata = {
-  title: NOME_PRODUTO,
+  metadataBase: new URL(urlBase),
+  title: { default: NOME_PRODUTO, template: `%s — ${NOME_PRODUTO}` },
   description: DESCRICAO_PRODUTO,
+  openGraph: {
+    title: NOME_PRODUTO,
+    description: DESCRICAO_PRODUTO,
+    locale: "pt_BR",
+    type: "website",
+  },
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

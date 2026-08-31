@@ -1,18 +1,23 @@
-import { NOME_PRODUTO } from "@/lib/site"
+import { BeforeAfter } from "@/components/marketing/before-after"
+import { FaqSection } from "@/components/marketing/faq-section"
+import { FeaturesGrid } from "@/components/marketing/features-grid"
+import { FinalCta } from "@/components/marketing/final-cta"
+import { Hero } from "@/components/marketing/hero"
+import { PainSection } from "@/components/marketing/pain-section"
+import { PricingSection } from "@/components/marketing/pricing-section"
+import { SocialProof } from "@/components/marketing/social-proof"
 
 export default function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-      <p className="text-muted-foreground text-sm tracking-widest uppercase">
-        {NOME_PRODUTO}
-      </p>
-      <h1 className="font-heading max-w-xl text-4xl">
-        O planejamento do seu casamento, com calma e em um só lugar.
-      </h1>
-      <p className="text-muted-foreground max-w-md">
-        A landing completa chega na fase de marketing. Por enquanto, a fundação do produto
-        está sendo construída.
-      </p>
-    </main>
+    <div>
+      <Hero />
+      <PainSection />
+      <FeaturesGrid />
+      <BeforeAfter />
+      <SocialProof />
+      <PricingSection />
+      <FaqSection />
+      <FinalCta />
+    </div>
   )
 }

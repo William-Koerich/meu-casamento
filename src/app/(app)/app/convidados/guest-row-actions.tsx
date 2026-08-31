@@ -51,7 +51,11 @@ export function GuestRowActions({ guest, slug }: { guest: GuestComMesa; slug: st
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="text-muted-foreground p-1">
+        <button
+          type="button"
+          aria-label={`Mais ações para ${guest.nome}`}
+          className="text-muted-foreground p-1"
+        >
           <MoreVertical className="size-4" />
         </button>
       </DropdownMenuTrigger>

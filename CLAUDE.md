@@ -347,8 +347,43 @@ durações anteriores`, recalculado e regravado em todas as linhas
   `https://www.google.com/maps?q=...&output=embed`, que não exige API key
   nem variável de ambiente — suficiente para mostrar a localização, sem
   gerenciar credenciais do Google Maps.
-
-## Fases
+- **Preço é placeholder**: os dois planos em `PricingSection`
+  (`Essencial` grátis / `Completo` R$ 149 pagamento único) são um valor
+  fictício para preencher a landing — o modelo de negócio real (preço,
+  se é assinatura ou pagamento único, o que cada plano libera de fato)
+  ainda não foi decidido e precisa ser substituído antes do lançamento.
+- **Favicon/ícones gerados por código**: `src/app/icon.tsx` e
+  `apple-icon.tsx` usam `next/og` (`ImageResponse`) para desenhar um
+  monograma "M" na cor de destaque, em vez de depender de um arquivo de
+  imagem pronto — não há nenhum arquivo de design disponível ainda. Troque
+  por um ícone de verdade quando a identidade visual for definida.
+- **Sitemap inclui casamentos publicados**: `src/app/sitemap.ts` consulta
+  `weddings` como a role `anon` (via `rls()`, sem usuária logada) — a
+  própria policy de RLS (`weddings_select_vitrine_publica`, Fase 2) já
+  garante que só entram os `slug`s de casamentos com `publicado = true`,
+  sem precisar de nenhuma query administrativa.
+- **Revisão geral (typecheck, N+1, `'use client'`, i18n, RLS)**: feita ao
+  final da Fase 9.
+  - Typecheck e ESLint zerados no projeto inteiro.
+  - RLS: as 17 tabelas de `src/db/schema` têm `.enableRLS()` — nenhuma
+    ficou de fora.
+  - `'use client'` desnecessário: removido de
+    `src/app/(app)/app/orcamento/orcamento-view.tsx` (só compunha
+    `Tabs`/`TabsContent`, que já são client components próprios — não
+    precisava ser um).
+  - Textos em inglês vazados: os componentes `Dialog`/`Sheet` do shadcn
+    tinham "Close" fixo (botão de fechar com ícone X, presente por padrão
+    em **todo** dialog/sheet do app) — traduzido para "Fechar" em
+    `src/components/ui/dialog.tsx` e `sheet.tsx`.
+  - Acessibilidade: botões só com ícone (excluir, reordenar por
+    drag, "mais ações") ganharam `aria-label` descritivo em vez de
+    depender só do ícone — checklist, cronograma, playlist, convidados,
+    mesas, orçamento, documentos, lua de mel, fornecedores.
+  - N+1: não há leitura em loop (`.map(async`/`for` com `select` por
+    item) em nenhuma query; os únicos `for` com uma query por iteração são
+    escritas em massa de baixa frequência (reordenar checklist/cronograma/
+    playlist por drag, importar convidados por CSV, retry de código único),
+    aceitas como troca simples por não afetarem carregamento de página.
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,
@@ -371,7 +406,7 @@ durações anteriores`, recalculado e regravado em todas as linhas
       presentes, enxoval, lua de mel, documentos, equipe, configurações,
       exportar).
 - [x] **Fase 8 — Página pública do casal** (`/c/[slug]`).
-- [ ] **Fase 9 — Marketing e finalização**.
+- [x] **Fase 9 — Marketing e finalização**.
 
 ## Como rodar localmente
 

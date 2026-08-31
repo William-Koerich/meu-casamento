@@ -47,6 +47,7 @@ export function RoteiroList({ roteiro }: { roteiro: RoteiroDia[] }) {
                 </div>
                 <button
                   type="button"
+                  aria-label={`Remover dia ${dia.dia}`}
                   onClick={() =>
                     iniciarTransicao(async () => {
                       await removerDiaRoteiro(indice)

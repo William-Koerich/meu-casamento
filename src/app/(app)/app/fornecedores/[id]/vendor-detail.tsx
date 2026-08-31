@@ -61,7 +61,7 @@ export function VendorDetail({
           />
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="Excluir fornecedor">
                 <Trash2 className="size-4" />
               </Button>
             </AlertDialogTrigger>

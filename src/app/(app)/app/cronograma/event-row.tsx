@@ -47,6 +47,7 @@ export function EventRow({
     >
       <button
         type="button"
+        aria-label={`Reordenar ${evento.titulo}`}
         {...attributes}
         {...listeners}
         className="text-muted-foreground shrink-0"
@@ -80,6 +81,7 @@ export function EventRow({
         <AlertDialogTrigger asChild>
           <button
             type="button"
+            aria-label={`Excluir ${evento.titulo}`}
             className="text-muted-foreground hover:text-destructive shrink-0"
           >
             <Trash2 className="size-4" />

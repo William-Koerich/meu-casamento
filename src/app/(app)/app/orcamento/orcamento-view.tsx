@@ -1,5 +1,3 @@
-"use client"
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { CategoriaComItens, PagamentoComItem } from "@/db/queries/budget"
 import type { vendors as vendorsTable } from "@/db/schema"

@@ -164,7 +164,11 @@ function DeleteItemButton({ id, descricao }: { id: string; descricao: string }) 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <button type="button" className="text-muted-foreground hover:text-destructive">
+        <button
+          type="button"
+          aria-label={`Excluir ${descricao}`}
+          className="text-muted-foreground hover:text-destructive"
+        >
           <Trash2 className="size-4" />
         </button>
       </AlertDialogTrigger>

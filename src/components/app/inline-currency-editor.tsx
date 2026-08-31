@@ -53,6 +53,7 @@ export function InlineCurrencyEditor({
         type="button"
         size="icon"
         className="size-8"
+        aria-label="Salvar valor"
         disabled={pendente}
         onClick={salvar}
       >

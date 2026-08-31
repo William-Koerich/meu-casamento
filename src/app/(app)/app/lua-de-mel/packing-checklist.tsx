@@ -53,6 +53,7 @@ export function PackingChecklist({ checklist }: { checklist: ChecklistMalaItem[]
                 </label>
                 <button
                   type="button"
+                  aria-label={`Remover ${item.item}`}
                   onClick={() =>
                     iniciarTransicao(async () => {
                       await removerItemMala(indice)
