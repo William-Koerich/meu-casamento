@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Meu Casamento
 
-## Getting Started
+SaaS de planejamento de casamento em português do Brasil. Nome provisório —
+veja `src/lib/site.ts`.
 
-First, run the development server:
+## Stack
+
+Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · shadcn/ui · Supabase
+(Postgres, Auth, Storage, RLS) · Drizzle ORM · React Hook Form + Zod ·
+date-fns · recharts · dnd-kit.
+
+Detalhes de arquitetura e convenções: veja [`CLAUDE.md`](./CLAUDE.md).
+
+## Rodando localmente
+
+### Pré-requisitos
+
+- Node.js 20+
+- Uma conta e um projeto no [Supabase](https://supabase.com)
+
+### 1. Instalar dependências
+
+```bash
+npm install
+```
+
+### 2. Configurar variáveis de ambiente
+
+```bash
+cp .env.example .env.local
+```
+
+Preencha no `.env.local`:
+
+- `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` — em
+  **Project Settings > API** no painel do Supabase.
+- `DATABASE_URL` — em **Project Settings > Database > Connection string**.
+  Use a connection string direta (porta 5432) para rodar migrations e seed
+  localmente.
+- `NEXT_PUBLIC_APP_URL` — `http://localhost:3000` em desenvolvimento.
+
+### 3. Criar o schema no banco
+
+```bash
+npm run db:push   # aplica o schema do Drizzle direto no Postgres do Supabase
+```
+
+Para gerar arquivos de migration versionados em vez de aplicar direto:
+
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+### 4. Popular com dados de exemplo (opcional)
+
+```bash
+npm run db:seed
+```
+
+### 5. Rodar o servidor de desenvolvimento
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script                 | Descrição                                       |
+| ---------------------- | ----------------------------------------------- |
+| `npm run dev`          | Servidor de desenvolvimento                     |
+| `npm run build`        | Build de produção                               |
+| `npm run start`        | Serve o build de produção                       |
+| `npm run lint`         | ESLint                                          |
+| `npm run format`       | Formata o projeto com Prettier                  |
+| `npm run format:check` | Checa formatação sem alterar arquivos           |
+| `npm run db:generate`  | Gera migrations a partir do schema Drizzle      |
+| `npm run db:push`      | Aplica o schema direto no banco (sem migration) |
+| `npm run db:migrate`   | Aplica migrations geradas                       |
+| `npm run db:studio`    | Abre o Drizzle Studio                           |
+| `npm run db:seed`      | Popula o banco com um casamento de exemplo      |
 
-## Learn More
+## Deploy (Vercel)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Importe o repositório na Vercel.
+2. Configure as variáveis de ambiente (as mesmas do `.env.example`) em
+   **Project Settings > Environment Variables**.
+3. Rode as migrations contra o banco de produção antes do primeiro deploy
+   (`npm run db:push` ou `db:migrate` apontando `DATABASE_URL` para produção).
+4. No Supabase, crie os buckets de Storage (`inspiracoes`, `presentes`,
+   `documentos`, `capas`) — o seed/migrations cuidam disso quando definidos
+   via SQL, ou crie manualmente pelo painel se preferir.
+5. Deploy. O build padrão da Vercel (`npm run build`) já é o usado neste
+   projeto.

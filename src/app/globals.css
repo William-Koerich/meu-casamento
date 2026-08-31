@@ -1,26 +1,141 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --font-mono: ui-monospace, monospace;
+  --font-heading: var(--font-serif);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * Paleta editorial "Meu Casamento": off-white e areia neutros, verde-oliva
+ * como cor de destaque única, texto em cinza-chumbo (nunca preto puro).
+ * Bordas sutis, raios pequenos, sem sombra pesada — ver CLAUDE.md > Direção visual.
+ */
+:root {
+  --background: #faf8f3;
+  --foreground: #33322d;
+  --card: #fffdf9;
+  --card-foreground: #33322d;
+  --popover: #fffdf9;
+  --popover-foreground: #33322d;
+  --primary: #6f7350;
+  --primary-foreground: #faf8f3;
+  --secondary: #f0ebde;
+  --secondary-foreground: #33322d;
+  --muted: #f0ebde;
+  --muted-foreground: #6b6862;
+  --accent: #e9e2d1;
+  --accent-foreground: #33322d;
+  --destructive: #a8442e;
+  --border: #e2dbc8;
+  --input: #e2dbc8;
+  --ring: #6f7350;
+  --chart-1: #6f7350;
+  --chart-2: #a8442e;
+  --chart-3: #b89b5e;
+  --chart-4: #7f8a99;
+  --chart-5: #9c8567;
+  --radius: 0.25rem;
+  --sidebar: #f3efe4;
+  --sidebar-foreground: #33322d;
+  --sidebar-primary: #6f7350;
+  --sidebar-primary-foreground: #faf8f3;
+  --sidebar-accent: #e9e2d1;
+  --sidebar-accent-foreground: #33322d;
+  --sidebar-border: #e2dbc8;
+  --sidebar-ring: #6f7350;
+}
+
+.dark {
+  --background: #23221e;
+  --foreground: #f0ebde;
+  --card: #2b2a25;
+  --card-foreground: #f0ebde;
+  --popover: #2b2a25;
+  --popover-foreground: #f0ebde;
+  --primary: #a3ab7c;
+  --primary-foreground: #23221e;
+  --secondary: #33322c;
+  --secondary-foreground: #f0ebde;
+  --muted: #33322c;
+  --muted-foreground: #b0aa9c;
+  --accent: #3a382f;
+  --accent-foreground: #f0ebde;
+  --destructive: #c96a51;
+  --border: #3d3b33;
+  --input: #3d3b33;
+  --ring: #a3ab7c;
+  --chart-1: #a3ab7c;
+  --chart-2: #c96a51;
+  --chart-3: #cbb27a;
+  --chart-4: #93a0ac;
+  --chart-5: #b39c7d;
+  --sidebar: #23221e;
+  --sidebar-foreground: #f0ebde;
+  --sidebar-primary: #a3ab7c;
+  --sidebar-primary-foreground: #23221e;
+  --sidebar-accent: #3a382f;
+  --sidebar-accent-foreground: #f0ebde;
+  --sidebar-border: #3d3b33;
+  --sidebar-ring: #a3ab7c;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading;
+  }
 }
