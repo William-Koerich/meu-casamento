@@ -4,10 +4,12 @@ import { useState } from "react"
 
 import { Input } from "@/components/ui/input"
 
-type CurrencyInputProps = {
+type CurrencyInputProps = Omit<
+  React.ComponentProps<"input">,
+  "value" | "onChange" | "type"
+> & {
   value?: number
   onChange: (valor: number) => void
-  placeholder?: string
 }
 
 function formatarCentavos(centavos: number) {
@@ -21,6 +23,7 @@ export function CurrencyInput({
   value,
   onChange,
   placeholder = "R$ 0,00",
+  ...props
 }: CurrencyInputProps) {
   const [centavos, setCentavos] = useState(() => Math.round((value ?? 0) * 100))
 
@@ -37,6 +40,7 @@ export function CurrencyInput({
       value={centavos ? formatarCentavos(centavos) : ""}
       onChange={handleChange}
       placeholder={placeholder}
+      {...props}
     />
   )
 }

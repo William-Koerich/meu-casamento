@@ -22,7 +22,12 @@ export function OrcamentoView({ categorias, vendors, pagamentos }: OrcamentoView
         <CategoryList categorias={categorias} vendors={vendors} />
       </TabsContent>
       <TabsContent value="pagamentos" className="pt-4">
-        <PaymentsTab pagamentos={pagamentos} />
+        <PaymentsTab
+          pagamentos={pagamentos}
+          itens={categorias.flatMap((categoria) =>
+            categoria.items.map((item) => ({ id: item.id, descricao: item.descricao }))
+          )}
+        />
       </TabsContent>
     </Tabs>
   )

@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
@@ -9,7 +10,10 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 
-type DatePickerFieldProps = {
+type DatePickerFieldProps = Omit<
+  React.ComponentProps<typeof Button>,
+  "value" | "onChange"
+> & {
   value?: string
   onChange: (valor: string) => void
   placeholder?: string
@@ -19,6 +23,8 @@ export function DatePickerField({
   value,
   onChange,
   placeholder = "Selecione uma data",
+  className,
+  ...props
 }: DatePickerFieldProps) {
   const selecionada = value ? new Date(`${value}T00:00:00`) : undefined
 
@@ -30,8 +36,10 @@ export function DatePickerField({
           variant="outline"
           className={cn(
             "w-full justify-start font-normal",
-            !selecionada && "text-muted-foreground"
+            !selecionada && "text-muted-foreground",
+            className
           )}
+          {...props}
         >
           <CalendarIcon className="mr-2 size-4" />
           {selecionada

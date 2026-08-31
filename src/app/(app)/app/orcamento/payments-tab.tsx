@@ -60,7 +60,15 @@ function exportarCsv(pagamentos: PagamentoComItem[], hoje: string) {
   baixarCsv("pagamentos.csv", arrayParaCsv([cabecalho, ...linhas]))
 }
 
-export function PaymentsTab({ pagamentos }: { pagamentos: PagamentoComItem[] }) {
+type ItemOpcao = { id: string; descricao: string }
+
+export function PaymentsTab({
+  pagamentos,
+  itens,
+}: {
+  pagamentos: PagamentoComItem[]
+  itens: ItemOpcao[]
+}) {
   const [filtro, setFiltro] = useState<Filtro>("todos")
   const hoje = hojeISO()
 
@@ -70,14 +78,6 @@ export function PaymentsTab({ pagamentos }: { pagamentos: PagamentoComItem[] }) 
         (pagamento) => filtro === "todos" || statusDe(pagamento, hoje) === filtro
       ),
     [pagamentos, filtro, hoje]
-  )
-
-  const itensParaNovoPagamento = useMemo(
-    () =>
-      [...new Map(pagamentos.map((p) => [p.budgetItem.id, p.budgetItem])).values()].map(
-        (item) => ({ id: item.id, descricao: item.descricao })
-      ),
-    [pagamentos]
   )
 
   return (
@@ -95,7 +95,7 @@ export function PaymentsTab({ pagamentos }: { pagamentos: PagamentoComItem[] }) 
           </SelectContent>
         </Select>
         <div className="flex gap-2">
-          <PagamentoFormDialog itens={itensParaNovoPagamento} />
+          <PagamentoFormDialog itens={itens} />
           <Button
             variant="outline"
             disabled={pagamentos.length === 0}

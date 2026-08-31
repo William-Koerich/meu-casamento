@@ -52,8 +52,11 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
 
         return (
           <AccordionItem key={categoria.id} value={categoria.id}>
-            <AccordionTrigger>
-              <div className="flex flex-1 items-center justify-between pr-4">
+            {/* InlineCurrencyEditor renderiza um <button> — não pode ficar
+                dentro do <button> do AccordionTrigger (HTML inválido, quebra
+                hidratação). Por isso fica como irmão do trigger, não filho. */}
+            <div className="flex items-center gap-3">
+              <AccordionTrigger className="flex-none gap-2">
                 <span className="flex items-center gap-2">
                   <span
                     className="size-2 rounded-full"
@@ -61,17 +64,17 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
                   />
                   {categoria.nome}
                 </span>
-                <span className={cn("text-sm", estourou && "text-destructive")}>
-                  {formatCurrency(contratadoCategoria)} de{" "}
-                  <InlineCurrencyEditor
-                    valor={previstoCategoria}
-                    onSalvar={(valor) =>
-                      atualizarValorPrevistoCategoria(categoria.id, valor)
-                    }
-                  />
-                </span>
-              </div>
-            </AccordionTrigger>
+              </AccordionTrigger>
+              <span className={cn("ml-auto text-sm", estourou && "text-destructive")}>
+                {formatCurrency(contratadoCategoria)} de{" "}
+                <InlineCurrencyEditor
+                  valor={previstoCategoria}
+                  onSalvar={(valor) =>
+                    atualizarValorPrevistoCategoria(categoria.id, valor)
+                  }
+                />
+              </span>
+            </div>
             <AccordionContent>
               {categoria.items.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
