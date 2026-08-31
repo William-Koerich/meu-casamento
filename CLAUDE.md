@@ -76,6 +76,84 @@ Toda função em `src/db/queries/*` recebe esse client já aberto (ou abre um
 internamente) — nunca importa `db` de `src/db/index.ts` para servir dado de
 usuário.
 
+`rls(callback, contexto?)` aceita um segundo argumento opcional
+`{ guestCode?, inviteToken? }`, setado via `set_config` na mesma transação,
+usado pelas duas policies públicas que não dependem de login (RSVP por
+código em `guests` e aceite de convite por token em `wedding_members` — ver
+"RLS — regras por tabela" abaixo).
+
+## Modelo de dados (Fase 2)
+
+Schema completo em `src/db/schema/*` (um arquivo por tabela/domínio, ver
+`index.ts` para a lista). Cada tabela usa `pgPolicy` do próprio Drizzle
+(`drizzle-orm/pg-core`) para declarar RLS junto da definição da tabela — as
+migrations em `src/db/migrations/*.sql` são geradas a partir daí
+(`npm run db:generate`).
+
+### RLS — regras por tabela
+
+- **Regra base (todas as tabelas "filhas" de `weddings`)**: leitura para
+  quem é dona (`weddings.owner_id`) ou membro com `convite_aceito_em`
+  preenchido (qualquer `permissao`); escrita (insert/update/delete) exige
+  `permissao` `admin` ou `editor` — `leitor` só lê. Implementado em
+  `src/db/schema/policy-helpers.ts` (`standardWeddingPolicies`), que usa duas
+  funções Postgres `security definer` criadas na migration
+  `0001_rls_policies_and_storage.sql`: `public.is_wedding_member(wedding_id)`
+  e `public.can_edit_wedding(wedding_id)`. `security definer` é necessário
+  para evitar recursão de RLS entre `weddings`/`wedding_members` (a função
+  roda como dona das tabelas, que ignora RLS por ser a "table owner").
+- **`weddings`**: leitura para membros via `is_wedding_member(id)`; update
+  restrito a `is_wedding_admin(id)` (dona ou membro `admin` — mais restrito
+  que "editor" porque inclui publicar/despublicar e excluir dados);
+  delete só pela dona. Leitura pública (`anon`) quando `publicado = true`,
+  mas só nas colunas de vitrine — ver "Grants de coluna" abaixo.
+- **`wedding_members`**: gestão de equipe (insert/update/delete) restrita a
+  quem é `is_wedding_admin`. Ver e aceitar o próprio convite não depende de
+  já estar logada nem de já ter `user_id`: a policy compara
+  `convite_token` com `current_setting('request.invite_token', true)`, que o
+  Server Action de `/convite/[token]` seta via `rls(cb, { inviteToken })`.
+- **`guests`**: CRUD normal para a equipe do casamento; RSVP público (sem
+  login) via `codigo_rsvp = current_setting('request.guest_code', true)`,
+  setado por `rls(cb, { guestCode })` a partir do código que a pessoa
+  convidada digita em `/c/[slug]/confirmar`.
+- **`gifts`**: CRUD normal para a equipe; leitura e reserva pública quando
+  `weddings.publicado = true` (join direto na policy, sem variável de
+  sessão — não há "código" aqui, é público mesmo).
+- **`profiles`**: cada usuária vê e edita o próprio perfil, e também vê o
+  perfil de quem participa de algum casamento em comum (para listas de
+  "responsável", equipe etc.).
+
+### Grants de coluna para `anon`
+
+Por padrão o Supabase concede privilégios amplos de tabela a `anon` e
+`authenticated` no schema `public` e deixa toda a autorização por conta da
+RLS — mas RLS filtra **linhas**, não colunas. Como `weddings`, `guests` e
+`gifts` têm policies que liberam `anon` em parte dos dados, a migration
+`0001_rls_policies_and_storage.sql` faz `revoke all ... from anon` seguido de
+`grant select/update (colunas específicas)` nessas 3 tabelas (+ leitura do
+convite por token em `wedding_members`), garantindo que endereço/orçamento
+de `weddings`, e-mail/telefone de outros convidados em `guests`, e o e-mail
+de quem reservou em `gifts` nunca vazem para o público mesmo que a regra de
+linha permita ver aquela linha.
+
+### Storage
+
+4 buckets criados na mesma migration: `capas` e `presentes` são **públicos**
+(a página `/c/[slug]` precisa exibi-los sem autenticação); `inspiracoes` e
+`documentos` são privados à equipe do casamento. Convenção de path:
+`{wedding_id}/arquivo.ext` — as policies de `storage.objects` extraem o
+`wedding_id` do 1º segmento via `storage.foldername(name)` e reusam
+`is_wedding_member`/`can_edit_wedding`.
+
+### Seed
+
+`npm run db:seed` (`src/db/seed.ts`) usa a Admin API do Supabase
+(`SUPABASE_SERVICE_ROLE_KEY`, só neste script local) para criar a usuária de
+demonstração `mariana@exemplo.com` / `SenhaDemo123!`, depois popula um
+casamento completo com o client administrativo (`src/db/index.ts`) — inclui
+o checklist real de 68 tarefas da Fase 3 (reaproveitado aqui só como dado de
+seed; a lógica oficial de geração no onboarding é implementada na Fase 3).
+
 ## Decisões registradas (spec ambígua → opção mais simples)
 
 - **Nome do produto**: "Meu Casamento" isolado em `src/lib/site.ts`.
@@ -100,6 +178,24 @@ usuário.
 - **Onboarding sem localStorage**: cada passo do wizard `/inicio` salva no
   banco (rascunho em `weddings` ou tabela de rascunho) — ver decisão detalhada
   quando a Fase 3 for implementada.
+- **Papel "admin" vs "editor" em `wedding_members`**: `editor` pode
+  criar/editar/excluir conteúdo de qualquer módulo (tarefas, orçamento,
+  convidados etc.); ações estruturais — publicar/despublicar o site,
+  editar dados de `weddings`, convidar/revogar membros da equipe — exigem
+  `admin`. A dona (`owner_id`) sempre tem acesso total, mesmo sem linha em
+  `wedding_members`.
+- **`auth.users` no schema Drizzle**: usamos o helper oficial
+  `drizzle-orm/supabase` (`authUsers`, `authUid`, `authenticatedRole`,
+  `anonRole`) em vez de declarar a tabela à mão. Como o `drizzle-kit
+generate` tentaria criar essa tabela (ela só existe de fato porque o
+  Supabase Auth já a gerencia), a migration `0000` teve o `CREATE TABLE
+"auth"."users"` removido manualmente — só a referência via FK fica. Se
+  algum dia rodar `drizzle-kit generate` de novo a partir do zero, repita
+  essa remoção antes de aplicar a migration.
+- **Trigger `handle_new_user`**: toda conta criada no Supabase Auth ganha
+  automaticamente uma linha em `profiles` (nome vindo de
+  `user_metadata.nome` ou do prefixo do e-mail) — feito na migration
+  `0001`, não depende do código da aplicação.
 
 ## Fases
 
@@ -107,8 +203,10 @@ usuário.
       clientes Supabase (browser/server/middleware), Drizzle configurado,
       Prettier, `.env.example`, README, estrutura de pastas, paleta e
       tipografia editorial nos tokens globais.
-- [ ] **Fase 2 — Modelo de dados**: schema Drizzle completo, migrations, RLS,
-      seed com casamento de exemplo.
+- [x] **Fase 2 — Modelo de dados**: schema Drizzle completo (18 tabelas + 12
+      enums), migrations (`0000` estrutura, `0001` funções/RLS/triggers/
+      storage), RLS habilitada em todas as tabelas, seed com casamento de
+      exemplo completo.
 - [ ] **Fase 3 — Auth e onboarding**: entrar/cadastro/recuperação de senha,
       middleware, wizard de 5 telas em `/inicio`, geração automática de
       categorias de orçamento e checklist de 12 meses.

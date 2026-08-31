@@ -54,9 +54,18 @@ npm run db:migrate
 
 ### 4. Popular com dados de exemplo (opcional)
 
+Preencha também `SUPABASE_SERVICE_ROLE_KEY` no `.env.local` (o script usa a
+Admin API do Supabase Auth só localmente, para criar a usuária de
+demonstração — nunca use essa chave em código da aplicação nem em produção).
+
 ```bash
 npm run db:seed
 ```
+
+Cria a usuária `mariana@exemplo.com` / `SenhaDemo123!` e um casamento de
+exemplo completo (checklist de 12 meses, orçamento, fornecedores,
+convidados, mesas, cronograma, playlist, presentes, enxoval, lua de mel e
+documentos).
 
 ### 5. Rodar o servidor de desenvolvimento
 

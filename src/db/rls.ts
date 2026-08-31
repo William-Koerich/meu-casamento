@@ -17,6 +17,17 @@ const db = drizzle(client, { schema })
 
 type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 
+// Contexto extra para os dois fluxos públicos por "token de posse" (sem
+// login): RSVP por código do convidado (`guests`) e visualização/aceite de
+// convite de equipe por token (`wedding_members`). As policies desses dois
+// casos comparam a coluna com `current_setting('request.guest_code', ...)` /
+// `current_setting('request.invite_token', ...)` — ver src/db/schema/guests.ts
+// e src/db/schema/wedding-members.ts.
+type RlsContext = {
+  guestCode?: string
+  inviteToken?: string
+}
+
 function decodeJwtPayload(token: string): Record<string, unknown> {
   const payload = token.split(".")[1]
   const base64 = payload.replace(/-/g, "+").replace(/_/g, "/")
@@ -36,19 +47,27 @@ export async function createDrizzleSupabaseClient() {
   const claims = session ? decodeJwtPayload(session.access_token) : {}
   const role = user ? "authenticated" : "anon"
 
-  async function rls<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
+  async function rls<T>(
+    callback: (tx: Transaction) => Promise<T>,
+    contexto: RlsContext = {}
+  ): Promise<T> {
     return db.transaction(async (tx) => {
       try {
         await tx.execute(sql`
           select set_config('request.jwt.claims', ${JSON.stringify(claims)}, true);
           select set_config('request.jwt.claim.sub', ${user?.id ?? ""}, true);
+          select set_config('request.guest_code', ${contexto.guestCode ?? ""}, true);
+          select set_config('request.invite_token', ${contexto.inviteToken ?? ""}, true);
           set local role ${sql.raw(role)};
         `)
         return await callback(tx)
       } finally {
-        await tx.execute(
-          sql`select set_config('request.jwt.claims', '', true); reset role;`
-        )
+        await tx.execute(sql`
+          select set_config('request.jwt.claims', '', true);
+          select set_config('request.guest_code', '', true);
+          select set_config('request.invite_token', '', true);
+          reset role;
+        `)
       }
     })
   }
