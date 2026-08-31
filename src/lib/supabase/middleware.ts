@@ -3,12 +3,11 @@ import { NextResponse, type NextRequest } from "next/server"
 
 import type { Database } from "@/lib/supabase/types"
 
-const PUBLIC_APP_PREFIXES = [
-  "/entrar",
-  "/cadastro",
-  "/recuperar-senha",
-  "/redefinir-senha",
-]
+// "/redefinir-senha" fica de fora de propósito: quem clica no link do e-mail
+// de recuperação chega em /auth/callback já autenticado (sessão de
+// recuperação) e é redirecionado para cá — se essa rota também mandasse
+// usuárias autenticadas para /app, ninguém conseguiria trocar a senha.
+const PUBLIC_APP_PREFIXES = ["/entrar", "/cadastro", "/recuperar-senha"]
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })

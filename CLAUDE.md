@@ -196,6 +196,24 @@ generate` tentaria criar essa tabela (ela só existe de fato porque o
   automaticamente uma linha em `profiles` (nome vindo de
   `user_metadata.nome` ou do prefixo do e-mail) — feito na migration
   `0001`, não depende do código da aplicação.
+- **Onboarding = uma linha em `weddings` desde o passo 1**: como
+  `slug` é `NOT NULL UNIQUE`, o rascunho já nasce com um slug definitivo
+  (nomes + sufixo aleatório de 4 caracteres, com retry em caso de colisão)
+  em vez de esperar o passo 5 — o slug pode ser trocado depois em
+  Configurações (Fase 7). "Onboarding concluído" é `weddings.estilo IS NOT
+NULL` (sem coluna extra): é o campo do último passo, e só depois dele
+  o app gera categorias de orçamento e checklist.
+- **Cada passo do wizard é uma rota própria** (`/inicio/nomes`,
+  `/inicio/data`, `/inicio/convidados`, `/inicio/orcamento`,
+  `/inicio/estilo`), cada uma um Server Component que busca o rascunho via
+  `getMinhaWedding()` e redireciona para o passo anterior faltante se a
+  pessoa tentar pular etapa — sem estado de wizard no cliente.
+- **Reset de senha**: o link do e-mail aponta para
+  `/auth/callback?next=/redefinir-senha`; o callback troca o código PKCE por
+  sessão e só então redireciona. Por isso `/redefinir-senha` é a única rota
+  de auth que o middleware **não** redireciona para `/app` quando já
+  autenticado (as outras sim, para não deixar quem já tem conta ver
+  `/entrar` de novo).
 
 ## Fases
 
@@ -207,9 +225,10 @@ generate` tentaria criar essa tabela (ela só existe de fato porque o
       enums), migrations (`0000` estrutura, `0001` funções/RLS/triggers/
       storage), RLS habilitada em todas as tabelas, seed com casamento de
       exemplo completo.
-- [ ] **Fase 3 — Auth e onboarding**: entrar/cadastro/recuperação de senha,
-      middleware, wizard de 5 telas em `/inicio`, geração automática de
-      categorias de orçamento e checklist de 12 meses.
+- [x] **Fase 3 — Auth e onboarding**: entrar/cadastro/recuperação de senha
+      (e-mail+senha e Google), callback OAuth/PKCE, wizard de 5 telas em
+      `/inicio` com rascunho salvo no banco a cada passo, geração automática
+      de categorias de orçamento e checklist de 68 tarefas ao concluir.
 - [ ] **Fase 4 — Layout e dashboard**: sidebar/bottom nav, header com
       contagem regressiva, dashboard com cards e skeletons.
 - [ ] **Fase 5 — Checklist, orçamento e fornecedores**.
