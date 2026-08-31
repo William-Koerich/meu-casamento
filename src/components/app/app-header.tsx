@@ -11,7 +11,7 @@ export function AppHeader({ nomeNoiva, nomeNoivo, dataCasamento }: AppHeaderProp
   const dias = diasParaCasamento(dataCasamento)
 
   return (
-    <header className="border-border bg-background sticky top-0 z-30 flex items-center justify-between border-b px-4 py-3 md:px-8">
+    <header className="border-border bg-background sticky top-0 z-30 flex items-center justify-between border-b px-4 py-3 md:px-8 print:hidden">
       <div>
         <p className="font-heading text-base md:text-lg">
           {nomeNoiva} & {nomeNoivo}

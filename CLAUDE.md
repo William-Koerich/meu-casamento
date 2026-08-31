@@ -247,6 +247,33 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
 - **"Criar item de orçamento" ao contratar fornecedor**: é uma etapa dentro
   do próprio formulário do fornecedor (checkbox + seleção de categoria),
   não um fluxo separado — evita um segundo modal para uma ação opcional.
+- **CSV genérico**: `src/lib/csv.ts` (parse + montagem + download) é
+  compartilhado entre exportar pagamentos (Fase 5) e importar convidados
+  (Fase 6) — parser próprio (aspas/vírgula/CRLF) em vez de dependência nova,
+  suficiente para o uso interno da ferramenta.
+- **Importação de convidados**: cabeçalho aceito é só
+  `nome,email,telefone,grupo,lado,acompanhantes` (em português, minúsculo);
+  linhas sem "nome" são ignoradas. `codigo_rsvp` é sempre gerado no servidor
+  (nunca vem do CSV), com o mesmo padrão de retry-em-colisão usado no slug
+  do casamento (Fase 3).
+- **Link de convite e mensagem de WhatsApp**: o link aponta para
+  `/c/[slug]/confirmar?codigo=...` (página pública da Fase 8, ainda não
+  existe — o botão já funciona, a rota fica de propósito 404 até lá, mesma
+  lógica dos itens de navegação da Fase 4). Copiar usa
+  `navigator.clipboard`, sem gerar nem enviar nada pelo servidor.
+- **Editor de mesas com dnd-kit**: convidado confirmado sem mesa é
+  arrastável (`guest:<id>`) para dentro de uma mesa (`table-drop:<id>`) ou
+  de volta para a lista lateral (`sem-mesa`) — a atribuição em si sempre
+  usa clique num "×" (não arrasto) para tirar alguém de uma mesa, mais
+  simples e sem ambiguidade de gesto. Mesas são arrastáveis pela própria
+  faixa de título (`table-drag:<id>`) para reposicionar; **redimensionar**
+  é feito editando a capacidade no formulário (a caixa da mesa cresce
+  proporcionalmente), não por alça de resize visual.
+- **Exportar mapa de mesas em PDF**: usa `window.print()` com classes
+  `print:hidden` na sidebar/bottom nav/header em vez de uma lib de PDF nova
+  — a pessoa usa "Salvar como PDF" do diálogo de impressão do navegador.
+  Mesmo padrão será reaproveitado no cronograma (Fase 7) e no exportar geral
+  (Fase 9).
 
 ## Fases
 
@@ -266,7 +293,7 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
       drawer (mobile), header com contagem regressiva compacta, dashboard
       com 6 cards clicáveis, `Suspense` + skeleton e empty states.
 - [x] **Fase 5 — Checklist, orçamento e fornecedores**.
-- [ ] **Fase 6 — Convidados, mesas e RSVP**.
+- [x] **Fase 6 — Convidados, mesas e RSVP**.
 - [ ] **Fase 7 — Módulos restantes** (cronograma, inspirações, playlist,
       presentes, enxoval, lua de mel, documentos, equipe, configurações,
       exportar).

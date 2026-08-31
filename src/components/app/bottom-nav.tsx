@@ -28,7 +28,7 @@ export function BottomNav() {
   )
 
   return (
-    <nav className="border-border bg-background fixed inset-x-0 bottom-0 z-40 flex border-t md:hidden">
+    <nav className="border-border bg-background fixed inset-x-0 bottom-0 z-40 flex border-t md:hidden print:hidden">
       {principais.map((item) => {
         const ativo = estaAtivo(pathname, item.href)
         return (

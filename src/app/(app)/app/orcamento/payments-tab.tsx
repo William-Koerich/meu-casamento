@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { PagamentoComItem } from "@/db/queries/budget"
+import { arrayParaCsv, baixarCsv } from "@/lib/csv"
 import { formatCurrency, formatDate, hojeISO } from "@/lib/format"
 
 import { PagamentoFormDialog } from "./pagamento-form-dialog"
@@ -56,18 +57,7 @@ function exportarCsv(pagamentos: PagamentoComItem[], hoje: string) {
     ROTULO_STATUS[statusDe(pagamento, hoje)],
     pagamento.formaPagamento ?? "",
   ])
-  const csv = [cabecalho, ...linhas]
-    .map((linha) =>
-      linha.map((valor) => `"${String(valor).replaceAll('"', '""')}"`).join(",")
-    )
-    .join("\n")
-  const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement("a")
-  link.href = url
-  link.download = "pagamentos.csv"
-  link.click()
-  URL.revokeObjectURL(url)
+  baixarCsv("pagamentos.csv", arrayParaCsv([cabecalho, ...linhas]))
 }
 
 export function PaymentsTab({ pagamentos }: { pagamentos: PagamentoComItem[] }) {
