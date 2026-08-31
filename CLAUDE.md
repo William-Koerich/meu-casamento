@@ -227,6 +227,26 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   agregações (checklist, orçamento, RSVP, alertas, próximas tarefas) dentro
   de uma única chamada a `rls()` — nenhuma delas itera por linha do lado do
   app, são somas/contagens agregadas no Postgres.
+- **Edição inline de valores (orçamento)**: `InlineCurrencyEditor`
+  (`src/components/app/inline-currency-editor.tsx`) é reaproveitado tanto no
+  valor previsto da categoria quanto no previsto/contratado de cada item —
+  clique para editar, `Enter`/botão salva via Server Action, sem modal.
+  Categoria fica em destaque (`text-destructive`) quando o contratado da
+  categoria ou de um item ultrapassa o previsto correspondente.
+- **CSV client-side**: exportar pagamentos gera o CSV no navegador (Blob +
+  link temporário) a partir dos dados já carregados — não existe rota de
+  export no servidor, evita ida e volta extra e mantém a lista de
+  pagamentos como única fonte de verdade.
+- **Contrato de fornecedor**: upload direto do navegador para o bucket
+  privado `documentos` (via client Supabase, respeitando as policies de
+  Storage da Fase 2), e o Server Action só grava a linha em `documents`
+  com o **caminho** do arquivo — como o bucket é privado, a visualização
+  gera uma signed URL sob demanda (`obterUrlAssinadaDocumento`) em vez de
+  guardar uma URL pública. `src/actions/documents.ts` já nasce genérico
+  (não amarrado a fornecedor) para a Fase 7 (`/app/documentos`) reaproveitar.
+- **"Criar item de orçamento" ao contratar fornecedor**: é uma etapa dentro
+  do próprio formulário do fornecedor (checkbox + seleção de categoria),
+  não um fluxo separado — evita um segundo modal para uma ação opcional.
 
 ## Fases
 
@@ -245,7 +265,7 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
 - [x] **Fase 4 — Layout e dashboard**: sidebar (desktop) e bottom nav com
       drawer (mobile), header com contagem regressiva compacta, dashboard
       com 6 cards clicáveis, `Suspense` + skeleton e empty states.
-- [ ] **Fase 5 — Checklist, orçamento e fornecedores**.
+- [x] **Fase 5 — Checklist, orçamento e fornecedores**.
 - [ ] **Fase 6 — Convidados, mesas e RSVP**.
 - [ ] **Fase 7 — Módulos restantes** (cronograma, inspirações, playlist,
       presentes, enxoval, lua de mel, documentos, equipe, configurações,

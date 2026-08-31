@@ -16,7 +16,8 @@ import { vendors } from "@/db/schema/vendors"
 import { weddingMembers } from "@/db/schema/wedding-members"
 import { weddings } from "@/db/schema/weddings"
 
-export const weddingsRelations = relations(weddings, ({ many }) => ({
+export const weddingsRelations = relations(weddings, ({ many, one }) => ({
+  owner: one(profiles, { fields: [weddings.ownerId], references: [profiles.id] }),
   members: many(weddingMembers),
   tasks: many(tasks),
   vendors: many(vendors),

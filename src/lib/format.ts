@@ -29,3 +29,8 @@ export function formatDistanciaAgora(data: Date | string): string {
   const parsed = typeof data === "string" ? new Date(data) : data
   return formatDistanceToNowStrict(parsed, { locale: ptBR, addSuffix: true })
 }
+
+/** Data de hoje em `yyyy-MM-dd`, para comparar com colunas `date` (string). */
+export function hojeISO(): string {
+  return format(new Date(), "yyyy-MM-dd")
+}
