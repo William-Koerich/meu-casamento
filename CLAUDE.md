@@ -535,6 +535,65 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       exportar).
 - [x] **Fase 8 — Página pública do casal** (`/c/[slug]`).
 - [x] **Fase 9 — Marketing e finalização**.
+- [x] **Fase 10 — Construtor de blocos da página pública** (`/app/site-publico`).
+
+## Fase 10 — Construtor de blocos da página pública
+
+Pedido explícito da dona: montar a página pública com liberdade — arrastar
+pra reordenar, ocultar o que não quiser, e incluir foto/galeria/texto onde
+fizer sentido. Decisão de escopo tomada com o usuário antes de implementar
+(pergunta feita porque muda a arquitetura, não é só "opção mais simples"):
+RSVP, presentes e local **continuam páginas próprias e funcionais** —
+`/c/[slug]/confirmar`, `/c/[slug]/presentes`, `/c/[slug]/local` (formulário,
+reserva de presente, RLS por token/código) não viram blocos de conteúdo
+solto; o que virou bloco arrastável é o **cartão de entrada** pra cada uma
+dessas páginas na home (antes uma grade fixa de 3, sempre nessa ordem,
+sempre visível — agora cada uma reordenável/ocultável individualmente),
+mais "Nossa história" (que já existia como seção fixa) e 3 tipos de
+conteúdo livre novos: foto, galeria de fotos e texto.
+
+- **Modelo de dados**: uma tabela nova, `page_blocks` (`tipo`, `ordem`,
+  `visivel`, `config` jsonb) — não um array JSONB dentro de `weddings`,
+  porque cada linha precisa de RLS própria (igual weddings, sem virar uma
+  segunda `is_wedding_member` por wedding). `config` é `null` pras 4 seções
+  embutidas (historia/nav_rsvp/nav_presentes/nav_local — usam dado que já
+  existe em `weddings`/rotas fixas) e só carrega algo pros 3 blocos de
+  conteúdo livre. Sem PII na tabela, então — diferente de
+  weddings/guests/gifts — não precisou do revoke+grant por coluna pra
+  `anon`, só uma policy de linha normal (`visivel = true` e
+  `weddings.publicado = true`), seguindo o mesmo padrão de
+  `gifts_publico_select`.
+- **Sem migration de backfill**: as 4 seções fixas nascem na primeira
+  visita da dona a `/app/site-publico` (`garantirBlocosPadrao`, idempotente
+  — só insere se a tabela estiver vazia pro casamento). A página pública
+  (`getBlocosPublicos`) cai de volta pro layout fixo antigo quando não há
+  bloco nenhum — importante porque casamentos já publicados antes dessa
+  fase (inclusive o de produção) continuam exatamente iguais até a dona
+  abrir o construtor pela primeira vez.
+- **Bucket de Storage novo, `blocos`** (migration `0006`): público, mesmo
+  padrão de `capas`/`presentes` (path `{wedding_id}/arquivo.ext`,
+  `can_edit_wedding` pra escrita).
+- **Foto de bloco reaproveita a UI de arrastar/zoom da foto de capa**
+  (Fase 9): mesma técnica de `object-position` + `transform: scale()` com
+  `transform-origin` no mesmo ponto, mas como componente separado
+  (`foto-block-dialog.tsx`) em vez de generalizar `CoverPhoto` — evita
+  arriscar regressão num componente já testado em produção por uma
+  generalização prematura.
+- **Reordenar usa o mesmo padrão de `reordenarMusicas`/cronograma**:
+  dnd-kit `SortableContext` + atualização otimista local + Server Action
+  que regrava `ordem` de todos os ids num loop (aceito como troca simples
+  de N+1, mesma decisão já registrada acima pra checklist/cronograma/
+  playlist).
+- **Dialogs de bloco seguem o padrão `trigger: ReactNode` já usado em todo
+  o app** (`SongFormDialog`, `GuestFormDialog`...) — o mesmo componente
+  serve pra criar (chamado no menu "Adicionar bloco") e editar (chamado a
+  partir da própria linha do bloco), diferenciado por receber ou não um
+  `bloco` existente.
+- **Verificado com RLS de verdade antes de considerar pronto**: script à
+  parte (fora do app, com rollback de transação) confirmou insert+select
+  como `authenticated` e select como `anon` na tabela nova, contra o banco
+  de produção — mesmo tipo de checagem que pegou o bug real de `rls()` na
+  Fase 2.
 
 ## Como rodar localmente
 

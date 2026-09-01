@@ -3,9 +3,11 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { getWeddingPublicaPorSlug } from "@/db/queries/public-site"
+import { getBlocosPublicos, getWeddingPublicaPorSlug } from "@/db/queries/public-site"
 import { diasParaCasamento, textoContagemCompacta } from "@/lib/countdown"
 import { formatDate } from "@/lib/format"
+
+import { PublicBlock } from "./public-block"
 
 export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug]">) {
   const { slug } = await params
@@ -13,6 +15,7 @@ export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug
   if (!wedding) notFound()
 
   const dias = diasParaCasamento(wedding.dataCasamento)
+  const blocos = await getBlocosPublicos(wedding.id)
 
   return (
     <div>
@@ -47,32 +50,46 @@ export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug
         )}
       </section>
 
-      {wedding.historiaCasal && (
-        <section className="mx-auto max-w-xl px-6 py-10">
-          <h2 className="font-heading mb-3 text-center text-2xl">Nossa história</h2>
-          <p className="text-muted-foreground text-center leading-relaxed whitespace-pre-line">
-            {wedding.historiaCasal}
-          </p>
-        </section>
+      {blocos.length > 0 ? (
+        blocos.map((bloco) => (
+          <PublicBlock
+            key={bloco.id}
+            bloco={bloco}
+            slug={slug}
+            historiaCasal={wedding.historiaCasal}
+          />
+        ))
+      ) : (
+        // Casamento ainda não visitou o construtor de página (/app/site-publico)
+        // — mantém o layout fixo de sempre em vez de mostrar uma página vazia.
+        <>
+          {wedding.historiaCasal && (
+            <section className="mx-auto max-w-xl px-6 py-10">
+              <h2 className="font-heading mb-3 text-center text-2xl">Nossa história</h2>
+              <p className="text-muted-foreground text-center leading-relaxed whitespace-pre-line">
+                {wedding.historiaCasal}
+              </p>
+            </section>
+          )}
+          <section className="mx-auto grid max-w-xl grid-cols-1 gap-4 px-6 py-10 sm:grid-cols-3">
+            <Link href={`/c/${slug}/confirmar`}>
+              <Card className="hover:bg-accent/30 h-full text-center transition-colors">
+                <CardContent>Confirmar presença</CardContent>
+              </Card>
+            </Link>
+            <Link href={`/c/${slug}/presentes`}>
+              <Card className="hover:bg-accent/30 h-full text-center transition-colors">
+                <CardContent>Lista de presentes</CardContent>
+              </Card>
+            </Link>
+            <Link href={`/c/${slug}/local`}>
+              <Card className="hover:bg-accent/30 h-full text-center transition-colors">
+                <CardContent>Local e horários</CardContent>
+              </Card>
+            </Link>
+          </section>
+        </>
       )}
-
-      <section className="mx-auto grid max-w-xl grid-cols-1 gap-4 px-6 py-10 sm:grid-cols-3">
-        <Link href={`/c/${slug}/confirmar`}>
-          <Card className="hover:bg-accent/30 h-full text-center transition-colors">
-            <CardContent>Confirmar presença</CardContent>
-          </Card>
-        </Link>
-        <Link href={`/c/${slug}/presentes`}>
-          <Card className="hover:bg-accent/30 h-full text-center transition-colors">
-            <CardContent>Lista de presentes</CardContent>
-          </Card>
-        </Link>
-        <Link href={`/c/${slug}/local`}>
-          <Card className="hover:bg-accent/30 h-full text-center transition-colors">
-            <CardContent>Local e horários</CardContent>
-          </Card>
-        </Link>
-      </section>
     </div>
   )
 }

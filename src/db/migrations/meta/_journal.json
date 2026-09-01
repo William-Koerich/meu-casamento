@@ -43,6 +43,13 @@
       "when": 1788283516011,
       "tag": "0005_simple_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788286370887,
+      "tag": "0006_neat_ben_grimm",
+      "breakpoints": true
     }
   ]
 }

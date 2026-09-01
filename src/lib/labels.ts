@@ -1,4 +1,5 @@
 import type {
+  blockTipoEnum,
   categoriaEnum,
   comodoEnxovalEnum,
   formatoMesaEnum,
@@ -25,6 +26,7 @@ type PrioridadeEnxoval = (typeof prioridadeEnxovalEnum.enumValues)[number]
 type TipoDocumento = (typeof tipoDocumentoEnum.enumValues)[number]
 type PapelMembro = (typeof papelMembroEnum.enumValues)[number]
 type PermissaoMembro = (typeof permissaoMembroEnum.enumValues)[number]
+type BlockTipo = (typeof blockTipoEnum.enumValues)[number]
 
 // Rótulos em português dos enums de domínio — únicos usados em toda a UI
 // (não duplicar essas listas em componentes).
@@ -130,3 +132,18 @@ export const PERMISSAO_LABELS: Record<PermissaoMembro, string> = {
   editor: "Editor(a)",
   leitor: "Leitor(a)",
 }
+
+export const BLOCK_TIPO_LABELS: Record<BlockTipo, string> = {
+  historia: "Nossa história",
+  nav_rsvp: "Confirmar presença",
+  nav_presentes: "Lista de presentes",
+  nav_local: "Local e horários",
+  foto: "Foto",
+  galeria: "Galeria de fotos",
+  texto: "Texto",
+}
+
+// Só esses 3 podem ser adicionados livremente pela dona — os outros 4 são
+// as seções fixas do site (semeadas uma vez por garantirBlocosPadrao),
+// reordenáveis/ocultáveis mas não duplicáveis.
+export const BLOCK_TIPOS_ADICIONAVEIS = ["foto", "galeria", "texto"] as const

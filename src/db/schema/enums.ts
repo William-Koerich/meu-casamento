@@ -101,3 +101,16 @@ export const tipoDocumentoEnum = pgEnum("tipo_documento", [
   "recibo",
   "outro",
 ])
+
+// "historia"/"nav_rsvp"/"nav_presentes"/"nav_local" são as seções já
+// existentes da página pública (agora reordenáveis/ocultáveis); "foto",
+// "galeria" e "texto" são conteúdo livre que a dona monta como quiser.
+export const blockTipoEnum = pgEnum("block_tipo", [
+  "historia",
+  "nav_rsvp",
+  "nav_presentes",
+  "nav_local",
+  "foto",
+  "galeria",
+  "texto",
+])

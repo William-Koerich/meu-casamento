@@ -7,6 +7,7 @@ import {
   Grid3x3,
   Home,
   Image,
+  LayoutTemplate,
   ListChecks,
   Music,
   Plane,
@@ -41,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
   { rotulo: "Lua de mel", href: "/app/lua-de-mel", icone: Plane },
   { rotulo: "Documentos", href: "/app/documentos", icone: FileText },
   { rotulo: "Equipe", href: "/app/equipe", icone: UserPlus },
+  { rotulo: "Página pública", href: "/app/site-publico", icone: LayoutTemplate },
   { rotulo: "Configurações", href: "/app/configuracoes", icone: Settings },
   { rotulo: "Exportar", href: "/app/exportar", icone: Download },
 ]
