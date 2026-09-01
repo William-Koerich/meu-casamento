@@ -47,6 +47,7 @@ export function CoverPhoto({
     y: fotoCapaPosicaoY,
   })
   const [zoom, setZoom] = useState(fotoCapaZoom)
+  const [editando, setEditando] = useState(false)
   const [arrastando, setArrastando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
@@ -79,6 +80,7 @@ export function CoverPhoto({
       setPreview(url)
       setPosicao({ x: 50, y: 50 })
       setZoom(100)
+      setEditando(true)
     })
   }
 
@@ -122,11 +124,28 @@ export function CoverPhoto({
     salvarEnquadramento(posicao.x, posicao.y, valores[0])
   }
 
+  const estiloFoto = {
+    objectPosition: `${posicao.x}% ${posicao.y}%`,
+    transform: `scale(${zoom / 100})`,
+    transformOrigin: `${posicao.x}% ${posicao.y}%`,
+  }
+
   return (
     <Card>
       <CardContent className="space-y-3">
         <h2 className="font-heading text-lg">Foto de capa</h2>
-        {preview && (
+        {preview && !editando && (
+          <Image
+            src={preview}
+            alt="Foto de capa"
+            width={600}
+            height={300}
+            className="h-40 w-full rounded object-cover"
+            style={estiloFoto}
+            unoptimized
+          />
+        )}
+        {preview && editando && (
           <>
             <div
               ref={containerRef}
@@ -145,11 +164,7 @@ export function CoverPhoto({
                 width={600}
                 height={300}
                 className="h-full w-full object-cover"
-                style={{
-                  objectPosition: `${posicao.x}% ${posicao.y}%`,
-                  transform: `scale(${zoom / 100})`,
-                  transformOrigin: `${posicao.x}% ${posicao.y}%`,
-                }}
+                style={estiloFoto}
                 unoptimized
                 draggable={false}
               />
@@ -180,14 +195,25 @@ export function CoverPhoto({
           onChange={selecionar}
           className="hidden"
         />
-        <Button
-          type="button"
-          variant="outline"
-          disabled={pendente}
-          onClick={() => inputRef.current?.click()}
-        >
-          {pendente ? "Enviando..." : "Trocar foto"}
-        </Button>
+        <div className="flex gap-2">
+          {preview && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditando((valor) => !valor)}
+            >
+              {editando ? "Concluir edição" : "Editar posição"}
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={pendente}
+            onClick={() => inputRef.current?.click()}
+          >
+            {pendente ? "Enviando..." : "Trocar foto"}
+          </Button>
+        </div>
         {erro && <p className="text-destructive text-sm">{erro}</p>}
       </CardContent>
     </Card>

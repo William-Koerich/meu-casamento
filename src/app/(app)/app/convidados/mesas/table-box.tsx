@@ -29,7 +29,7 @@ export function TableBox({
   mesa: MesaComConvidados
   posicao: { x: number; y: number }
 }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
   const ocupacao = mesa.guests.length
   const estourou = ocupacao > mesa.capacidade
 
@@ -97,13 +97,14 @@ export function TableBox({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
+                  disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
                       await excluirMesa(mesa.id)
                     })
                   }
                 >
-                  Excluir
+                  {pendente ? "Excluindo..." : "Excluir"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -129,12 +130,13 @@ export function TableBox({
               <button
                 type="button"
                 aria-label={`Tirar ${guest.nome} da mesa`}
+                disabled={pendente}
                 onClick={() =>
                   iniciarTransicao(async () => {
                     await atribuirConvidadoMesa(guest.id, null)
                   })
                 }
-                className="text-muted-foreground hover:text-destructive shrink-0"
+                className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"
               >
                 <X className="size-3" />
               </button>

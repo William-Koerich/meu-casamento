@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useTransition } from "react"
+import { useMemo, useState, useTransition } from "react"
 
 import { alternarComprado, excluirItemEnxoval } from "@/actions/trousseau"
 import { Badge } from "@/components/ui/badge"
@@ -86,25 +86,25 @@ export function TrousseauView({ itens }: { itens: ItemEnxoval[] }) {
 }
 
 function TrousseauRow({ item }: { item: ItemEnxoval }) {
-  const [, iniciarTransicao] = useTransition()
+  const [comprado, setComprado] = useState(item.comprado)
+  const [pendente, iniciarTransicao] = useTransition()
+
+  function alternarCheckbox(valor: boolean) {
+    setComprado(valor)
+    iniciarTransicao(async () => {
+      const resultado = await alternarComprado(item.id, valor)
+      if (resultado?.erro) setComprado(!valor)
+    })
+  }
 
   return (
     <div className="border-border flex items-center gap-3 border-b py-2 text-sm last:border-b-0">
       <Checkbox
-        checked={item.comprado}
-        onCheckedChange={(valor) =>
-          iniciarTransicao(async () => {
-            await alternarComprado(item.id, Boolean(valor))
-          })
-        }
+        checked={comprado}
+        onCheckedChange={(valor) => alternarCheckbox(Boolean(valor))}
       />
       <div className="min-w-0 flex-1">
-        <p
-          className={cn(
-            "truncate",
-            item.comprado && "text-muted-foreground line-through"
-          )}
-        >
+        <p className={cn("truncate", comprado && "text-muted-foreground line-through")}>
           {item.nome} {item.quantidade > 1 ? `(${item.quantidade})` : ""}
         </p>
         <div className="flex items-center gap-2">
@@ -129,14 +129,15 @@ function TrousseauRow({ item }: { item: ItemEnxoval }) {
       />
       <button
         type="button"
+        disabled={pendente}
         onClick={() =>
           iniciarTransicao(async () => {
             await excluirItemEnxoval(item.id)
           })
         }
-        className="text-destructive shrink-0 text-xs underline"
+        className="text-destructive shrink-0 text-xs underline disabled:opacity-50"
       >
-        Excluir
+        {pendente ? "Excluindo..." : "Excluir"}
       </button>
     </div>
   )

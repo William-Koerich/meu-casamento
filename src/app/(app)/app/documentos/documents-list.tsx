@@ -45,7 +45,7 @@ export function DocumentsList({ documentos }: { documentos: DocumentoComForneced
 }
 
 function DocumentRow({ documento }: { documento: DocumentoComFornecedor }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   async function abrir() {
     const resultado = await obterUrlAssinadaDocumento(documento.arquivoUrl)
@@ -56,11 +56,12 @@ function DocumentRow({ documento }: { documento: DocumentoComFornecedor }) {
     <div className="border-border flex items-center justify-between gap-3 border-b py-2 text-sm last:border-b-0">
       <button
         type="button"
+        disabled={pendente}
         onClick={() => iniciarTransicao(() => abrir())}
-        className="flex min-w-0 flex-1 items-center gap-2 text-left underline"
+        className="flex min-w-0 flex-1 items-center gap-2 text-left underline disabled:opacity-50"
       >
         <FileText className="text-muted-foreground size-4 shrink-0" />
-        <span className="truncate">{documento.nome}</span>
+        <span className="truncate">{pendente ? "Abrindo..." : documento.nome}</span>
       </button>
       {documento.vendor && (
         <span className="text-muted-foreground shrink-0 text-xs">
@@ -70,12 +71,13 @@ function DocumentRow({ documento }: { documento: DocumentoComFornecedor }) {
       <button
         type="button"
         aria-label={`Excluir ${documento.nome}`}
+        disabled={pendente}
         onClick={() =>
           iniciarTransicao(async () => {
             await excluirDocumento(documento.id)
           })
         }
-        className="text-muted-foreground hover:text-destructive shrink-0"
+        className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"
       >
         <Trash2 className="size-4" />
       </button>

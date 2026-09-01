@@ -30,7 +30,7 @@ export function EventRow({
   evento: Evento
   ehPrimeiro: boolean
 }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: evento.id,
@@ -97,13 +97,14 @@ export function EventRow({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
+              disabled={pendente}
               onClick={() =>
                 iniciarTransicao(async () => {
                   await excluirEvento(evento.id)
                 })
               }
             >
-              Excluir
+              {pendente ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

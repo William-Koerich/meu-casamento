@@ -18,12 +18,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { getUrlBase } from "@/lib/site"
 import { slugSchema, type SlugInput } from "@/lib/validators/settings"
 
-// NEXT_PUBLIC_* é embutido no bundle do cliente em build time — mostra o
-// domínio real do deploy (Vercel) em vez de um exemplo fixo que não bate
-// com o link que a convidada de fato recebe.
-const URL_BASE = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+const URL_BASE = getUrlBase()
 const HOST_EXIBIDO = URL_BASE.replace(/^https?:\/\//, "")
 
 export function SlugAndPublish({

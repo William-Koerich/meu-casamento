@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { SongFormDialog } from "./song-form-dialog"
 
 export function SongRow({ musica }: { musica: Song }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: musica.id,
@@ -66,12 +66,13 @@ export function SongRow({ musica }: { musica: Song }) {
       <button
         type="button"
         aria-label={`Excluir ${musica.titulo}`}
+        disabled={pendente}
         onClick={() =>
           iniciarTransicao(async () => {
             await excluirMusica(musica.id)
           })
         }
-        className="text-muted-foreground hover:text-destructive shrink-0"
+        className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"
       >
         <Trash2 className="size-4" />
       </button>

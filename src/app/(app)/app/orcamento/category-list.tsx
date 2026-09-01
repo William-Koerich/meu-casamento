@@ -162,7 +162,7 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
 }
 
 function DeleteItemButton({ id, descricao }: { id: string; descricao: string }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   return (
     <AlertDialog>
@@ -186,13 +186,14 @@ function DeleteItemButton({ id, descricao }: { id: string; descricao: string }) 
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
+            disabled={pendente}
             onClick={() =>
               iniciarTransicao(async () => {
                 await excluirItemOrcamento(id)
               })
             }
           >
-            Excluir
+            {pendente ? "Excluindo..." : "Excluir"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

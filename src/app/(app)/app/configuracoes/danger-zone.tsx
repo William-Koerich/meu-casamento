@@ -63,7 +63,7 @@ export function DangerZone({ souDona }: { souDona: boolean }) {
                   })
                 }}
               >
-                Excluir permanentemente
+                {pendente ? "Excluindo..." : "Excluir permanentemente"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

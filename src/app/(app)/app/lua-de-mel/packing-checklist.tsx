@@ -13,13 +13,24 @@ import { cn } from "@/lib/utils"
 
 export function PackingChecklist({ checklist }: { checklist: ChecklistMalaItem[] }) {
   const [novoItem, setNovoItem] = useState("")
-  const [, iniciarTransicao] = useTransition()
+  const [marcadosLocal, setMarcadosLocal] = useState<Record<number, boolean>>({})
+  const [pendente, iniciarTransicao] = useTransition()
 
   function adicionar() {
     if (!novoItem.trim()) return
     iniciarTransicao(async () => {
       await adicionarItemMala(novoItem)
       setNovoItem("")
+    })
+  }
+
+  function alternarItem(indice: number, valor: boolean) {
+    setMarcadosLocal((atual) => ({ ...atual, [indice]: valor }))
+    iniciarTransicao(async () => {
+      const resultado = await alternarItemMala(indice, valor)
+      if (resultado?.erro) {
+        setMarcadosLocal((atual) => ({ ...atual, [indice]: !valor }))
+      }
     })
   }
 
@@ -38,15 +49,14 @@ export function PackingChecklist({ checklist }: { checklist: ChecklistMalaItem[]
               >
                 <label className="flex items-center gap-2">
                   <Checkbox
-                    checked={item.marcado}
-                    onCheckedChange={(valor) =>
-                      iniciarTransicao(async () => {
-                        await alternarItemMala(indice, Boolean(valor))
-                      })
-                    }
+                    checked={marcadosLocal[indice] ?? item.marcado}
+                    onCheckedChange={(valor) => alternarItem(indice, Boolean(valor))}
                   />
                   <span
-                    className={cn(item.marcado && "text-muted-foreground line-through")}
+                    className={cn(
+                      (marcadosLocal[indice] ?? item.marcado) &&
+                        "text-muted-foreground line-through"
+                    )}
                   >
                     {item.item}
                   </span>
@@ -54,12 +64,13 @@ export function PackingChecklist({ checklist }: { checklist: ChecklistMalaItem[]
                 <button
                   type="button"
                   aria-label={`Remover ${item.item}`}
+                  disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
                       await removerItemMala(indice)
                     })
                   }
-                  className="text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive disabled:opacity-50"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -74,8 +85,14 @@ export function PackingChecklist({ checklist }: { checklist: ChecklistMalaItem[]
             onChange={(evento) => setNovoItem(evento.target.value)}
             onKeyDown={(evento) => evento.key === "Enter" && adicionar()}
           />
-          <Button type="button" variant="outline" size="sm" onClick={adicionar}>
-            Adicionar
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pendente}
+            onClick={adicionar}
+          >
+            {pendente ? "Adicionando..." : "Adicionar"}
           </Button>
         </div>
       </CardContent>

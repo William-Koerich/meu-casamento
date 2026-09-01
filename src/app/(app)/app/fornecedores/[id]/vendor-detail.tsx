@@ -37,7 +37,7 @@ export function VendorDetail({
   categoriasOrcamento: Pick<CategoriaComItens, "id" | "nome">[]
 }) {
   const router = useRouter()
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   const pagamentos = vendor.budgetItems.flatMap((item) =>
     item.payments.map((pagamento) => ({ ...pagamento, itemDescricao: item.descricao }))
@@ -76,6 +76,7 @@ export function VendorDetail({
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction
+                  disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
                       await excluirFornecedor(vendor.id)
@@ -83,7 +84,7 @@ export function VendorDetail({
                     })
                   }
                 >
-                  Excluir
+                  {pendente ? "Excluindo..." : "Excluir"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

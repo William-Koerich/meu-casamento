@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function UserMenu() {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   return (
     <DropdownMenu>
@@ -24,9 +24,12 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => iniciarTransicao(() => sair())}>
+        <DropdownMenuItem
+          disabled={pendente}
+          onClick={() => iniciarTransicao(() => sair())}
+        >
           <LogOut className="size-4" />
-          Sair
+          {pendente ? "Saindo..." : "Sair"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

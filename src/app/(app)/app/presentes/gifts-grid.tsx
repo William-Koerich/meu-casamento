@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import Image from "next/image"
 
 import { alternarRecebido, excluirPresente } from "@/actions/gifts"
@@ -31,7 +31,16 @@ export function GiftsGrid({ gifts, weddingId }: { gifts: Gift[]; weddingId: stri
 }
 
 function GiftCard({ gift, weddingId }: { gift: Gift; weddingId: string }) {
-  const [, iniciarTransicao] = useTransition()
+  const [recebido, setRecebido] = useState(gift.recebido)
+  const [pendente, iniciarTransicao] = useTransition()
+
+  function alternarCheckbox(valor: boolean) {
+    setRecebido(valor)
+    iniciarTransicao(async () => {
+      const resultado = await alternarRecebido(gift.id, valor)
+      if (resultado?.erro) setRecebido(!valor)
+    })
+  }
 
   return (
     <Card>
@@ -48,7 +57,7 @@ function GiftCard({ gift, weddingId }: { gift: Gift; weddingId: string }) {
       <CardContent className="space-y-2">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-medium">{gift.nome}</p>
-          {gift.recebido && <Badge variant="secondary">Recebido</Badge>}
+          {recebido && <Badge variant="secondary">Recebido</Badge>}
         </div>
         {gift.preco && (
           <p className="text-muted-foreground text-sm">{formatCurrency(gift.preco)}</p>
@@ -62,12 +71,8 @@ function GiftCard({ gift, weddingId }: { gift: Gift; weddingId: string }) {
         <div className="flex items-center justify-between pt-1">
           <label className="flex items-center gap-2 text-xs">
             <Checkbox
-              checked={gift.recebido}
-              onCheckedChange={(valor) =>
-                iniciarTransicao(async () => {
-                  await alternarRecebido(gift.id, Boolean(valor))
-                })
-              }
+              checked={recebido}
+              onCheckedChange={(valor) => alternarCheckbox(Boolean(valor))}
             />
             Recebido
           </label>
@@ -83,14 +88,15 @@ function GiftCard({ gift, weddingId }: { gift: Gift; weddingId: string }) {
             />
             <button
               type="button"
+              disabled={pendente}
               onClick={() =>
                 iniciarTransicao(async () => {
                   await excluirPresente(gift.id)
                 })
               }
-              className="text-destructive underline"
+              className="text-destructive underline disabled:opacity-50"
             >
-              Excluir
+              {pendente ? "Excluindo..." : "Excluir"}
             </button>
           </div>
         </div>

@@ -23,12 +23,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { GuestComMesa } from "@/db/queries/guests"
+import { getUrlBase } from "@/lib/site"
 
 import { GuestFormDialog } from "./guest-form-dialog"
 
 function linkConvite(codigoRsvp: string, slug: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-  return `${base}/c/${slug}/confirmar?codigo=${codigoRsvp}`
+  return `${getUrlBase()}/c/${slug}/confirmar?codigo=${codigoRsvp}`
 }
 
 function mensagemWhatsapp(nome: string, link: string) {
@@ -36,7 +36,7 @@ function mensagemWhatsapp(nome: string, link: string) {
 }
 
 export function GuestRowActions({ guest, slug }: { guest: GuestComMesa; slug: string }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
   const [copiado, setCopiado] = useState<"link" | "mensagem" | null>(null)
 
   const link = linkConvite(guest.codigoRsvp, slug)
@@ -94,13 +94,14 @@ export function GuestRowActions({ guest, slug }: { guest: GuestComMesa; slug: st
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
+                disabled={pendente}
                 onClick={() =>
                   iniciarTransicao(async () => {
                     await excluirConvidado(guest.id)
                   })
                 }
               >
-                Excluir
+                {pendente ? "Excluindo..." : "Excluir"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next"
 
 import { getSlugsPublicados } from "@/db/queries/sitemap"
+import { getUrlBase } from "@/lib/site"
 
-const URL_BASE = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+const URL_BASE = getUrlBase()
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paginasEstaticas: MetadataRoute.Sitemap = [

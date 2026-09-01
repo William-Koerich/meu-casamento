@@ -113,21 +113,22 @@ export function Moodboard({ itens }: { itens: ItemComUrl[] }) {
 }
 
 function ExcluirBotao({ id, aoExcluir }: { id: string; aoExcluir: () => void }) {
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   return (
     <button
       type="button"
+      disabled={pendente}
       onClick={() =>
         iniciarTransicao(async () => {
           await excluirInspiracao(id)
           aoExcluir()
         })
       }
-      className="text-destructive flex items-center gap-1 text-sm"
+      className="text-destructive flex items-center gap-1 text-sm disabled:opacity-50"
     >
       <Trash2 className="size-4" />
-      Excluir
+      {pendente ? "Excluindo..." : "Excluir"}
     </button>
   )
 }

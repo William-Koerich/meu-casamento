@@ -473,6 +473,40 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
   tarefa ou nome de convidado compridos empurravam o card pra fora da tela.
   Só `next-tasks-card.tsx` e `table-box.tsx` ficaram sem o `min-w-0` que o
   resto do app já usa nesse padrão.
+- **`NEXT_PUBLIC_APP_URL` sem "https://" também derrubava o build**: mesma
+  classe do bug de string vazia acima, causa diferente — o valor colado na
+  Vercel era `organiza-meu-casamento.vercel.app/` (sem protocolo), e
+  `new URL(...)` exige uma URL absoluta. Em vez de só trocar `??` por `||`
+  de novo, centralizado em `getUrlBase()` (`src/lib/site.ts`), usado pelos 6
+  lugares que liam essa variável: normaliza string vazia (`||`), adiciona
+  `https://` quando falta protocolo, e remove `/` sobrando no final (evita
+  `//` ao concatenar rota). Reproduzido localmente com
+  `NEXT_PUBLIC_APP_URL="organiza-meu-casamento.vercel.app/" npm run build`
+  antes e depois da correção.
+- **Loading state em botões que disparavam `useTransition` sem capturar o
+  `pendente`**: vários (`const [, iniciarTransicao] = useTransition()`)
+  descartavam o próprio booleano que indicaria "ação em andamento" — sem
+  ele, não tem como desabilitar o botão nem trocar o texto, e a ação
+  parecia não ter sido clicada em conexões mais lentas. Corrigido em todo
+  botão de exclusão (`AlertDialogAction` e ícones de lixeira — fornecedor,
+  cronograma, convidado, item de orçamento, mesa, equipe, presente, música,
+  inspiração, enxoval, lua de mel), nos botões "abrir documento" (busca
+  signed URL antes de abrir a aba) e em "Sair". De brinde, dois checkboxes
+  (`gifts-grid.tsx`, `packing-checklist.tsx`) estavam sem estado local
+  otimista — o `checked` vinha direto da prop do servidor, então o clique
+  só refletia visualmente depois da revalidação completa; agora seguem o
+  mesmo padrão já usado em `task-row.tsx`/`payments-tab.tsx` (estado local
+  atualizado na hora, revertido só se a Server Action retornar erro).
+- **Foto de capa: edição atrás de um botão "Editar posição"**: antes a área
+  de arrastar/zoom ficava sempre visível; agora só aparece depois de clicar
+  em "Editar posição" (some de novo em "Concluir edição"), e abre sozinha
+  ao enviar uma foto nova — menos poluição visual quando não se está
+  ajustando o enquadramento.
+- **Item ativo mais destacado na bottom nav (mobile)**: `text-primary` vs
+  `text-muted-foreground` sozinho era sutil demais pra notar em qual aba se
+  está (as duas cores são tons médios parecidos em luminosidade). Adicionado
+  um fundo `bg-accent` em pílula atrás do ícone ativo, igual ao tratamento
+  que os itens do drawer "Mais" já tinham.
 - **Link da página pública em Configurações**: o campo de endereço mostrava
   um domínio de exemplo fixo ("meucasamento.com") em vez do domínio real do
   deploy. Trocado para usar `NEXT_PUBLIC_APP_URL` (a mesma variável já usada

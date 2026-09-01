@@ -37,10 +37,17 @@ export function BottomNav() {
             href={item.href}
             className={cn(
               "flex flex-1 flex-col items-center gap-1 py-2 text-[11px]",
-              ativo ? "text-primary" : "text-muted-foreground"
+              ativo ? "text-primary font-medium" : "text-muted-foreground"
             )}
           >
-            <item.icone className="size-5" />
+            <span
+              className={cn(
+                "flex size-8 items-center justify-center rounded-full",
+                ativo && "bg-accent"
+              )}
+            >
+              <item.icone className="size-5" />
+            </span>
             {item.rotulo}
           </Link>
         )

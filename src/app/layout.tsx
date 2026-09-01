@@ -3,7 +3,7 @@ import { Fraunces, Inter } from "next/font/google"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
-import { DESCRICAO_PRODUTO, NOME_PRODUTO } from "@/lib/site"
+import { DESCRICAO_PRODUTO, getUrlBase, NOME_PRODUTO } from "@/lib/site"
 
 import "./globals.css"
 
@@ -19,13 +19,8 @@ const fontSerif = Fraunces({
   style: ["normal", "italic"],
 })
 
-// "||", não "??": uma NEXT_PUBLIC_APP_URL configurada como string vazia na
-// Vercel (em vez de ausente) faz `new URL("")` estourar "Invalid URL" — ??
-// só cai no fallback quando a variável é undefined/null, não quando é "".
-const urlBase = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-
 export const metadata: Metadata = {
-  metadataBase: new URL(urlBase),
+  metadataBase: new URL(getUrlBase()),
   title: { default: NOME_PRODUTO, template: `%s — ${NOME_PRODUTO}` },
   description: DESCRICAO_PRODUTO,
   openGraph: {

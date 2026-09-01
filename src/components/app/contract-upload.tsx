@@ -17,7 +17,7 @@ export function ContractUpload({ weddingId, vendorId, documentos }: ContractUplo
   const inputRef = useRef<HTMLInputElement>(null)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   async function enviarArquivo(evento: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = evento.target.files?.[0]
@@ -61,12 +61,13 @@ export function ContractUpload({ weddingId, vendorId, documentos }: ContractUplo
             <li key={documento.id}>
               <button
                 type="button"
+                disabled={pendente}
                 onClick={() =>
                   iniciarTransicao(() => abrirDocumento(documento.arquivoUrl))
                 }
-                className="text-sm underline"
+                className="text-sm underline disabled:opacity-50"
               >
-                {documento.nome}
+                {pendente ? "Abrindo..." : documento.nome}
               </button>
             </li>
           ))}

@@ -29,7 +29,7 @@ import { PAPEL_MEMBRO_LABELS, PERMISSAO_LABELS } from "@/lib/labels"
 
 export function MemberRow({ membro }: { membro: MembroEquipe }) {
   const [permissao, setPermissao] = useState(membro.permissao)
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   function alterarPermissao(valor: string) {
     const anterior = permissao
@@ -85,13 +85,14 @@ export function MemberRow({ membro }: { membro: MembroEquipe }) {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
+                disabled={pendente}
                 onClick={() =>
                   iniciarTransicao(async () => {
                     await revogarMembro(membro.id)
                   })
                 }
               >
-                Revogar
+                {pendente ? "Revogando..." : "Revogar"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

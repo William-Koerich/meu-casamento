@@ -13,7 +13,7 @@ import type { RoteiroDia } from "@/db/schema"
 export function RoteiroList({ roteiro }: { roteiro: RoteiroDia[] }) {
   const [titulo, setTitulo] = useState("")
   const [atividades, setAtividades] = useState("")
-  const [, iniciarTransicao] = useTransition()
+  const [pendente, iniciarTransicao] = useTransition()
 
   function adicionar() {
     if (!titulo.trim()) return
@@ -48,12 +48,13 @@ export function RoteiroList({ roteiro }: { roteiro: RoteiroDia[] }) {
                 <button
                   type="button"
                   aria-label={`Remover dia ${dia.dia}`}
+                  disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
                       await removerDiaRoteiro(indice)
                     })
                   }
-                  className="text-muted-foreground hover:text-destructive shrink-0"
+                  className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -73,8 +74,14 @@ export function RoteiroList({ roteiro }: { roteiro: RoteiroDia[] }) {
             value={atividades}
             onChange={(evento) => setAtividades(evento.target.value)}
           />
-          <Button type="button" variant="outline" size="sm" onClick={adicionar}>
-            Adicionar dia
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={pendente}
+            onClick={adicionar}
+          >
+            {pendente ? "Adicionando..." : "Adicionar dia"}
           </Button>
         </div>
       </CardContent>
