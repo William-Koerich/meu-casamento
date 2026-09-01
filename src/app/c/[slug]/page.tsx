@@ -24,6 +24,9 @@ export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug
             fill
             unoptimized
             className="absolute inset-0 -z-10 object-cover opacity-20"
+            style={{
+              objectPosition: `${wedding.fotoCapaPosicaoX}% ${wedding.fotoCapaPosicaoY}%`,
+            }}
           />
         )}
         <p className="text-muted-foreground text-sm tracking-widest uppercase">

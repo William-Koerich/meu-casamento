@@ -23,7 +23,12 @@ export default async function ConfiguracoesPage() {
     <div className="space-y-6">
       <h1 className="font-heading text-2xl">Configurações</h1>
       <SettingsForm wedding={wedding} />
-      <CoverPhoto weddingId={wedding.id} fotoCapaUrl={wedding.fotoCapaUrl} />
+      <CoverPhoto
+        weddingId={wedding.id}
+        fotoCapaUrl={wedding.fotoCapaUrl}
+        fotoCapaPosicaoX={wedding.fotoCapaPosicaoX}
+        fotoCapaPosicaoY={wedding.fotoCapaPosicaoY}
+      />
       <SlugAndPublish slug={wedding.slug} publicado={wedding.publicado} />
       <DangerZone souDona={user?.id === wedding.ownerId} />
     </div>

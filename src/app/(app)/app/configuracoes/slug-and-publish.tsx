@@ -20,6 +20,12 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { slugSchema, type SlugInput } from "@/lib/validators/settings"
 
+// NEXT_PUBLIC_* é embutido no bundle do cliente em build time — mostra o
+// domínio real do deploy (Vercel) em vez de um exemplo fixo que não bate
+// com o link que a convidada de fato recebe.
+const URL_BASE = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+const HOST_EXIBIDO = URL_BASE.replace(/^https?:\/\//, "")
+
 export function SlugAndPublish({
   slug,
   publicado,
@@ -30,6 +36,14 @@ export function SlugAndPublish({
   const [erro, setErro] = useState<string | null>(null)
   const [publicadoAtual, setPublicadoAtual] = useState(publicado)
   const [pendente, iniciarTransicao] = useTransition()
+  const [copiado, setCopiado] = useState(false)
+  const linkPublico = `${URL_BASE}/c/${slug}`
+
+  async function copiarLink() {
+    await navigator.clipboard.writeText(linkPublico)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
 
   const form = useForm<SlugInput>({
     resolver: zodResolver(slugSchema),
@@ -63,7 +77,7 @@ export function SlugAndPublish({
               name="slug"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel>Endereço (meucasamento.com/c/...)</FormLabel>
+                  <FormLabel>Endereço ({HOST_EXIBIDO}/c/...)</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -77,6 +91,19 @@ export function SlugAndPublish({
           </form>
         </Form>
         {erro && <p className="text-destructive text-sm">{erro}</p>}
+        <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+          <a
+            href={linkPublico}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm underline"
+          >
+            {linkPublico}
+          </a>
+          <Button type="button" variant="ghost" size="sm" onClick={copiarLink}>
+            {copiado ? "Link copiado!" : "Copiar link"}
+          </Button>
+        </div>
         <div className="flex items-center gap-2 border-t pt-4">
           <Switch checked={publicadoAtual} onCheckedChange={alternar} id="publicado" />
           <Label htmlFor="publicado">

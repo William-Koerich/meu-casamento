@@ -404,6 +404,72 @@ durações anteriores`, recalculado e regravado em todas as linhas
     playlist por drag, importar convidados por CSV, retry de código único),
     aceitas como troca simples por não afetarem carregamento de página.
 
+## Pós-lançamento (correções após conectar em produção/Vercel)
+
+- **Bugs de infraestrutura só visíveis em produção real**: depois do app no
+  ar na Vercel com o Supabase de verdade, apareceram 4 problemas que nenhuma
+  ferramenta estática (build/typecheck/lint) pega, porque só se manifestam
+  com serviços externos de verdade:
+  - `NEXT_PUBLIC_APP_URL` configurada na Vercel como string vazia (em vez de
+    ausente) quebrava o build inteiro: `layout.tsx` fazia
+    `process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"` para montar
+    `new URL(...)` no `metadataBase` — `??` só cai no fallback quando a
+    variável é `undefined`/`null`, não quando é `""`, e `new URL("")` estoura
+    `Invalid URL`. Trocado por `||` ali e nos outros 4 lugares que liam essa
+    mesma variável do mesmo jeito.
+  - Os 3 clients Supabase (`browser`/`server`/`middleware`) liam
+    `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` com `!`
+    (non-null assertion) — faltando a variável na Vercel (nome errado ou
+    ambiente errado), o middleware (roda em quase toda rota) derrubava o
+    site inteiro com um erro genérico do `@supabase/ssr`. Centralizado em
+    `src/lib/supabase/env.ts` (`supabaseEnv()`), que valida as duas de uma
+    vez e lança um erro nomeando exatamente o que falta.
+  - `DATABASE_URL` de conexão **direta** do Supabase
+    (`db.<projeto>.supabase.co`) só resolve por IPv6 — a rede das funções
+    da Vercel não tem rota IPv6 de saída, então dava
+    `getaddrinfo ENOTFOUND` em toda página autenticada (que passa por
+    `rls()`). Resolvido usando o **connection pooler** (Supavisor) do
+    Supabase — host `aws-0-<região>.pooler.supabase.com`, compatível com
+    IPv4 — só na `DATABASE_URL` da Vercel (localmente a conexão direta
+    funciona normalmente, sem precisar trocar). Compatível de graça com o
+    `{ prepare: false }` que `src/db/rls.ts` já usava.
+  - Moral, na mesma linha do bug de `rls()` documentado acima: infraestrutura
+    real (variáveis de ambiente, DNS, protocolo de rede) só se testa
+    conectando de verdade — nenhuma dessas quatro falhas aparece rodando só
+    localmente ou só com build/typecheck/lint.
+- **Foto de capa com posição ajustável**: `weddings.fotoCapaPosicaoX/Y`
+  (percentual 0-100, migration `0004`) guarda o `object-position` da foto de
+  capa. `CoverPhoto` (Configurações) deixa arrastar a prévia da foto
+  (Pointer Events, funciona com mouse e touch) para reenquadrar sem precisar
+  cortar/reenviar a imagem — salva ao soltar, via
+  `atualizarPosicaoFotoCapa`. A página pública (`/c/[slug]`) aplica o mesmo
+  `object-position` na foto de capa de fundo. Como são colunas novas em
+  `weddings`, entraram também no grant de coluna pra `anon` (migration
+  `0004`) e no `columns` explícito de `getWeddingPublicaPorSlug` — sem isso
+  a leitura pública quebraria com "permission denied" (ver "Grants de coluna
+  para anon" e "Queries públicas sempre limitam columns" acima).
+- **`CurrencyInput`/`DatePickerField` não repassavam `id`/`aria-*`**: o
+  `FormControl` do shadcn injeta essas props via clone (Slot) esperando que
+  o componente filho as encaminhe pro elemento interativo real — os dois
+  ignoravam qualquer prop além das que já declaravam, então `<label
+for=...>` apontava pra um `id` que não existia no DOM em todo formulário
+  que os usa. Corrigido aceitando e espalhando `...props`.
+- **Item de orçamento sem pagamento ainda não aparecia no select de "novo
+  pagamento"**: a lista de opções vinha de um `Map` sobre os próprios
+  pagamentos já lançados, não dos itens de orçamento em si — corrigido
+  passando a lista completa de itens (achatada a partir de categorias).
+- **`truncate` sem `min-w-0` causava overflow horizontal no mobile**: item
+  flex tem `min-width: auto` por padrão, então `truncate` (que depende de
+  `white-space: nowrap`) não encolhia abaixo do texto inteiro — título de
+  tarefa ou nome de convidado compridos empurravam o card pra fora da tela.
+  Só `next-tasks-card.tsx` e `table-box.tsx` ficaram sem o `min-w-0` que o
+  resto do app já usa nesse padrão.
+- **Link da página pública em Configurações**: o campo de endereço mostrava
+  um domínio de exemplo fixo ("meucasamento.com") em vez do domínio real do
+  deploy. Trocado para usar `NEXT_PUBLIC_APP_URL` (a mesma variável já usada
+  em `robots.ts`/`sitemap.ts`/convites) e exibir o link completo e clicável
+  da página pública, com botão de copiar.
+
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,
       Prettier, `.env.example`, README, estrutura de pastas, paleta e

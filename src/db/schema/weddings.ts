@@ -37,6 +37,10 @@ export const weddings = pgTable(
     estilo: text("estilo"),
     historiaCasal: text("historia_casal"),
     fotoCapaUrl: text("foto_capa_url"),
+    // Percentual (0-100) usado como object-position da foto de capa — permite
+    // arrastar pra reenquadrar sem precisar cortar/reenviar a imagem.
+    fotoCapaPosicaoX: integer("foto_capa_posicao_x").notNull().default(50),
+    fotoCapaPosicaoY: integer("foto_capa_posicao_y").notNull().default(50),
     dressCode: text("dress_code"),
     slug: text("slug").notNull().unique(),
     publicado: boolean("publicado").default(false).notNull(),

@@ -120,6 +120,32 @@ export async function atualizarFotoCapa(fotoCapaUrl: string): Promise<ResultadoA
   return {}
 }
 
+export async function atualizarPosicaoFotoCapa(
+  fotoCapaPosicaoX: number,
+  fotoCapaPosicaoY: number
+): Promise<ResultadoAction> {
+  const x = Math.round(Math.min(100, Math.max(0, fotoCapaPosicaoX)))
+  const y = Math.round(Math.min(100, Math.max(0, fotoCapaPosicaoY)))
+
+  const wedding = await getMinhaWedding()
+  if (!wedding) return { erro: "Casamento não encontrado." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) =>
+      tx
+        .update(weddings)
+        .set({ fotoCapaPosicaoX: x, fotoCapaPosicaoY: y })
+        .where(eq(weddings.id, wedding.id))
+    )
+  } catch {
+    return { erro: "Não foi possível salvar a posição da foto." }
+  }
+
+  revalidarConfiguracoes()
+  return {}
+}
+
 export async function excluirMinhaConta(): Promise<ResultadoAction> {
   const supabase = await createClient()
   const { error } = await supabase.rpc("excluir_minha_conta")
