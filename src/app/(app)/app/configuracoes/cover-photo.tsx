@@ -140,7 +140,7 @@ export function CoverPhoto({
             alt="Foto de capa"
             width={600}
             height={300}
-            className="h-40 w-full rounded object-cover"
+            className="h-56 w-full rounded object-cover sm:h-72 md:h-80"
             style={estiloFoto}
             unoptimized
           />
@@ -154,7 +154,7 @@ export function CoverPhoto({
               onPointerUp={finalizarArrasto}
               onPointerCancel={finalizarArrasto}
               className={cn(
-                "h-40 w-full touch-none overflow-hidden rounded select-none",
+                "h-56 w-full touch-none overflow-hidden rounded select-none sm:h-72 md:h-80",
                 arrastando ? "cursor-grabbing" : "cursor-grab"
               )}
             >
