@@ -19,7 +19,10 @@ const fontSerif = Fraunces({
   style: ["normal", "italic"],
 })
 
-const urlBase = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+// "||", não "??": uma NEXT_PUBLIC_APP_URL configurada como string vazia na
+// Vercel (em vez de ausente) faz `new URL("")` estourar "Invalid URL" — ??
+// só cai no fallback quando a variável é undefined/null, não quando é "".
+const urlBase = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
 export const metadata: Metadata = {
   metadataBase: new URL(urlBase),

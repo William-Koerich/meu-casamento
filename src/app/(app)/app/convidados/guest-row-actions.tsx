@@ -27,7 +27,7 @@ import type { GuestComMesa } from "@/db/queries/guests"
 import { GuestFormDialog } from "./guest-form-dialog"
 
 function linkConvite(codigoRsvp: string, slug: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   return `${base}/c/${slug}/confirmar?codigo=${codigoRsvp}`
 }
 

@@ -85,7 +85,7 @@ export async function recuperarSenha(input: unknown): Promise<ResultadoAction> {
   }
 
   const supabase = await createClient()
-  const url = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+  const url = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   await supabase.auth.resetPasswordForEmail(dados.data.email, {
     redirectTo: `${url}/auth/callback?next=/redefinir-senha`,
   })
