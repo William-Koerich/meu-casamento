@@ -125,7 +125,7 @@ export function TableBox({
               key={guest.id}
               className="flex items-center justify-between gap-1 text-xs"
             >
-              <span className="truncate">{guest.nome}</span>
+              <span className="min-w-0 flex-1 truncate">{guest.nome}</span>
               <button
                 type="button"
                 aria-label={`Tirar ${guest.nome} da mesa`}

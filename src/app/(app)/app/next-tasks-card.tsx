@@ -27,7 +27,7 @@ export function NextTasksCard({ tarefas }: NextTasksCardProps) {
                   key={tarefa.id}
                   className="flex items-center justify-between gap-2 text-sm"
                 >
-                  <span className="truncate">{tarefa.titulo}</span>
+                  <span className="min-w-0 flex-1 truncate">{tarefa.titulo}</span>
                   {tarefa.prazo && (
                     <span className="text-muted-foreground shrink-0 text-xs">
                       {formatDate(tarefa.prazo)}

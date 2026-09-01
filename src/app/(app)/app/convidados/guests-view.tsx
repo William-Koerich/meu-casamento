@@ -77,7 +77,7 @@ export function GuestsView({ guests, slug }: { guests: GuestComMesa[]; slug: str
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {[
           { rotulo: "Convidados", valor: contadores.total },
-          { rotulo: "Com acompanhantes", valor: contadores.totalPessoas },
+          { rotulo: "Total de pessoas", valor: contadores.totalPessoas },
           { rotulo: "Confirmados", valor: contadores.confirmados },
           { rotulo: "Pendentes", valor: contadores.pendentes },
         ].map((item) => (
