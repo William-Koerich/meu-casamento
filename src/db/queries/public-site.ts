@@ -38,6 +38,7 @@ export const getWeddingPublicaPorSlug = cache(async function getWeddingPublicaPo
         fotoCapaUrl: true,
         fotoCapaPosicaoX: true,
         fotoCapaPosicaoY: true,
+        fotoCapaZoom: true,
         dressCode: true,
         slug: true,
         publicado: true,

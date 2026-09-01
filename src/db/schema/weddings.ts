@@ -41,6 +41,11 @@ export const weddings = pgTable(
     // arrastar pra reenquadrar sem precisar cortar/reenviar a imagem.
     fotoCapaPosicaoX: integer("foto_capa_posicao_x").notNull().default(50),
     fotoCapaPosicaoY: integer("foto_capa_posicao_y").notNull().default(50),
+    // Percentual de zoom (100 = ajuste padrão, sem corte extra além do
+    // object-cover; até 300 = aproxima/corta mais). Nunca abaixo de 100
+    // porque object-cover já preenche a moldura inteira nesse ponto — "zoom
+    // out" além disso deixaria espaço vazio na capa.
+    fotoCapaZoom: integer("foto_capa_zoom").notNull().default(100),
     dressCode: text("dress_code"),
     slug: text("slug").notNull().unique(),
     publicado: boolean("publicado").default(false).notNull(),

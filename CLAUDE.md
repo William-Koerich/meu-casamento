@@ -437,17 +437,26 @@ durações anteriores`, recalculado e regravado em todas as linhas
     real (variáveis de ambiente, DNS, protocolo de rede) só se testa
     conectando de verdade — nenhuma dessas quatro falhas aparece rodando só
     localmente ou só com build/typecheck/lint.
-- **Foto de capa com posição ajustável**: `weddings.fotoCapaPosicaoX/Y`
+- **Foto de capa com posição e zoom ajustáveis**: `weddings.fotoCapaPosicaoX/Y`
   (percentual 0-100, migration `0004`) guarda o `object-position` da foto de
-  capa. `CoverPhoto` (Configurações) deixa arrastar a prévia da foto
-  (Pointer Events, funciona com mouse e touch) para reenquadrar sem precisar
-  cortar/reenviar a imagem — salva ao soltar, via
-  `atualizarPosicaoFotoCapa`. A página pública (`/c/[slug]`) aplica o mesmo
-  `object-position` na foto de capa de fundo. Como são colunas novas em
-  `weddings`, entraram também no grant de coluna pra `anon` (migration
-  `0004`) e no `columns` explícito de `getWeddingPublicaPorSlug` — sem isso
-  a leitura pública quebraria com "permission denied" (ver "Grants de coluna
-  para anon" e "Queries públicas sempre limitam columns" acima).
+  capa; `fotoCapaZoom` (percentual 100-300, migration `0005`) guarda um
+  `transform: scale()` aplicado por cima, com `transform-origin` no mesmo
+  ponto do `object-position` (zoom "em volta" do foco escolhido, não do
+  centro). Zoom nunca fica abaixo de 100 — `object-cover` já preenche a
+  moldura inteira nesse ponto, ir abaixo deixaria espaço vazio na capa.
+  `CoverPhoto` (Configurações) deixa arrastar a prévia (Pointer Events,
+  mouse e touch) pra reposicionar e um `Slider` (shadcn) pra dar zoom, ambos
+  salvando ao soltar via `atualizarPosicaoFotoCapa`. A página pública
+  (`/c/[slug]`) aplica os mesmos três valores na foto de fundo — a seção
+  precisou ganhar `overflow-hidden`, senão a imagem com zoom vazava pra fora
+  da moldura (o `fill` do `next/image` não corta sozinho quando somado a um
+  `transform: scale()`). Enviar uma foto nova reseta os três valores (centro,
+  sem zoom) — são relativos à foto anterior, carregá-los pra uma foto
+  diferente não faz sentido. Colunas novas em `weddings` entraram também no
+  grant de coluna pra `anon` (migrations `0004`/`0005`) e no `columns`
+  explícito de `getWeddingPublicaPorSlug` — sem isso a leitura pública
+  quebraria com "permission denied" (ver "Grants de coluna para anon" e
+  "Queries públicas sempre limitam columns" acima).
 - **`CurrencyInput`/`DatePickerField` não repassavam `id`/`aria-*`**: o
   `FormControl` do shadcn injeta essas props via clone (Slot) esperando que
   o componente filho as encaminhe pro elemento interativo real — os dois

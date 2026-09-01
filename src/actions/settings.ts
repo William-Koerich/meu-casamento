@@ -110,7 +110,17 @@ export async function atualizarFotoCapa(fotoCapaUrl: string): Promise<ResultadoA
   const { rls } = await createDrizzleSupabaseClient()
   try {
     await rls((tx) =>
-      tx.update(weddings).set({ fotoCapaUrl }).where(eq(weddings.id, wedding.id))
+      // Reseta posição/zoom junto — são relativos à foto anterior, não fazem
+      // sentido carregados pra uma foto nova.
+      tx
+        .update(weddings)
+        .set({
+          fotoCapaUrl,
+          fotoCapaPosicaoX: 50,
+          fotoCapaPosicaoY: 50,
+          fotoCapaZoom: 100,
+        })
+        .where(eq(weddings.id, wedding.id))
     )
   } catch {
     return { erro: "Não foi possível salvar a foto." }
@@ -122,10 +132,12 @@ export async function atualizarFotoCapa(fotoCapaUrl: string): Promise<ResultadoA
 
 export async function atualizarPosicaoFotoCapa(
   fotoCapaPosicaoX: number,
-  fotoCapaPosicaoY: number
+  fotoCapaPosicaoY: number,
+  fotoCapaZoom: number
 ): Promise<ResultadoAction> {
   const x = Math.round(Math.min(100, Math.max(0, fotoCapaPosicaoX)))
   const y = Math.round(Math.min(100, Math.max(0, fotoCapaPosicaoY)))
+  const zoom = Math.round(Math.min(300, Math.max(100, fotoCapaZoom)))
 
   const wedding = await getMinhaWedding()
   if (!wedding) return { erro: "Casamento não encontrado." }
@@ -135,7 +147,7 @@ export async function atualizarPosicaoFotoCapa(
     await rls((tx) =>
       tx
         .update(weddings)
-        .set({ fotoCapaPosicaoX: x, fotoCapaPosicaoY: y })
+        .set({ fotoCapaPosicaoX: x, fotoCapaPosicaoY: y, fotoCapaZoom: zoom })
         .where(eq(weddings.id, wedding.id))
     )
   } catch {

@@ -16,7 +16,7 @@ export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug
 
   return (
     <div>
-      <section className="relative flex flex-col items-center justify-center px-6 py-20 text-center">
+      <section className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-20 text-center">
         {wedding.fotoCapaUrl && (
           <Image
             src={wedding.fotoCapaUrl}
@@ -26,6 +26,8 @@ export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug
             className="absolute inset-0 -z-10 object-cover opacity-20"
             style={{
               objectPosition: `${wedding.fotoCapaPosicaoX}% ${wedding.fotoCapaPosicaoY}%`,
+              transform: `scale(${wedding.fotoCapaZoom / 100})`,
+              transformOrigin: `${wedding.fotoCapaPosicaoX}% ${wedding.fotoCapaPosicaoY}%`,
             }}
           />
         )}

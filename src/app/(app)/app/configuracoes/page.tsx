@@ -28,6 +28,7 @@ export default async function ConfiguracoesPage() {
         fotoCapaUrl={wedding.fotoCapaUrl}
         fotoCapaPosicaoX={wedding.fotoCapaPosicaoX}
         fotoCapaPosicaoY={wedding.fotoCapaPosicaoY}
+        fotoCapaZoom={wedding.fotoCapaZoom}
       />
       <SlugAndPublish slug={wedding.slug} publicado={wedding.publicado} />
       <DangerZone souDona={user?.id === wedding.ownerId} />

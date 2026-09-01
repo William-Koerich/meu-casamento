@@ -6,10 +6,15 @@ import Image from "next/image"
 import { atualizarFotoCapa, atualizarPosicaoFotoCapa } from "@/actions/settings"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Slider } from "@/components/ui/slider"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
 type Posicao = { x: number; y: number }
+
+const ZOOM_MIN = 100
+const ZOOM_MAX = 300
 
 function clamp(valor: number, min: number, max: number) {
   return Math.min(max, Math.max(min, valor))
@@ -20,11 +25,13 @@ export function CoverPhoto({
   fotoCapaUrl,
   fotoCapaPosicaoX,
   fotoCapaPosicaoY,
+  fotoCapaZoom,
 }: {
   weddingId: string
   fotoCapaUrl: string | null
   fotoCapaPosicaoX: number
   fotoCapaPosicaoY: number
+  fotoCapaZoom: number
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -39,9 +46,16 @@ export function CoverPhoto({
     x: fotoCapaPosicaoX,
     y: fotoCapaPosicaoY,
   })
+  const [zoom, setZoom] = useState(fotoCapaZoom)
   const [arrastando, setArrastando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
+
+  function salvarEnquadramento(x: number, y: number, z: number) {
+    iniciarTransicao(async () => {
+      await atualizarPosicaoFotoCapa(x, y, z)
+    })
+  }
 
   function selecionar(evento: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = evento.target.files?.[0]
@@ -64,6 +78,7 @@ export function CoverPhoto({
       }
       setPreview(url)
       setPosicao({ x: 50, y: 50 })
+      setZoom(100)
     })
   }
 
@@ -96,9 +111,15 @@ export function CoverPhoto({
     if (!arrastoRef.current) return
     arrastoRef.current = null
     setArrastando(false)
-    iniciarTransicao(async () => {
-      await atualizarPosicaoFotoCapa(posicao.x, posicao.y)
-    })
+    salvarEnquadramento(posicao.x, posicao.y, zoom)
+  }
+
+  function mudarZoom(valores: number[]) {
+    setZoom(valores[0])
+  }
+
+  function confirmarZoom(valores: number[]) {
+    salvarEnquadramento(posicao.x, posicao.y, valores[0])
   }
 
   return (
@@ -124,7 +145,11 @@ export function CoverPhoto({
                 width={600}
                 height={300}
                 className="h-full w-full object-cover"
-                style={{ objectPosition: `${posicao.x}% ${posicao.y}%` }}
+                style={{
+                  objectPosition: `${posicao.x}% ${posicao.y}%`,
+                  transform: `scale(${zoom / 100})`,
+                  transformOrigin: `${posicao.x}% ${posicao.y}%`,
+                }}
                 unoptimized
                 draggable={false}
               />
@@ -132,6 +157,20 @@ export function CoverPhoto({
             <p className="text-muted-foreground text-xs">
               Arraste a foto para ajustar o enquadramento.
             </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="zoom-capa" className="text-muted-foreground text-xs">
+                Zoom
+              </Label>
+              <Slider
+                id="zoom-capa"
+                min={ZOOM_MIN}
+                max={ZOOM_MAX}
+                step={1}
+                value={[zoom]}
+                onValueChange={mudarZoom}
+                onValueCommit={confirmarZoom}
+              />
+            </div>
           </>
         )}
         <input
