@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm"
 
 import { createDrizzleSupabaseClient } from "@/db/rls"
-import { gifts, guests } from "@/db/schema"
+import { gifts, guestPhotos, guests } from "@/db/schema"
 import {
   confirmarPresencaSchema,
   reservarPresenteSchema,
@@ -69,6 +69,31 @@ export async function reservarPresente(
       }
   } catch {
     return { erro: "Não foi possível reservar. Tente novamente." }
+  }
+
+  return {}
+}
+
+export async function enviarFotosConvidado(
+  weddingId: string,
+  caminhos: string[],
+  nomeConvidado: string
+): Promise<ResultadoAction> {
+  if (caminhos.length === 0) return { erro: "Selecione ao menos uma foto." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) =>
+      tx.insert(guestPhotos).values(
+        caminhos.map((caminho) => ({
+          weddingId,
+          caminho,
+          nomeConvidado: nomeConvidado.trim() || null,
+        }))
+      )
+    )
+  } catch {
+    return { erro: "Não foi possível enviar as fotos. Tente novamente." }
   }
 
   return {}

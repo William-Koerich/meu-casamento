@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import {
   CalendarClock,
+  Camera,
   Download,
   FileText,
   Gift,
@@ -36,6 +37,7 @@ export const NAV_ITEMS: NavItem[] = [
   { rotulo: "Mesas", href: "/app/convidados/mesas", icone: Grid3x3 },
   { rotulo: "Cronograma", href: "/app/cronograma", icone: CalendarClock },
   { rotulo: "Inspirações", href: "/app/inspiracoes", icone: Image },
+  { rotulo: "Fotos dos convidados", href: "/app/fotos-convidados", icone: Camera },
   { rotulo: "Playlist", href: "/app/playlist", icone: Music },
   { rotulo: "Presentes", href: "/app/presentes", icone: Gift },
   { rotulo: "Enxoval", href: "/app/enxoval", icone: ShoppingBag },

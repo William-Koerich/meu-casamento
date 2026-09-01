@@ -536,6 +536,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
 - [x] **Fase 8 — Página pública do casal** (`/c/[slug]`).
 - [x] **Fase 9 — Marketing e finalização**.
 - [x] **Fase 10 — Construtor de blocos da página pública** (`/app/site-publico`).
+- [x] **Fase 11 — Fotos enviadas pelos convidados via QR code**
+      (`/app/fotos-convidados`, `/c/[slug]/fotos`).
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -594,6 +596,55 @@ conteúdo livre novos: foto, galeria de fotos e texto.
   como `authenticated` e select como `anon` na tabela nova, contra o banco
   de produção — mesmo tipo de checagem que pegou o bug real de `rls()` na
   Fase 2.
+
+## Fase 11 — Fotos enviadas pelos convidados (QR code)
+
+Pedido explícito: os noivos querem um QR code pra mostrar na festa —
+convidado escaneia, envia as fotos que tirou, sem precisar de login ou
+conta, e o casal vê/baixa tudo depois em `/app/fotos-convidados`. Diferente
+do bloco "galeria" da Fase 10 (fotos que o casal escolhe e cura pra exibir
+publicamente), aqui é o inverso: convidado envia, só a equipe vê — não é
+uma galeria compartilhada entre convidados.
+
+- **Tabela `guest_photos`** (`caminho`, `nome_convidado` opcional,
+  `created_at`) + policy de insert pública pra `anon` (mesmo formato
+  `exists (... w.publicado = true)` de `gifts_publico_reservar`/
+  `page_blocks_publico_select`) — **sem** policy de select pra `anon`, de
+  propósito: convidado só escreve, nunca lê a tabela (ninguém vê foto de
+  outro convidado, só a equipe).
+- **Bug real encontrado só testando a policy de INSERT contra o Postgres
+  de verdade** (mesma categoria dos bugs de protocolo/rede já documentados
+  acima — só aparecem com banco de verdade, não em build/typecheck/lint):
+  o script de verificação usava `insert ... returning id` pra conferir o
+  que foi gravado, e isso falhava com "new row violates row-level security
+  policy" **mesmo o `with check` da policy de insert avaliando `true`**
+  isoladamente. Causa: `INSERT ... RETURNING` no Postgres também exige que
+  a linha satisfaça alguma policy de **SELECT** pro role atual — não só o
+  `WITH CHECK` do INSERT — porque devolver a linha de volta equivale, pra
+  fins de RLS, a fazer um SELECT nela. Como `guest_photos` não tem policy
+  de SELECT pra `anon` (de propósito, ver acima), qualquer `.returning()`
+  nessa tabela quebra pra esse role. A ação real
+  (`enviarFotosConvidado`) nunca usou `.returning()`, então não é afetada
+  — mas fica registrado aqui porque é uma pegadinha genérica do Postgres:
+  **uma tabela com INSERT liberado pra um role mas sem SELECT nunca pode
+  usar `.returning()` nesse insert**, mesmo que o `WITH CHECK` passe.
+- **Bucket de Storage novo, `fotos-convidados`**: privado (diferente de
+  `capas`/`presentes`/`blocos`) — só a equipe visualiza via signed URL
+  (`obterUrlsAssinadas`, já genérico desde a Fase 7), convidado só tem
+  policy de `insert` no `storage.objects`, nunca `select`.
+- **QR code gerado no servidor** (`qrcode`, `QRCode.toDataURL`) em vez de
+  um serviço externo de QR-code-como-API: não depende de terceiro no ar,
+  não vaza o link do casamento pra fora, e não precisa de chave — mesma
+  lógica da decisão do mapa embutido sem API key. Vira `data:` URL
+  embutida direto num `<Image>`, sem rota própria.
+- **Baixar/imprimir o QR code sem lib nova**: `data:` URL já é
+  "salvar imagem como" nativo do navegador; impressão reaproveita
+  `ExportPdfButton`/`window.print()` (Fase 7) com `print:hidden` nos
+  botões — mesmo padrão do mapa de mesas.
+- **Sem moderação/aprovação nessa primeira versão**: toda foto enviada
+  aparece direto pra equipe; exclusão é manual (mesmo padrão de
+  `excluirDocumento`/`excluirInspiracao` — remove só a linha do banco, o
+  arquivo no Storage fica órfão, aceito como troca simples).
 
 ## Como rodar localmente
 
