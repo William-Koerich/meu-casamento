@@ -1,7 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { DndContext, useDroppable, type DragEndEvent } from "@dnd-kit/core"
+import {
+  DndContext,
+  PointerSensor,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
 
 import { atribuirConvidadoMesa, atualizarPosicaoMesa } from "@/actions/tables"
 import { Button } from "@/components/ui/button"
@@ -28,6 +35,12 @@ export function SeatingEditor({ mesas, semMesa }: SeatingEditorProps) {
   const { setNodeRef: setSemMesaRef, isOver: estaSobreSemMesa } = useDroppable({
     id: "sem-mesa",
   })
+
+  // distance:4 evita que um toque rápido (ex.: nos botões "Editar"/"Excluir"
+  // dentro da mesa) seja interpretado como início de arrasto.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  )
 
   function onDragEnd(event: DragEndEvent) {
     const { active, over, delta } = event
@@ -60,7 +73,7 @@ export function SeatingEditor({ mesas, semMesa }: SeatingEditorProps) {
   }
 
   return (
-    <DndContext onDragEnd={onDragEnd}>
+    <DndContext sensors={sensors} onDragEnd={onDragEnd}>
       <div className="flex flex-col gap-4 lg:flex-row">
         <aside
           ref={setSemMesaRef}

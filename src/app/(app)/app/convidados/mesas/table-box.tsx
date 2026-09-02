@@ -62,7 +62,7 @@ export function TableBox({
           {...attributes}
           type="button"
           style={{ transform: CSS.Translate.toString(transform) }}
-          className="flex min-w-0 flex-1 items-center gap-1 text-left"
+          className="flex min-w-0 flex-1 touch-none items-center gap-1 text-left"
         >
           <GripVertical className="text-muted-foreground size-3 shrink-0" />
           <span className="truncate text-sm font-medium">{mesa.nome}</span>

@@ -26,7 +26,7 @@ export function GuestChip({
       type="button"
       style={{ transform: CSS.Translate.toString(transform) }}
       className={cn(
-        "border-border bg-card w-full rounded border px-2 py-1.5 text-left text-xs",
+        "border-border bg-card w-full touch-none rounded border px-2 py-1.5 text-left text-xs",
         isDragging && "relative z-50 opacity-70"
       )}
     >
