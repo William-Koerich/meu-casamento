@@ -3,12 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-import { NAV_ITEMS } from "@/lib/nav-items"
+import { itemNavAtivo, NAV_ITEMS } from "@/lib/nav-items"
 import { cn } from "@/lib/utils"
-
-function estaAtivo(pathname: string, href: string) {
-  return href === "/app" ? pathname === "/app" : pathname.startsWith(href)
-}
 
 export function SidebarNav() {
   const pathname = usePathname()
@@ -16,7 +12,7 @@ export function SidebarNav() {
   return (
     <nav className="flex flex-col gap-1">
       {NAV_ITEMS.map((item) => {
-        const ativo = estaAtivo(pathname, item.href)
+        const ativo = itemNavAtivo(pathname, item)
         return (
           <Link
             key={item.href}

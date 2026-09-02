@@ -57,3 +57,24 @@ export const NAV_ITEMS_MOBILE_PRINCIPAIS = [
   "/app/orcamento",
   "/app/convidados",
 ]
+
+/**
+ * Um item só fica marcado como ativo se nenhum outro item da navegação
+ * "encaixar" melhor na rota atual — sem isso, "Convidados" (/app/convidados)
+ * também acendia junto com "Mesas" (/app/convidados/mesas), porque a rota
+ * de Mesas começa com o href de Convidados. Também exige limite de barra
+ * (`${href}/`) em vez de só `startsWith`, pra "/app/convidados" não bater
+ * com uma rota parecida tipo "/app/convidados-x".
+ */
+export function itemNavAtivo(pathname: string, item: NavItem): boolean {
+  const bate = (href: string) =>
+    href === "/app"
+      ? pathname === "/app"
+      : pathname === href || pathname.startsWith(`${href}/`)
+  if (!bate(item.href)) return false
+
+  return !NAV_ITEMS.some(
+    (outro) =>
+      outro.href !== item.href && outro.href.startsWith(item.href) && bate(outro.href)
+  )
+}

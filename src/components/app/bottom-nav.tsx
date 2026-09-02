@@ -12,12 +12,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { NAV_ITEMS, NAV_ITEMS_MOBILE_PRINCIPAIS } from "@/lib/nav-items"
+import { itemNavAtivo, NAV_ITEMS, NAV_ITEMS_MOBILE_PRINCIPAIS } from "@/lib/nav-items"
 import { cn } from "@/lib/utils"
-
-function estaAtivo(pathname: string, href: string) {
-  return href === "/app" ? pathname === "/app" : pathname.startsWith(href)
-}
 
 export function BottomNav() {
   const pathname = usePathname()
@@ -30,7 +26,7 @@ export function BottomNav() {
   return (
     <nav className="border-border bg-background fixed inset-x-0 bottom-0 z-40 flex border-t md:hidden print:hidden">
       {principais.map((item) => {
-        const ativo = estaAtivo(pathname, item.href)
+        const ativo = itemNavAtivo(pathname, item)
         return (
           <Link
             key={item.href}
@@ -74,7 +70,7 @@ export function BottomNav() {
                 onClick={() => setAberto(false)}
                 className={cn(
                   "border-border flex flex-col items-center gap-2 rounded border p-3 text-center text-xs",
-                  estaAtivo(pathname, item.href) && "border-primary bg-accent"
+                  itemNavAtivo(pathname, item) && "border-primary bg-accent"
                 )}
               >
                 <item.icone className="size-5" />
