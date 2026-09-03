@@ -6,13 +6,15 @@ import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 
 import { getMeuPerfil } from "@/db/queries/profiles"
-import { onboardingConcluido } from "@/db/queries/weddings"
+import { getMeusCasamentos, onboardingConcluido } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { weddings } from "@/db/schema"
 import {
   COOKIE_CASAMENTO_ATIVO,
   OPCOES_COOKIE_CASAMENTO_ATIVO,
 } from "@/lib/casamento-ativo"
+import { PLANO_CERIMONIALISTA_LABELS } from "@/lib/labels"
+import { LIMITE_CASAMENTOS_POR_PLANO, limiteAtingido } from "@/lib/planos"
 import { ehViolacaoDeSlugDuplicado, gerarSlugUnico } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/server"
 import { nomesSchema } from "@/lib/validators/onboarding"
@@ -47,6 +49,16 @@ export async function criarCasamento(input: unknown): Promise<ResultadoAction> {
   const perfil = await getMeuPerfil()
   if (perfil?.tipoConta !== "cerimonialista") {
     return { erro: "Só contas de cerimonialista podem cadastrar mais de um casamento." }
+  }
+
+  const casamentosAtuais = await getMeusCasamentos()
+  if (limiteAtingido(perfil.planoCerimonialista, casamentosAtuais.length)) {
+    const plano = perfil.planoCerimonialista
+    const limite = plano ? LIMITE_CASAMENTOS_POR_PLANO[plano] : null
+    const nomePlano = plano ? PLANO_CERIMONIALISTA_LABELS[plano] : "atual"
+    return {
+      erro: `Seu plano ${nomePlano} permite até ${limite} casamentos simultâneos. Fale com a gente para fazer upgrade.`,
+    }
   }
 
   // Sem .returning(): "weddings_select_membros" resolve via is_wedding_member(),

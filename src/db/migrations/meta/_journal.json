@@ -64,6 +64,13 @@
       "when": 1788436619571,
       "tag": "0008_stiff_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788440656202,
+      "tag": "0009_hard_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

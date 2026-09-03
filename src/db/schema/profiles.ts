@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm"
 import { pgPolicy, pgTable, text, uuid } from "drizzle-orm/pg-core"
 
 import { authenticatedRole, authUid, authUsers } from "@/db/schema/auth"
-import { tipoContaEnum } from "@/db/schema/enums"
+import { planoCerimonialistaEnum, tipoContaEnum } from "@/db/schema/enums"
 import { createdAt } from "@/db/schema/helpers"
 
 export const profiles = pgTable(
@@ -15,6 +15,10 @@ export const profiles = pgTable(
     avatarUrl: text("avatar_url"),
     telefone: text("telefone"),
     tipoConta: tipoContaEnum("tipo_conta").notNull().default("noiva"),
+    // Null pra conta noiva. Cerimonialista nasce em "basico" (ver trigger
+    // handle_new_user) — upgrade é manual até existir cobrança de verdade
+    // (ver "Fase 13" no CLAUDE.md).
+    planoCerimonialista: planoCerimonialistaEnum("plano_cerimonialista"),
     createdAt: createdAt(),
   },
   (table) => [

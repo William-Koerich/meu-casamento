@@ -39,7 +39,9 @@ export default function ParaCerimonialistasPage() {
         </h1>
         <p className="text-muted-foreground mt-4">
           A noiva te convida para a equipe do casamento dela e você acompanha exatamente o
-          que precisa — sem esperar print de planilha.
+          que precisa — sem esperar print de planilha. Ou, se você atende vários casais ao
+          mesmo tempo, crie sua própria conta profissional e cadastre o casamento de cada
+          cliente você mesma.
         </p>
       </section>
 
@@ -52,6 +54,22 @@ export default function ParaCerimonialistasPage() {
             </CardContent>
           </Card>
         ))}
+      </section>
+
+      <section className="border-border border-t px-6 py-16 text-center">
+        <h2 className="font-heading text-2xl">Administra vários casamentos?</h2>
+        <p className="text-muted-foreground mt-2">
+          Crie uma conta profissional e cadastre o casamento de cada cliente com o mesmo
+          login. Planos Básico, Premium e Platinum, por assinatura mensal.
+        </p>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <Button asChild>
+            <Link href="/cadastro">Criar conta profissional</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/precos">Ver planos</Link>
+          </Button>
+        </div>
       </section>
 
       <section className="border-border border-t px-6 py-16 text-center">

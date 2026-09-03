@@ -5,7 +5,8 @@ import { PricingSection } from "@/components/marketing/pricing-section"
 
 export const metadata: Metadata = {
   title: "Preços",
-  description: "Planos simples para organizar o seu casamento, sem mensalidade.",
+  description:
+    "Pagamento único para noivas planejarem o próprio casamento; planos mensais para cerimonialistas administrarem vários casamentos.",
 }
 
 export default function PrecosPage() {
@@ -14,8 +15,8 @@ export default function PrecosPage() {
       <div className="mx-auto max-w-2xl px-6 pt-16 text-center">
         <h1 className="font-heading text-4xl">Preços</h1>
         <p className="text-muted-foreground mt-3">
-          Comece de graça. Pague uma única vez quando precisar dos módulos completos — sem
-          mensalidade, sem surpresa.
+          Noiva paga uma única vez, sem mensalidade. Cerimonialista assina um plano mensal
+          para administrar o casamento de vários clientes.
         </p>
       </div>
       <PricingSection />

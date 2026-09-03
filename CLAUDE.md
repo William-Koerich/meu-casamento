@@ -366,11 +366,11 @@ durações anteriores`, recalculado e regravado em todas as linhas
   `https://www.google.com/maps?q=...&output=embed`, que não exige API key
   nem variável de ambiente — suficiente para mostrar a localização, sem
   gerenciar credenciais do Google Maps.
-- **Preço é placeholder**: os dois planos em `PricingSection`
-  (`Essencial` grátis / `Completo` R$ 149 pagamento único) são um valor
-  fictício para preencher a landing — o modelo de negócio real (preço,
-  se é assinatura ou pagamento único, o que cada plano libera de fato)
-  ainda não foi decidido e precisa ser substituído antes do lançamento.
+- **Preço é placeholder**: o modelo de negócio (noiva = pagamento único;
+  cerimonialista = 3 planos mensais) foi decidido na Fase 13, mas os
+  valores em si (`src/lib/planos.ts`) são fictícios — nunca validados com
+  o mercado, precisam ser substituídos antes do lançamento de verdade. Ver
+  "Fase 13 — Planos e preços" para o racional completo.
 - **Favicon/ícones gerados por código**: `src/app/icon.tsx` e
   `apple-icon.tsx` usam `next/og` (`ImageResponse`) para desenhar um
   monograma "M" na cor de destaque, em vez de depender de um arquivo de
@@ -585,6 +585,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
 - [x] **Fase 11 — Fotos enviadas pelos convidados via QR code**
       (`/app/fotos-convidados`, `/c/[slug]/fotos`).
 - [x] **Fase 12 — Conta cerimonialista (multi-casamento)** (`/casamentos`).
+- [x] **Fase 13 — Planos e preços** (noiva: pagamento único; cerimonialista:
+      Básico/Premium/Platinum mensais).
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -814,6 +816,60 @@ cobrança):
   agora importa `next/headers` (pelo cookie do casamento ativo) — Next
   recusa buildar um Client Component que importa (mesmo que indiretamente)
   um módulo com `next/headers`.
+
+## Fase 13 — Planos e preços
+
+Pedido explícito: definir os planos de venda agora que existem 2 tipos de
+conta. Modelo pedido pela dona (valores e funcionalidades de cada plano
+ficaram a critério da implementação): **noiva** é plano único, pagamento
+único, sem mensalidade; **cerimonialista** tem 3 planos mensais (Básico,
+Premium, Platinum), preço e limite diferentes cada um.
+
+- **Preço ainda é placeholder** — mesma ressalva já registrada pra
+  `PricingSection` desde a Fase 9 (`Preço é placeholder`), agora estendida
+  aos 3 planos novos: nenhum desses valores foi validado com o mercado,
+  são só números plausíveis pra ter algo publicável. Trocar antes do
+  lançamento de verdade.
+- **O diferencial real entre os planos da cerimonialista é só 1: quantos
+  casamentos simultâneos ela pode cadastrar** (Básico 5, Premium 15,
+  Platinum ilimitado) — é a única coisa que dá pra aplicar de verdade no
+  código hoje, porque todo casamento cadastrado (não importa o plano de
+  quem cadastrou) usa o app inteiro sem nenhum flag de feature por módulo
+  (checklist, convidados, site público etc. não têm "nível" — todo
+  casamento tem tudo). Os outros itens listados em cada plano (nível de
+  suporte) são promessa comercial/operacional, não uma trava de código —
+  evitei prometer feature que não existe de verdade.
+- **`profiles.planoCerimonialista`** (`pgEnum` novo, `plano_cerimonialista`:
+  `basico` | `premium` | `platinum`, nullable — null pra conta noiva, não
+  se aplica). `handle_new_user()` (trigger da Fase 2, já mexida nas Fases
+  12) grava `'basico'` automaticamente pra toda conta que nasce
+  `tipo_conta = 'cerimonialista'`. **Sem Stripe ainda** (decisão já tomada
+  na Fase 12): não existe checkout nem cobrança de verdade — trocar de
+  plano é uma atualização manual dessa coluna (por você, direto no banco
+  ou via `db:studio`) até existir integração de pagamento reAL.
+- **Limite aplicado de verdade em `criarCasamento`** (`src/actions/casamentos.ts`):
+  antes de inserir, compara `getMeusCasamentos().length` contra
+  `LIMITE_CASAMENTOS_POR_PLANO[plano]` (`src/lib/planos.ts` — fonte única
+  de preço/limite, importada tanto pela Server Action quanto pela página
+  de preços, pra nunca desalinhar o que é vendido do que é aplicado).
+  Limite atingido devolve erro pedindo pra falar com a equipe pra
+  upgrade — não existe fluxo de autoatendimento pra trocar de plano ainda
+  (não faz sentido sem cobrança real por trás).
+- **`/casamentos` mostra o plano atual e quantos casamentos já foram
+  usados** (ex.: "3 de 5 casamentos usados") com link pra `/precos` — pra
+  a cerimonialista nunca ser surpreendida pelo limite sem contexto antes
+  de tentar cadastrar o próximo.
+- **`PricingSection`** (usada na home e em `/precos`) ganhou 2 blocos:
+  "Para noivas" (1 card, preço único) e "Para cerimonialistas" (grid de 3
+  cards, preço mensal + limite de casamentos em destaque + itens). FAQ e
+  `/para-cerimonialistas` atualizados pra descrever os dois caminhos
+  possíveis pra uma cerimonialista (ser convidada por uma noiva **ou**
+  criar a própria conta profissional) — não é mais só o primeiro.
+- **Verificado com RLS de verdade antes de considerar pronto**, mesmo
+  método das Fases 10–12 (script com rollback forçado contra produção):
+  trigger grava `plano_cerimonialista = 'basico'` pra conta cerimonialista
+  nova e `null` pra conta noiva; 5 casamentos (limite do Básico) são
+  criados e contados corretamente via RLS.
 
 ## Como rodar localmente
 

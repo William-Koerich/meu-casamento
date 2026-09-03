@@ -10,7 +10,7 @@ const PERGUNTAS = [
   {
     pergunta: "Preciso pagar?",
     resposta:
-      "Não para começar. O plano Essencial é gratuito; o Completo é um pagamento único, sem mensalidade, quando vocês quiserem os módulos de convidados, mesas e a página pública.",
+      "Se você é noiva, sim: um pagamento único, sem mensalidade, que já libera o app inteiro. Se você é cerimonialista, é uma assinatura mensal — o plano define quantos casamentos você administra ao mesmo tempo.",
   },
   {
     pergunta: "Funciona no celular?",
@@ -24,7 +24,7 @@ const PERGUNTAS = [
   {
     pergunta: "Sou cerimonialista, serve?",
     resposta:
-      "Serve. Como cerimonialista você pode ser convidada para colaborar em um casamento, com acesso ao cronograma, ao checklist e aos fornecedores.",
+      "Serve, de duas formas: uma noiva pode te convidar pra colaborar no casamento dela, ou você pode criar sua própria conta cerimonialista e cadastrar o casamento de vários clientes diferentes — veja os planos Básico, Premium e Platinum em Preços.",
   },
   {
     pergunta: "Meus dados ficam salvos?",

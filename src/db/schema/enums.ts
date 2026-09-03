@@ -7,6 +7,16 @@ import { pgEnum } from "drizzle-orm/pg-core"
 // só a UI/actions assumiam 1 casamento por conta).
 export const tipoContaEnum = pgEnum("tipo_conta", ["noiva", "cerimonialista"])
 
+// Só se aplica a conta cerimonialista (null pra conta noiva, que tem um
+// único plano fixo, sem mensalidade — ver `NOME_PRODUTO`/pricing). Define
+// quantos casamentos simultâneos a conta pode cadastrar — ver
+// `src/lib/planos.ts` (`LIMITE_CASAMENTOS_POR_PLANO`).
+export const planoCerimonialistaEnum = pgEnum("plano_cerimonialista", [
+  "basico",
+  "premium",
+  "platinum",
+])
+
 // Compartilhado entre tasks (categoria) e vendors (categoria)
 export const categoriaEnum = pgEnum("categoria", [
   "local",

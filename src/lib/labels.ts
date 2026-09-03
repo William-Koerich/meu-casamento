@@ -8,6 +8,7 @@ import type {
   momentoMusicaEnum,
   papelMembroEnum,
   permissaoMembroEnum,
+  planoCerimonialistaEnum,
   prioridadeEnxovalEnum,
   statusFornecedorEnum,
   statusRsvpEnum,
@@ -27,6 +28,7 @@ type TipoDocumento = (typeof tipoDocumentoEnum.enumValues)[number]
 type PapelMembro = (typeof papelMembroEnum.enumValues)[number]
 type PermissaoMembro = (typeof permissaoMembroEnum.enumValues)[number]
 type BlockTipo = (typeof blockTipoEnum.enumValues)[number]
+type PlanoCerimonialista = (typeof planoCerimonialistaEnum.enumValues)[number]
 
 // Rótulos em português dos enums de domínio — únicos usados em toda a UI
 // (não duplicar essas listas em componentes).
@@ -147,3 +149,9 @@ export const BLOCK_TIPO_LABELS: Record<BlockTipo, string> = {
 // as seções fixas do site (semeadas uma vez por garantirBlocosPadrao),
 // reordenáveis/ocultáveis mas não duplicáveis.
 export const BLOCK_TIPOS_ADICIONAVEIS = ["foto", "galeria", "texto"] as const
+
+export const PLANO_CERIMONIALISTA_LABELS: Record<PlanoCerimonialista, string> = {
+  basico: "Básico",
+  premium: "Premium",
+  platinum: "Platinum",
+}
