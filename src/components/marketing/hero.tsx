@@ -20,7 +20,7 @@ function PreviaPainel() {
       </div>
       <div className="border-border bg-background space-y-4 rounded-xl border p-5">
         <div className="flex items-center justify-between">
-          <p className="font-heading text-sm">Ana & Bruno</p>
+          <p className="font-heading text-sm">Maria & William</p>
           <span className="text-muted-foreground text-xs">128 dias</span>
         </div>
 
