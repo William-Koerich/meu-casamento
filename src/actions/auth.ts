@@ -61,7 +61,7 @@ export async function cadastrar(
     email: dados.data.email,
     password: dados.data.senha,
     options: {
-      data: { nome: dados.data.nome },
+      data: { nome: dados.data.nome, tipo_conta: dados.data.tipoConta },
     },
   })
 
@@ -76,7 +76,8 @@ export async function cadastrar(
     return { sucesso: true, precisaConfirmarEmail: true }
   }
 
-  redirect(destinoSeguro(redirecionarPara, "/inicio"))
+  const padrao = dados.data.tipoConta === "cerimonialista" ? "/casamentos" : "/inicio"
+  redirect(destinoSeguro(redirecionarPara, padrao))
 }
 
 export async function recuperarSenha(input: unknown): Promise<ResultadoAction> {

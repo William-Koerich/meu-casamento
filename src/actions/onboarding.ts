@@ -4,12 +4,13 @@ import { eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { addDays, format, subMonths } from "date-fns"
 
+import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { budgetCategories, tasks, weddings } from "@/db/schema"
 import { CHECKLIST_TEMPLATE } from "@/lib/checklist-template"
 import { ORCAMENTO_TEMPLATE } from "@/lib/orcamento-template"
+import { ehViolacaoDeSlugDuplicado, gerarSlugUnico } from "@/lib/slug"
 import { createClient } from "@/lib/supabase/server"
-import { gerarCodigo, slugify } from "@/lib/utils"
 import {
   convidadosSchema,
   dataLocalSchema,
@@ -29,17 +30,6 @@ async function usuarioAtual() {
   return user
 }
 
-function gerarSlugUnico(nomeNoiva: string, nomeNoivo: string) {
-  const base = slugify(`${nomeNoiva} e ${nomeNoivo}`) || "casamento"
-  return `${base}-${gerarCodigo(4).toLowerCase()}`
-}
-
-function ehViolacaoDeSlugDuplicado(erro: unknown) {
-  return Boolean(
-    erro && typeof erro === "object" && "code" in erro && erro.code === "23505"
-  )
-}
-
 export async function salvarNomes(input: unknown): Promise<ResultadoAction> {
   const dados = nomesSchema.safeParse(input)
   if (!dados.success) return { erro: "Preencha os dois nomes." }
@@ -47,9 +37,11 @@ export async function salvarNomes(input: unknown): Promise<ResultadoAction> {
   const user = await usuarioAtual()
   const { rls } = await createDrizzleSupabaseClient()
 
-  const rascunho = await rls((tx) =>
-    tx.query.weddings.findFirst({ where: eq(weddings.ownerId, user.id) })
-  )
+  // Casamento "ativo" da sessão, não só "o primeiro que essa conta tem" —
+  // uma conta cerimonialista pode ter outros casamentos já concluídos, e
+  // as etapas seguintes do wizard precisam mexer sempre no mesmo rascunho
+  // (ver getMinhaWedding, que resolve pelo cookie casamento_ativo).
+  const rascunho = await getMinhaWedding()
 
   if (rascunho) {
     await rls((tx) =>
@@ -89,9 +81,11 @@ export async function salvarDataLocal(input: unknown): Promise<ResultadoAction> 
   const dados = dataLocalSchema.safeParse(input)
   if (!dados.success) return { erro: "Preencha data, cidade e estado." }
 
-  const user = await usuarioAtual()
-  const { rls } = await createDrizzleSupabaseClient()
+  await usuarioAtual()
+  const wedding = await getMinhaWedding()
+  if (!wedding) redirect("/inicio/nomes")
 
+  const { rls } = await createDrizzleSupabaseClient()
   await rls((tx) =>
     tx
       .update(weddings)
@@ -100,7 +94,7 @@ export async function salvarDataLocal(input: unknown): Promise<ResultadoAction> 
         cidade: dados.data.cidade,
         estado: dados.data.estado,
       })
-      .where(eq(weddings.ownerId, user.id))
+      .where(eq(weddings.id, wedding.id))
   )
 
   redirect("/inicio/convidados")
@@ -110,14 +104,16 @@ export async function salvarConvidados(input: unknown): Promise<ResultadoAction>
   const dados = convidadosSchema.safeParse(input)
   if (!dados.success) return { erro: "Informe o número estimado de convidados." }
 
-  const user = await usuarioAtual()
-  const { rls } = await createDrizzleSupabaseClient()
+  await usuarioAtual()
+  const wedding = await getMinhaWedding()
+  if (!wedding) redirect("/inicio/nomes")
 
+  const { rls } = await createDrizzleSupabaseClient()
   await rls((tx) =>
     tx
       .update(weddings)
       .set({ convidadosEstimados: dados.data.convidadosEstimados })
-      .where(eq(weddings.ownerId, user.id))
+      .where(eq(weddings.id, wedding.id))
   )
 
   redirect("/inicio/orcamento")
@@ -127,14 +123,16 @@ export async function salvarOrcamento(input: unknown): Promise<ResultadoAction> 
   const dados = orcamentoSchema.safeParse(input)
   if (!dados.success) return { erro: "Informe o orçamento total." }
 
-  const user = await usuarioAtual()
-  const { rls } = await createDrizzleSupabaseClient()
+  await usuarioAtual()
+  const wedding = await getMinhaWedding()
+  if (!wedding) redirect("/inicio/nomes")
 
+  const { rls } = await createDrizzleSupabaseClient()
   await rls((tx) =>
     tx
       .update(weddings)
       .set({ orcamentoTotal: String(dados.data.orcamentoTotal) })
-      .where(eq(weddings.ownerId, user.id))
+      .where(eq(weddings.id, wedding.id))
   )
 
   redirect("/inicio/estilo")
@@ -150,17 +148,14 @@ export async function finalizarOnboarding(input: unknown): Promise<ResultadoActi
   const dados = estiloSchema.safeParse(input)
   if (!dados.success) return { erro: "Escolha um estilo para continuar." }
 
-  const user = await usuarioAtual()
-  const { rls } = await createDrizzleSupabaseClient()
-
-  const wedding = await rls((tx) =>
-    tx.query.weddings.findFirst({ where: eq(weddings.ownerId, user.id) })
-  )
+  await usuarioAtual()
+  const wedding = await getMinhaWedding()
 
   if (!wedding || !wedding.dataCasamento || !wedding.orcamentoTotal) {
     redirect("/inicio")
   }
 
+  const { rls } = await createDrizzleSupabaseClient()
   await rls(async (tx) => {
     await tx
       .update(weddings)

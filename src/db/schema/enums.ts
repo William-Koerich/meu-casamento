@@ -1,5 +1,12 @@
 import { pgEnum } from "drizzle-orm/pg-core"
 
+// "noiva" cadastra e planeja o próprio casamento (modelo padrão, 1 conta =
+// 1 casamento). "cerimonialista" é conta profissional: cadastra e administra
+// vários casamentos de clientes diferentes com o mesmo login (ver
+// `weddings.ownerId`, sem unicidade — nunca impediu isso a nível de banco,
+// só a UI/actions assumiam 1 casamento por conta).
+export const tipoContaEnum = pgEnum("tipo_conta", ["noiva", "cerimonialista"])
+
 // Compartilhado entre tasks (categoria) e vendors (categoria)
 export const categoriaEnum = pgEnum("categoria", [
   "local",

@@ -6,9 +6,15 @@ type AppHeaderProps = {
   nomeNoiva: string
   nomeNoivo: string
   dataCasamento: string | null
+  souCerimonialista?: boolean
 }
 
-export function AppHeader({ nomeNoiva, nomeNoivo, dataCasamento }: AppHeaderProps) {
+export function AppHeader({
+  nomeNoiva,
+  nomeNoivo,
+  dataCasamento,
+  souCerimonialista,
+}: AppHeaderProps) {
   const dias = diasParaCasamento(dataCasamento)
 
   return (
@@ -21,7 +27,7 @@ export function AppHeader({ nomeNoiva, nomeNoivo, dataCasamento }: AppHeaderProp
       </div>
       <div className="flex items-center gap-1">
         <ThemeToggle />
-        <UserMenu />
+        <UserMenu souCerimonialista={souCerimonialista} />
       </div>
     </header>
   )

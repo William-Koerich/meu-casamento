@@ -34,7 +34,10 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAppRoute = pathname.startsWith("/app") || pathname.startsWith("/inicio")
+  const isAppRoute =
+    pathname.startsWith("/app") ||
+    pathname.startsWith("/inicio") ||
+    pathname.startsWith("/casamentos")
   const isPublicAuthRoute = PUBLIC_APP_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   )

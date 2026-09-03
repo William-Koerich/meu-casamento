@@ -584,6 +584,7 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
 - [x] **Fase 10 — Construtor de blocos da página pública** (`/app/site-publico`).
 - [x] **Fase 11 — Fotos enviadas pelos convidados via QR code**
       (`/app/fotos-convidados`, `/c/[slug]/fotos`).
+- [x] **Fase 12 — Conta cerimonialista (multi-casamento)** (`/casamentos`).
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -691,6 +692,128 @@ uma galeria compartilhada entre convidados.
   aparece direto pra equipe; exclusão é manual (mesmo padrão de
   `excluirDocumento`/`excluirInspiracao` — remove só a linha do banco, o
   arquivo no Storage fica órfão, aceito como troca simples).
+
+## Fase 12 — Conta cerimonialista (multi-casamento)
+
+Pedido explícito da dona, com intenção de monetização: cerimonialista
+paga uma conta profissional própria e cadastra/administra o casamento de
+vários clientes diferentes — hoje (Fases 1–11) toda conta só tinha um
+casamento (`getMinhaWedding()` fazia `findFirst`, e as Server Actions do
+onboarding atualizavam `where(ownerId = auth.uid())`, que já pressupunha
+"no máximo 1"). Decisão de escopo tomada com o usuário antes de
+implementar (3 perguntas — muda modelo de dados, cadastro e toca em
+cobrança):
+
+- **Cobrança real fica pra depois**: nesta fase não existe Stripe nem
+  nenhum gate de pagamento — conta cerimonialista tem acesso completo e
+  ilimitado a criar casamentos, exatamente como hoje o preço da landing é
+  placeholder (ver decisão "Preço é placeholder"). Cobrança mensal de
+  verdade é trabalho futuro, quando houver conta Stripe configurada.
+- **Ela mesma cadastra cada casamento** (em vez de só ser convidada
+  casamento por casamento via `wedding_members`, como cerimonialista já
+  podia ser desde a Fase 2): ela vira `owner_id` do casamento que cria,
+  com controle total — modelo de ferramenta de trabalho profissional, não
+  de convidada. `wedding_members` com `papel = 'cerimonialista'` continua
+  existindo do jeito que já era (uma noiva convidando **a própria**
+  cerimonialista pro casamento dela) — são dois caminhos independentes
+  pro mesmo tipo de pessoa, não uma substituição.
+- **Tipo de conta escolhido no cadastro** (`/cadastro`, só no formulário
+  de e-mail/senha — o botão do Google não pergunta nada no meio do fluxo
+  OAuth, então cadastro via Google sempre nasce `tipoConta = 'noiva'`;
+  quem quer conta cerimonialista com login Google não está coberto nesta
+  fase, teria que recriar a conta com e-mail/senha).
+
+### Modelo de dados
+
+- **`profiles.tipoConta`** (`pgEnum` novo, `tipo_conta`: `noiva` |
+  `cerimonialista`, default `'noiva'`) — só essa coluna nova. `weddings`
+  não mudou nada: `ownerId` nunca teve unicidade, uma conta já podia
+  "tecnicamente" possuir vários casamentos a nível de banco — só a
+  UI/actions da app é que assumiam 1:1. `handle_new_user()` (trigger da
+  Fase 2) foi atualizado pra gravar `tipo_conta` a partir de
+  `raw_user_meta_data ->> 'tipo_conta'` (metadata do Supabase Auth
+  setada no cadastro), com `coalesce` pro padrão `'noiva'` — cobre tanto
+  cadastro via Google (sem essa metadata) quanto as contas que já
+  existiam antes desta coluna.
+- **Cookie `casamento_ativo`** (`src/lib/casamento-ativo.ts`), não coluna
+  no banco: guarda qual casamento é "o atual" da sessão. `getMinhaWedding()`
+  (`src/db/queries/weddings.ts`) resolve por esse cookie primeiro, com
+  fallback pro casamento mais antigo visível à conta — o fallback sozinho
+  já resolve certo pra conta noiva (1 casamento só) mesmo sem cookie
+  nenhum, então nada mudou pra quem já usava o produto. RLS garante que um
+  cookie adulterado (id de casamento de outra conta, ou já excluído) só
+  cai no fallback em vez de vazar dado — a query do `getMinhaWedding`
+  filtra pela mesma policy de sempre, o cookie não é "confiado" por si só.
+- **Bug de correção de dados que só apareceria com 2+ casamentos por
+  conta** (achado revisando o código antes de escrever a feature nova, não
+  em produção): as Server Actions do onboarding (`src/actions/onboarding.ts`)
+  faziam `update(weddings).set(...).where(eq(weddings.ownerId, user.id))`
+  — sem `LIMIT`, isso atualiza **todas** as linhas daquele dono de uma vez.
+  Inofensivo enquanto só existia 1 casamento por conta, mas quebraria
+  silenciosamente qualquer conta cerimonialista com 2+ casamentos (editar o
+  rascunho de um cliente reescreveria data/orçamento de todos os outros
+  casamentos dela ao mesmo tempo). Corrigido resolvendo o casamento alvo
+  via `getMinhaWedding()` (cookie ativo) e filtrando por
+  `eq(weddings.id, wedding.id)` em todas as etapas do wizard.
+- **Nova pegadinha de Postgres RLS, prima da já documentada na Fase 11**:
+  `criarCasamento` originalmente usava `.insert(weddings).values(...).returning({id: ...})`
+  pra saber o id do casamento recém-criado — e isso falhava com "new row
+  violates row-level security policy" mesmo o `WITH CHECK` do insert
+  passando, **mesmo existindo** policy de SELECT pra `authenticated`
+  (diferente do caso de `guest_photos`, que não tinha policy de SELECT
+  nenhuma). Causa, confirmada isolando o teste contra produção: a policy
+  de SELECT de `weddings` roda via `is_wedding_member()` — uma função
+  `security definer` que faz sua **própria** consulta em `public.weddings`
+  pra decidir se o role atual é dono/membro. Essa consulta interna é um
+  comando separado dentro da mesma transação e não enxerga a linha que o
+  `INSERT` ainda está inserindo (visibilidade por command counter do
+  Postgres: uma subconsulta não vê as linhas que o comando "pai" ainda não
+  terminou de gravar) — então o check implícito de SELECT que o
+  `RETURNING` exige falha sempre, incondicionalmente, pra qualquer insert
+  em `weddings` que use `.returning()`. Um `select` manual **depois** do
+  insert (comando separado) enxerga a linha normalmente — só o
+  `RETURNING` no mesmo comando do `INSERT` que não funciona aqui. Moral
+  mais ampla que a da Fase 11: **`.returning()` também pode falhar numa
+  tabela que TEM policy de SELECT, se essa policy passar por uma função
+  seguridade-definidora que reconsulta a própria tabela** — não é exclusivo
+  de tabela sem SELECT nenhuma. Corrigido gerando o `id` em JS
+  (`crypto.randomUUID()`) e passando explícito no insert, em vez de deixar
+  o banco gerar (`defaultRandom()`) e tentar recuperá-lo via `.returning()`.
+- **Verificado com RLS de verdade antes de considerar pronto**, mesmo
+  método das Fases 10/11 (script à parte, `sql.begin()` com rollback
+  forçado, contra o banco de produção): trigger grava `tipo_conta`
+  corretamente a partir da metadata; a mesma conta cria 2 casamentos;
+  `select where owner_id = ...` (usado por `getMeusCasamentos`) vê os 2;
+  `update where id = ...` muda só o casamento certo e não vaza pro outro
+  dono da mesma conta (a correção do bug acima); exclusão por id remove só
+  1. Foi nesse script que o bug do `.returning()` acima apareceu e foi
+  isolado.
+
+### Rotas e navegação
+
+- **`/casamentos`** (fora de `(app)/app`, mesmo padrão de `/inicio` —
+  acessível sem casamento cadastrado): painel só pra conta cerimonialista
+  (`CasamentosLayout` redireciona pra `/app` ou `/inicio` se a conta for
+  `noiva`) — lista os casamentos que ela é dona, cada um com "Entrar"/
+  "Continuar cadastro" (seta o cookie `casamento_ativo` e entra) e
+  "Excluir". "Novo casamento" pede só os 2 nomes (`nomesSchema`,
+  reaproveitado do onboarding) e cai direto em `/inicio/data` — pula o
+  passo de nomes do wizard porque acabou de preencher ali mesmo.
+- **`(app)/app/layout.tsx`**: sem casamento ativo concluído, conta noiva
+  cai em `/inicio` (como sempre) e conta cerimonialista cai em
+  `/casamentos` — não faz sentido jogar uma conta que gerencia vários
+  casamentos num wizard pensado pra "o meu casamento".
+- **"Trocar casamento"** no menu de conta (`UserMenu`, ícone no header),
+  só visível pra conta cerimonialista — link direto pra `/casamentos`.
+- **Middleware**: `/casamentos` entrou na lista de rotas que exigem login
+  (redireciona deslogado pra `/entrar`), igual `/app` e `/inicio`.
+- **`onboardingConcluido()` movida** de `src/db/queries/weddings.ts` pra
+  `src/lib/wedding-status.ts` (função pura, sem import de servidor):
+  `casamento-card.tsx` (Client Component, mostra o badge "cadastro
+  completo/incompleto" de cada card) precisava dela, e `weddings.ts`
+  agora importa `next/headers` (pelo cookie do casamento ativo) — Next
+  recusa buildar um Client Component que importa (mesmo que indiretamente)
+  um módulo com `next/headers`.
 
 ## Como rodar localmente
 

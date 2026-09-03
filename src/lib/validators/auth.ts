@@ -11,6 +11,7 @@ export const cadastroSchema = z.object({
   nome: z.string().trim().min(2, "Informe seu nome."),
   email: z.string().trim().min(1, "Informe seu e-mail.").email("E-mail inválido."),
   senha: z.string().min(8, "A senha precisa ter pelo menos 8 caracteres."),
+  tipoConta: z.enum(["noiva", "cerimonialista"]),
 })
 
 export type CadastroInput = z.infer<typeof cadastroSchema>

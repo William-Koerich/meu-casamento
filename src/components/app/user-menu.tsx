@@ -1,7 +1,8 @@
 "use client"
 
 import { useTransition } from "react"
-import { LogOut, UserRound } from "lucide-react"
+import Link from "next/link"
+import { LogOut, Repeat, UserRound } from "lucide-react"
 
 import { sair } from "@/actions/auth"
 import { Button } from "@/components/ui/button"
@@ -9,10 +10,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function UserMenu() {
+export function UserMenu({ souCerimonialista }: { souCerimonialista?: boolean }) {
   const [pendente, iniciarTransicao] = useTransition()
 
   return (
@@ -24,6 +26,17 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {souCerimonialista && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/casamentos">
+                <Repeat className="size-4" />
+                Trocar casamento
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem
           disabled={pendente}
           onClick={() => iniciarTransicao(() => sair())}

@@ -15,7 +15,23 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { cn } from "@/lib/utils"
 import { cadastroSchema, type CadastroInput } from "@/lib/validators/auth"
+
+const TIPOS_CONTA = [
+  {
+    valor: "noiva" as const,
+    titulo: "Sou noiva",
+    descricao: "Vou planejar o meu próprio casamento.",
+  },
+  {
+    valor: "cerimonialista" as const,
+    titulo: "Sou cerimonialista",
+    descricao: "Vou cadastrar e acompanhar o casamento de vários clientes.",
+  },
+]
 
 export function CadastroForm({ redirecionarPara }: { redirecionarPara?: string }) {
   const [erro, setErro] = useState<string | null>(null)
@@ -24,7 +40,7 @@ export function CadastroForm({ redirecionarPara }: { redirecionarPara?: string }
 
   const form = useForm<CadastroInput>({
     resolver: zodResolver(cadastroSchema),
-    defaultValues: { nome: "", email: "", senha: "" },
+    defaultValues: { nome: "", email: "", senha: "", tipoConta: "noiva" },
   })
 
   function onSubmit(dados: CadastroInput) {
@@ -53,6 +69,42 @@ export function CadastroForm({ redirecionarPara }: { redirecionarPara?: string }
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="tipoConta"
+          render={({ field }) => (
+            <FormItem>
+              <RadioGroup
+                value={field.value}
+                onValueChange={field.onChange}
+                className="grid-cols-1 gap-2 sm:grid-cols-2"
+              >
+                {TIPOS_CONTA.map((tipo) => (
+                  <Label
+                    key={tipo.valor}
+                    htmlFor={`tipo-conta-${tipo.valor}`}
+                    className={cn(
+                      "border-border flex cursor-pointer flex-col gap-1 rounded border p-3 text-sm font-normal",
+                      field.value === tipo.valor && "border-primary bg-accent"
+                    )}
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <RadioGroupItem
+                        value={tipo.valor}
+                        id={`tipo-conta-${tipo.valor}`}
+                      />
+                      {tipo.titulo}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {tipo.descricao}
+                    </span>
+                  </Label>
+                ))}
+              </RadioGroup>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="nome"
