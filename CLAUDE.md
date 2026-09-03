@@ -512,6 +512,35 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
   deploy. Trocado para usar `NEXT_PUBLIC_APP_URL` (a mesma variável já usada
   em `robots.ts`/`sitemap.ts`/convites) e exibir o link completo e clicável
   da página pública, com botão de copiar.
+- **Tema escuro**: pedido explícito da dona. As variáveis `.dark` já
+  existiam em `src/app/globals.css` desde o init do shadcn (Fase 1) mas
+  nunca eram aplicadas — o trabalho foi todo em como ativar/persistir a
+  classe, não em paleta nova.
+  - **3 opções (Claro/Escuro/Sistema), não só um botão liga/desliga**:
+    `src/lib/theme.ts` (`Tema`) + `ThemeProvider`
+    (`src/components/theme-provider.tsx`, contexto React simples) +
+    `ThemeToggle` (`src/components/theme-toggle.tsx`, dropdown com
+    ícone sol/lua) — "Sistema" acompanha `prefers-color-scheme` do SO ao
+    vivo via `matchMedia(...).addEventListener("change", ...)`, sem precisar
+    recarregar a página.
+  - **`localStorage`, não banco**: única exceção deliberada à regra "sem
+    localStorage pra dado de negócio" (ver Convenções) — tema é preferência
+    de UI do navegador, não dado do casamento; salvar no banco faria a
+    dona ver o tema errado ao trocar de dispositivo por 1 request até a
+    hidratação, sem ganho real (ninguém espera que o tema "siga a conta"
+    entre computador e celular).
+  - **Script inline no `<head>` do layout raiz** (`SCRIPT_TEMA_INICIAL`,
+    `src/lib/theme.ts`) aplica a classe `dark` no `<html>` lendo o
+    `localStorage` antes do primeiro paint — sem isso a página nasce clara
+    e pisca pro tema salvo um instante depois (flash of wrong theme), já
+    que o React só teria a chance de aplicar a classe depois de hidratar.
+    Como esse script mexe na classe do `<html>` por fora do React,
+    `suppressHydrationWarning` no `<html>` evita o aviso de mismatch.
+  - **Toggle só no header da área logada** (`AppHeader`, ao lado do menu de
+    conta): "no app todo" aqui é a área logada (a pasta já se chama
+    `(app)/app`) — a página pública do casal (`/c/[slug]`) e o marketing
+    mantêm a paleta clara fixa de propósito (ver decisão de Paleta acima),
+    sem toggle.
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,

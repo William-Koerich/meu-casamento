@@ -1,4 +1,5 @@
 import { UserMenu } from "@/components/app/user-menu"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { diasParaCasamento, textoContagemCompacta } from "@/lib/countdown"
 
 type AppHeaderProps = {
@@ -18,7 +19,10 @@ export function AppHeader({ nomeNoiva, nomeNoivo, dataCasamento }: AppHeaderProp
         </p>
         <p className="text-muted-foreground text-xs">{textoContagemCompacta(dias)}</p>
       </div>
-      <UserMenu />
+      <div className="flex items-center gap-1">
+        <ThemeToggle />
+        <UserMenu />
+      </div>
     </header>
   )
 }
