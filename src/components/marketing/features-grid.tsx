@@ -54,16 +54,24 @@ const FUNCIONALIDADES = [
 
 export function FeaturesGrid() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-16">
-      <h2 className="font-heading text-center text-3xl">
+    <section className="mx-auto max-w-6xl px-6 py-20">
+      <p className="text-primary text-center text-sm font-medium tracking-widest uppercase">
+        Tudo incluso
+      </p>
+      <h2 className="font-heading mt-2 text-center text-3xl sm:text-4xl">
         Tudo que o seu casamento precisa
       </h2>
-      <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {FUNCIONALIDADES.map((item) => (
-          <div key={item.titulo}>
-            <item.icone className="text-primary size-5" strokeWidth={1.5} />
-            <h3 className="font-heading mt-3 text-lg">{item.titulo}</h3>
-            <p className="text-muted-foreground mt-1 text-sm">{item.descricao}</p>
+          <div
+            key={item.titulo}
+            className="border-border bg-card hover:border-primary/40 group rounded-xl border p-6 transition-colors hover:shadow-sm"
+          >
+            <span className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground flex size-10 items-center justify-center rounded-full transition-colors">
+              <item.icone className="size-5" strokeWidth={1.5} />
+            </span>
+            <h3 className="font-heading mt-4 text-lg">{item.titulo}</h3>
+            <p className="text-muted-foreground mt-1.5 text-sm">{item.descricao}</p>
           </div>
         ))}
       </div>

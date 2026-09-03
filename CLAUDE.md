@@ -192,7 +192,10 @@ seed; a lógica oficial de geração no onboarding é implementada na Fase 3).
 - **Paleta**: tokens definidos uma única vez em `src/app/globals.css`
   (off-white `#faf8f3`, areia `#f0ebde`/`#e2dbc8`, verde-oliva `#6f7350` como
   única cor de destaque, texto chumbo `#33322d`). `--radius` pequeno
-  (0.25rem). Sem gradiente, sem sombra pesada, sem glassmorphism.
+  (0.25rem). Sem gradiente, sem sombra pesada, sem glassmorphism **na área
+  logada** — a landing/marketing pública ganhou uma exceção pontual na
+  Fase 15 (gradiente suave no hero, `shadow-sm`/`shadow-lg` leves em card),
+  ver "Fase 15 — Rebranding da landing page".
 - **Redirecionamento /inicio vs /app**: o middleware (`src/lib/supabase/middleware.ts`)
   só cuida de autenticado x não autenticado. A checagem "tem wedding
   cadastrado?" roda no layout de `(app)/app` (Server Component, via
@@ -593,6 +596,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       Básico/Premium/Platinum mensais).
 - [x] **Fase 14 — Pagamentos via Stripe** (checkout, webhook, `/pagamento`,
       `/planos`) — modo teste, sem CNPJ validado ainda.
+- [x] **Fase 15 — Rebranding da landing page** (`/`) — visual mais expressivo
+      pra converter visita em cadastro.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1002,6 +1007,64 @@ localhost:3000/api/stripe/webhook` (Stripe CLI, instalado via
   imediato; trocar de plano pelo portal (em vez de assinar um novo) exige
   habilitar "subscription update" na configuração do portal no Dashboard
   do Stripe, não feito nesta fase (ainda em modo teste).
+
+## Fase 15 — Rebranding da landing page
+
+Pedido explícito: a landing (`/`) estava "sem graça" — texto simples
+centralizado, sem imagem, sem hierarquia visual — e precisava chamar mais
+atenção pra converter visita em cadastro. Diferente das fases anteriores,
+não houve pergunta prévia: é execução de design dentro de uma direção clara
+("total rebranding, chamar atenção"), não uma decisão de arquitetura.
+
+- **Exceção pontual documentada às regras de "sem gradiente/sombra pesada"**
+  (ver decisão de Paleta acima): só na landing/marketing pública, não na
+  área logada nem no site público do casal — a superfície de venda pode ser
+  mais expressiva que o produto em si. Usado com moderação: gradiente
+  radial suave no hero (`from-primary/15` esmaecendo pro fundo, mais um
+  blur decorativo), `shadow-sm`/`shadow-lg shadow-black/5` em cards (nunca
+  sombra opaca/pesada).
+- **Hero com mockup do painel** (`PreviaPainel`, componente interno de
+  `hero.tsx`): card estático (HTML/CSS puro, sem imagem real nem
+  screenshot) simulando um resumo de casamento — anel de progresso via
+  `conic-gradient`, 2 itens de checklist marcados, barra de orçamento.
+  Serve pra dar credibilidade visual ("é assim que fica") sem precisar de
+  asset de design nenhum nem expor dado de conta real.
+- **`PainSection` + `BeforeAfter` viraram um componente só**
+  (`ProblemaSolucao`) — as duas seções antigas repetiam a mesma lista de
+  dores ("planilha em aba separada", "grupo de WhatsApp lotado"...) de
+  jeitos ligeiramente diferentes. Consolidado num cartão único dividido ao
+  meio (❌ vermelho/❌ mudo de um lado, ✅ verde-oliva do outro) — mais
+  direto e sem repetir a mesma dor duas vezes na mesma página.
+- **Ícones em emblema colorido** (círculo `bg-primary/10 text-primary`)
+  em vez de ícone solto, em `FeaturesGrid` e no cartão de
+  `ProblemaSolucao` — com hover invertendo pra `bg-primary` sólido nos
+  cards de funcionalidade, dando uma resposta visual ao passar o mouse
+  sem precisar de JS.
+- **`FinalCta` virou um "outdoor" de fechamento**: banner
+  `bg-primary text-primary-foreground` de ponta a ponta (antes era só
+  texto simples) — contraste forte de propósito, é a última coisa antes
+  do rodapé, deveria ser a mais chamativa da página.
+- **Copy de "Começar grátis" corrigido pra refletir a Fase 14**: antes do
+  Stripe existir, o app inteiro era de fato grátis; agora só o
+  cadastro/onboarding é (o pagamento único da noiva acontece depois, ao
+  tentar entrar em `/app` — ver Fase 14). Trocado por "Começar agora" nos
+  botões (header, hero) e "de graça, sem cartão" como qualificador mais
+  preciso no `FinalCta`, em vez de "grátis" sozinho, que ficaria
+  tecnicamente falso depois que ela termina o onboarding.
+- **Larguras padronizadas em `max-w-6xl`** (header, footer, `Hero`,
+  `FeaturesGrid`, `SocialProof`, `PricingSection`) — a maioria das seções
+  ainda estava em `max-w-5xl`/`max-w-3xl` old, deixando bastante espaço
+  vazio nas laterais em telas largas.
+- **Ritmo vertical consistente**: `py-20` em vez de `py-16` nas seções
+  principais, e um rótulo pequeno em maiúsculas (`text-primary text-sm
+tracking-widest uppercase`, ex. "TUDO INCLUSO", "PREÇOS", "DÚVIDAS") acima
+  do título de cada seção — mesmo padrão repetido dá uma "assinatura
+  visual" à página que ela não tinha antes (cada seção com título solto,
+  sem hierarquia entre elas).
+- **Logo do header ganhou monograma**: círculo `bg-primary` com a inicial
+  de `NOME_PRODUTO` ao lado do nome por extenso — mesma ideia visual do
+  favicon (`src/app/icon.tsx`, Fase 9), reforçando marca no topo da página
+  que mais gente vê.
 
 ## Como rodar localmente
 

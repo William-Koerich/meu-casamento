@@ -12,9 +12,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-border bg-background/95 sticky top-0 z-30 border-b backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" className="font-heading text-lg">
-            {NOME_PRODUTO}
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="bg-primary text-primary-foreground font-heading flex size-7 items-center justify-center rounded-full text-sm">
+              {NOME_PRODUTO.charAt(0)}
+            </span>
+            <span className="font-heading text-lg">{NOME_PRODUTO}</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm sm:flex">
             {NAV.map((item) => (
@@ -32,14 +35,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
               <Link href="/entrar">Entrar</Link>
             </Button>
             <Button asChild size="sm">
-              <Link href="/cadastro">Começar grátis</Link>
+              <Link href="/cadastro">Começar agora</Link>
             </Button>
           </div>
         </div>
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-border border-t">
-        <div className="text-muted-foreground mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm sm:flex-row">
+        <div className="text-muted-foreground mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm sm:flex-row">
           <p>
             © {new Date().getFullYear()} {NOME_PRODUTO}
           </p>

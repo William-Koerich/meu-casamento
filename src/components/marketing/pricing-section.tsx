@@ -47,8 +47,11 @@ const PLANOS_CERIMONIALISTA = [
 
 export function PricingSection() {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <h2 className="font-heading text-center text-3xl">
+    <section className="mx-auto max-w-6xl px-6 py-20">
+      <p className="text-primary text-center text-sm font-medium tracking-widest uppercase">
+        Preços
+      </p>
+      <h2 className="font-heading mt-2 text-center text-3xl sm:text-4xl">
         Preços simples, sem letra miúda
       </h2>
 

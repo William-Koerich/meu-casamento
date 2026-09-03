@@ -40,9 +40,14 @@ const PERGUNTAS = [
 
 export function FaqSection() {
   return (
-    <section className="mx-auto max-w-2xl px-6 py-16">
-      <h2 className="font-heading text-center text-3xl">Perguntas frequentes</h2>
-      <Accordion type="single" collapsible className="mt-8">
+    <section className="mx-auto max-w-2xl px-6 py-20">
+      <p className="text-primary text-center text-sm font-medium tracking-widest uppercase">
+        Dúvidas
+      </p>
+      <h2 className="font-heading mt-2 text-center text-3xl sm:text-4xl">
+        Perguntas frequentes
+      </h2>
+      <Accordion type="single" collapsible className="mt-10">
         {PERGUNTAS.map((item) => (
           <AccordionItem key={item.pergunta} value={item.pergunta}>
             <AccordionTrigger>{item.pergunta}</AccordionTrigger>
