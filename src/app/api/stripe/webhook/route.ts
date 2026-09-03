@@ -5,7 +5,7 @@ import type Stripe from "stripe"
 import { db } from "@/db"
 import { profiles, weddings } from "@/db/schema"
 import type { PlanoCerimonialista } from "@/lib/planos"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 
 export const runtime = "nodejs"
 
@@ -30,13 +30,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ erro: "assinatura ausente" }, { status: 400 })
   }
 
+  const segredoWebhook = process.env.STRIPE_WEBHOOK_SECRET
+  if (!segredoWebhook) {
+    console.error("STRIPE_WEBHOOK_SECRET não configurada — webhook recusado.")
+    return NextResponse.json({ erro: "webhook não configurado" }, { status: 500 })
+  }
+
   let evento: Stripe.Event
   try {
-    evento = stripe.webhooks.constructEvent(
-      corpo,
-      assinatura,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    )
+    evento = getStripe().webhooks.constructEvent(corpo, assinatura, segredoWebhook)
   } catch (erro) {
     console.error("Assinatura do webhook do Stripe inválida:", erro)
     return NextResponse.json({ erro: "assinatura inválida" }, { status: 400 })

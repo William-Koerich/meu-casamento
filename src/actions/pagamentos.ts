@@ -13,7 +13,7 @@ import {
   type PlanoCerimonialista,
 } from "@/lib/planos"
 import { getUrlBase } from "@/lib/site"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { createClient } from "@/lib/supabase/server"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
@@ -41,7 +41,7 @@ async function obterOuCriarStripeCustomerId(userId: string, email: string | unde
   const perfil = await getMeuPerfil()
   if (perfil?.stripeCustomerId) return perfil.stripeCustomerId
 
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email,
     metadata: { userId },
   })
@@ -61,7 +61,7 @@ export async function criarCheckoutNoiva(): Promise<ResultadoAction> {
   const customerId = await obterOuCriarStripeCustomerId(user.id, user.email)
   const base = getUrlBase()
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "payment",
     customer: customerId,
     line_items: [{ price: precoStripeNoiva(), quantity: 1 }],
@@ -90,7 +90,7 @@ export async function criarCheckoutCerimonialista(
   const customerId = await obterOuCriarStripeCustomerId(user.id, user.email)
   const base = getUrlBase()
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
     line_items: [{ price: precoStripeCerimonialista(plano), quantity: 1 }],
@@ -114,7 +114,7 @@ export async function criarSessaoPortal(): Promise<ResultadoAction> {
     return { erro: "Você ainda não tem nenhuma assinatura para gerenciar." }
   }
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripe().billingPortal.sessions.create({
     customer: perfil.stripeCustomerId,
     return_url: `${getUrlBase()}/planos`,
   })

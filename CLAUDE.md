@@ -444,6 +444,22 @@ durações anteriores`, recalculado e regravado em todas as linhas
     real (variáveis de ambiente, DNS, protocolo de rede) só se testa
     conectando de verdade — nenhuma dessas quatro falhas aparece rodando só
     localmente ou só com build/typecheck/lint.
+- **Mesma classe de bug, 5ª ocorrência: `STRIPE_SECRET_KEY` ausente na Vercel
+  derrubava o build inteiro** (Fase 14, só apareceu ao dar deploy — local
+  sempre tinha a variável no `.env.local`): `src/lib/stripe.ts` fazia
+  `export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)` no
+  topo do módulo — o Next importa esse módulo (via
+  `src/app/api/stripe/webhook/route.ts`) na etapa de "collect page data"
+  do build, então `new Stripe(undefined)` já lançava "Neither apiKey nor
+  config.authenticator provided" e derrubava o build **inteiro**, não só a
+  rota do webhook. Mesma causa raiz do bug de `supabaseEnv()` acima
+  (client construído com `!` no topo do módulo, não dentro de uma função)
+  — corrigido do mesmo jeito: `getStripe()`, uma função que só constrói o
+  client (e só lança, com mensagem nomeando a variável) quando efetivamente
+  chamada em runtime, nunca no import do módulo. Reproduzido localmente
+  antes e depois da correção removendo `STRIPE_SECRET_KEY` do
+  `.env.local` e rodando `npm run build` — quebrava antes, buildava normal
+  depois.
 - **Foto de capa com posição e zoom ajustáveis**: `weddings.fotoCapaPosicaoX/Y`
   (percentual 0-100, migration `0004`) guarda o `object-position` da foto de
   capa; `fotoCapaZoom` (percentual 100-300, migration `0005`) guarda um
