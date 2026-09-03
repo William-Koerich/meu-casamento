@@ -15,10 +15,14 @@ export const profiles = pgTable(
     avatarUrl: text("avatar_url"),
     telefone: text("telefone"),
     tipoConta: tipoContaEnum("tipo_conta").notNull().default("noiva"),
-    // Null pra conta noiva. Cerimonialista nasce em "basico" (ver trigger
-    // handle_new_user) — upgrade é manual até existir cobrança de verdade
-    // (ver "Fase 13" no CLAUDE.md).
+    // Null = sem assinatura ativa (conta noiva, ou cerimonialista que nunca
+    // assinou/cancelou) — setado pelo webhook do Stripe, nunca por ação do
+    // usuário direto (ver "Fase 14" no CLAUDE.md e o revoke de coluna na
+    // migration 0010).
     planoCerimonialista: planoCerimonialistaEnum("plano_cerimonialista"),
+    // Id do customer no Stripe — criado lazy no primeiro checkout. Nunca
+    // editável pelo usuário (mesmo revoke de coluna do plano acima).
+    stripeCustomerId: text("stripe_customer_id"),
     createdAt: createdAt(),
   },
   (table) => [

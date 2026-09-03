@@ -2,6 +2,7 @@ import Link from "next/link"
 import type { Metadata } from "next"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { getMeuPerfil } from "@/db/queries/profiles"
 import { getMeusCasamentos } from "@/db/queries/weddings"
 import { PLANO_CERIMONIALISTA_LABELS } from "@/lib/labels"
@@ -26,25 +27,39 @@ export default async function CasamentosPage() {
             Cadastre e acompanhe o planejamento de cada casal que você atende.
           </p>
         </div>
-        <NovoCasamentoDialog />
+        {plano ? (
+          <NovoCasamentoDialog />
+        ) : (
+          <Button asChild>
+            <Link href="/planos">Assinar um plano</Link>
+          </Button>
+        )}
       </div>
 
-      {plano && (
+      {plano ? (
         <div className="border-border bg-card flex flex-wrap items-center gap-2 rounded border p-3 text-sm">
           <Badge variant="secondary">Plano {PLANO_CERIMONIALISTA_LABELS[plano]}</Badge>
           <span className="text-muted-foreground">
             {casamentos.length} de {limite ?? "∞"} casamentos usados
           </span>
-          <Link href="/precos" className="ml-auto text-xs underline">
-            Ver planos
+          <Link href="/planos" className="ml-auto text-xs underline">
+            Gerenciar assinatura
           </Link>
+        </div>
+      ) : (
+        <div className="border-primary bg-accent rounded border p-3 text-sm">
+          Você ainda não tem uma assinatura ativa —{" "}
+          <Link href="/planos" className="underline">
+            assine um plano
+          </Link>{" "}
+          para cadastrar casamentos.
         </div>
       )}
 
       {casamentos.length === 0 ? (
         <p className="text-muted-foreground py-12 text-center text-sm">
-          Nenhum casamento cadastrado ainda. Use &ldquo;Novo casamento&rdquo; para
-          começar.
+          Nenhum casamento cadastrado ainda
+          {plano ? ' — use "Novo casamento" para começar.' : "."}
         </p>
       ) : (
         <div className="space-y-3">

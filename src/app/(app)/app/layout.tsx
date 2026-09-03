@@ -18,6 +18,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect(souCerimonialista ? "/casamentos" : "/inicio")
   }
 
+  // Gate de pagamento (Fase 14): só depois do wizard inteiro, não antes — a
+  // noiva já viu o produto pronto com os dados dela antes de decidir pagar.
+  // Não se aplica a casamento de conta cerimonialista (coberto pela
+  // assinatura dela, ver weddings.pago em criarCasamento).
+  if (!souCerimonialista && !wedding.pago) {
+    redirect("/pagamento")
+  }
+
   return (
     <div className="bg-background flex min-h-screen">
       <Sidebar />

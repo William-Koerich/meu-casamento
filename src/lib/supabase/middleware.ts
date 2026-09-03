@@ -37,7 +37,9 @@ export async function updateSession(request: NextRequest) {
   const isAppRoute =
     pathname.startsWith("/app") ||
     pathname.startsWith("/inicio") ||
-    pathname.startsWith("/casamentos")
+    pathname.startsWith("/casamentos") ||
+    pathname.startsWith("/pagamento") ||
+    pathname.startsWith("/planos")
   const isPublicAuthRoute = PUBLIC_APP_PREFIXES.some((prefix) =>
     pathname.startsWith(prefix)
   )

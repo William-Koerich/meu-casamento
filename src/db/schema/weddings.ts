@@ -49,6 +49,11 @@ export const weddings = pgTable(
     dressCode: text("dress_code"),
     slug: text("slug").notNull().unique(),
     publicado: boolean("publicado").default(false).notNull(),
+    // Pagamento único da noiva (Fase 14) — sempre `true` pra casamento de
+    // conta cerimonialista (coberto pela assinatura dela, não por essa
+    // cobrança avulsa). Migration grandfatheia todo casamento que já
+    // existia como pago, pra ninguém que já usa o app ficar bloqueado.
+    pago: boolean("pago").default(false).notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

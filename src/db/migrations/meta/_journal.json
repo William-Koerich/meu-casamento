@@ -71,6 +71,20 @@
       "when": 1788440656202,
       "tag": "0009_hard_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788442572853,
+      "tag": "0010_strange_wendigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788443170974,
+      "tag": "0011_fix_grants_authenticated",
+      "breakpoints": true
     }
   ]
 }

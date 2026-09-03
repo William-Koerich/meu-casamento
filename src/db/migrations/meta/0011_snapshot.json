@@ -1,0 +1,3331 @@
+{
+  "id": "dd02627d-33dc-45be-8732-673dfbe68df0",
+  "prevId": "d4bcc3f4-f19c-4c8b-9c73-264566126f09",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "auth.users": {
+      "name": "users",
+      "schema": "auth",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email_confirmed_at": {
+          "name": "email_confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone_confirmed_at": {
+          "name": "phone_confirmed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_sign_in_at": {
+          "name": "last_sign_in_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_phone_unique": {
+          "name": "users_phone_unique",
+          "columns": [
+            "phone"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.profiles": {
+      "name": "profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefone": {
+          "name": "telefone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tipo_conta": {
+          "name": "tipo_conta",
+          "type": "tipo_conta",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'noiva'"
+        },
+        "plano_cerimonialista": {
+          "name": "plano_cerimonialista",
+          "type": "plano_cerimonialista",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "profiles_id_users_id_fk": {
+          "name": "profiles_id_users_id_fk",
+          "tableFrom": "profiles",
+          "columnsFrom": [
+            "id"
+          ],
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "profiles_select_propria_ou_equipe": {
+          "name": "profiles_select_propria_ou_equipe",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\n        \"profiles\".\"id\" = (select auth.uid())\n        or exists (\n          select 1\n          from wedding_members eu\n          join wedding_members outra on outra.wedding_id = eu.wedding_id\n          where eu.user_id = (select auth.uid())\n            and eu.convite_aceito_em is not null\n            and outra.user_id = \"profiles\".\"id\"\n            and outra.convite_aceito_em is not null\n        )\n      "
+        },
+        "profiles_insert_propria": {
+          "name": "profiles_insert_propria",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"profiles\".\"id\" = (select auth.uid())"
+        },
+        "profiles_update_propria": {
+          "name": "profiles_update_propria",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"profiles\".\"id\" = (select auth.uid())",
+          "withCheck": "\"profiles\".\"id\" = (select auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.weddings": {
+      "name": "weddings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "owner_id": {
+          "name": "owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome_noiva": {
+          "name": "nome_noiva",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome_noivo": {
+          "name": "nome_noivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data_casamento": {
+          "name": "data_casamento",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hora_cerimonia": {
+          "name": "hora_cerimonia",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "local_cerimonia": {
+          "name": "local_cerimonia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "endereco_cerimonia": {
+          "name": "endereco_cerimonia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "local_festa": {
+          "name": "local_festa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "endereco_festa": {
+          "name": "endereco_festa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cidade": {
+          "name": "cidade",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "orcamento_total": {
+          "name": "orcamento_total",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "convidados_estimados": {
+          "name": "convidados_estimados",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estilo": {
+          "name": "estilo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "historia_casal": {
+          "name": "historia_casal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "foto_capa_url": {
+          "name": "foto_capa_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "foto_capa_posicao_x": {
+          "name": "foto_capa_posicao_x",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 50
+        },
+        "foto_capa_posicao_y": {
+          "name": "foto_capa_posicao_y",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 50
+        },
+        "foto_capa_zoom": {
+          "name": "foto_capa_zoom",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 100
+        },
+        "dress_code": {
+          "name": "dress_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "publicado": {
+          "name": "publicado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "pago": {
+          "name": "pago",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "weddings_owner_id_users_id_fk": {
+          "name": "weddings_owner_id_users_id_fk",
+          "tableFrom": "weddings",
+          "columnsFrom": [
+            "owner_id"
+          ],
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "weddings_slug_unique": {
+          "name": "weddings_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "weddings_select_membros": {
+          "name": "weddings_select_membros",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"weddings\".\"id\"))"
+        },
+        "weddings_select_vitrine_publica": {
+          "name": "weddings_select_vitrine_publica",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "\"weddings\".\"publicado\" = true"
+        },
+        "weddings_insert_dona": {
+          "name": "weddings_insert_dona",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "\"weddings\".\"owner_id\" = (select auth.uid())"
+        },
+        "weddings_update_admin": {
+          "name": "weddings_update_admin",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_admin(\"weddings\".\"id\"))",
+          "withCheck": "(select public.is_wedding_admin(\"weddings\".\"id\"))"
+        },
+        "weddings_delete_dona": {
+          "name": "weddings_delete_dona",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "\"weddings\".\"owner_id\" = (select auth.uid())"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.wedding_members": {
+      "name": "wedding_members",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "papel": {
+          "name": "papel",
+          "type": "papel_membro",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permissao": {
+          "name": "permissao",
+          "type": "permissao_membro",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "convite_email": {
+          "name": "convite_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "convite_token": {
+          "name": "convite_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "convite_aceito_em": {
+          "name": "convite_aceito_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "wedding_members_wedding_id_idx": {
+          "name": "wedding_members_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "wedding_members_user_id_idx": {
+          "name": "wedding_members_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "wedding_members_wedding_id_weddings_id_fk": {
+          "name": "wedding_members_wedding_id_weddings_id_fk",
+          "tableFrom": "wedding_members",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "wedding_members_user_id_users_id_fk": {
+          "name": "wedding_members_user_id_users_id_fk",
+          "tableFrom": "wedding_members",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wedding_members_convite_token_unique": {
+          "name": "wedding_members_convite_token_unique",
+          "columns": [
+            "convite_token"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "wedding_members_select_equipe": {
+          "name": "wedding_members_select_equipe",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"wedding_members\".\"wedding_id\"))"
+        },
+        "wedding_members_select_por_token": {
+          "name": "wedding_members_select_por_token",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon",
+            "authenticated"
+          ],
+          "using": "(convite_token = current_setting('request.invite_token', true))"
+        },
+        "wedding_members_insert_admin": {
+          "name": "wedding_members_insert_admin",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.is_wedding_admin(\"wedding_members\".\"wedding_id\"))"
+        },
+        "wedding_members_update_admin": {
+          "name": "wedding_members_update_admin",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_admin(\"wedding_members\".\"wedding_id\"))",
+          "withCheck": "(select public.is_wedding_admin(\"wedding_members\".\"wedding_id\"))"
+        },
+        "wedding_members_aceitar_convite": {
+          "name": "wedding_members_aceitar_convite",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(convite_token = current_setting('request.invite_token', true)) and \"wedding_members\".\"user_id\" is null",
+          "withCheck": "\"wedding_members\".\"user_id\" = (select auth.uid())"
+        },
+        "wedding_members_delete_admin": {
+          "name": "wedding_members_delete_admin",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_admin(\"wedding_members\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.tasks": {
+      "name": "tasks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "categoria": {
+          "name": "categoria",
+          "type": "categoria",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "meses_antes": {
+          "name": "meses_antes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prazo": {
+          "name": "prazo",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "concluida": {
+          "name": "concluida",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "concluida_em": {
+          "name": "concluida_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "responsavel_id": {
+          "name": "responsavel_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "origem": {
+          "name": "origem",
+          "type": "origem_tarefa",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tasks_wedding_id_idx": {
+          "name": "tasks_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "tasks_responsavel_id_idx": {
+          "name": "tasks_responsavel_id_idx",
+          "columns": [
+            {
+              "expression": "responsavel_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "tasks_wedding_id_weddings_id_fk": {
+          "name": "tasks_wedding_id_weddings_id_fk",
+          "tableFrom": "tasks",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "tasks_responsavel_id_users_id_fk": {
+          "name": "tasks_responsavel_id_users_id_fk",
+          "tableFrom": "tasks",
+          "columnsFrom": [
+            "responsavel_id"
+          ],
+          "tableTo": "users",
+          "schemaTo": "auth",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tasks_select": {
+          "name": "tasks_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"tasks\".\"wedding_id\"))"
+        },
+        "tasks_insert": {
+          "name": "tasks_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"tasks\".\"wedding_id\"))"
+        },
+        "tasks_update": {
+          "name": "tasks_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"tasks\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"tasks\".\"wedding_id\"))"
+        },
+        "tasks_delete": {
+          "name": "tasks_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"tasks\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.vendors": {
+      "name": "vendors",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "categoria": {
+          "name": "categoria",
+          "type": "categoria",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contato_nome": {
+          "name": "contato_nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefone": {
+          "name": "telefone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instagram": {
+          "name": "instagram",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "site": {
+          "name": "site",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valor_proposto": {
+          "name": "valor_proposto",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "status_fornecedor",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pesquisando'"
+        },
+        "avaliacao": {
+          "name": "avaliacao",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observacoes": {
+          "name": "observacoes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "vendors_wedding_id_idx": {
+          "name": "vendors_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "vendors_wedding_id_weddings_id_fk": {
+          "name": "vendors_wedding_id_weddings_id_fk",
+          "tableFrom": "vendors",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "vendors_select": {
+          "name": "vendors_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"vendors\".\"wedding_id\"))"
+        },
+        "vendors_insert": {
+          "name": "vendors_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"vendors\".\"wedding_id\"))"
+        },
+        "vendors_update": {
+          "name": "vendors_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"vendors\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"vendors\".\"wedding_id\"))"
+        },
+        "vendors_delete": {
+          "name": "vendors_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"vendors\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.budget_categories": {
+      "name": "budget_categories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor_previsto": {
+          "name": "valor_previsto",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cor": {
+          "name": "cor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "budget_categories_wedding_id_idx": {
+          "name": "budget_categories_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "budget_categories_wedding_id_weddings_id_fk": {
+          "name": "budget_categories_wedding_id_weddings_id_fk",
+          "tableFrom": "budget_categories",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "budget_categories_select": {
+          "name": "budget_categories_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"budget_categories\".\"wedding_id\"))"
+        },
+        "budget_categories_insert": {
+          "name": "budget_categories_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"budget_categories\".\"wedding_id\"))"
+        },
+        "budget_categories_update": {
+          "name": "budget_categories_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"budget_categories\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"budget_categories\".\"wedding_id\"))"
+        },
+        "budget_categories_delete": {
+          "name": "budget_categories_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"budget_categories\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.budget_items": {
+      "name": "budget_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vendor_id": {
+          "name": "vendor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor_previsto": {
+          "name": "valor_previsto",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valor_contratado": {
+          "name": "valor_contratado",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "budget_items_wedding_id_idx": {
+          "name": "budget_items_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "budget_items_category_id_idx": {
+          "name": "budget_items_category_id_idx",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "budget_items_vendor_id_idx": {
+          "name": "budget_items_vendor_id_idx",
+          "columns": [
+            {
+              "expression": "vendor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "budget_items_wedding_id_weddings_id_fk": {
+          "name": "budget_items_wedding_id_weddings_id_fk",
+          "tableFrom": "budget_items",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "budget_items_category_id_budget_categories_id_fk": {
+          "name": "budget_items_category_id_budget_categories_id_fk",
+          "tableFrom": "budget_items",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "tableTo": "budget_categories",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "budget_items_vendor_id_vendors_id_fk": {
+          "name": "budget_items_vendor_id_vendors_id_fk",
+          "tableFrom": "budget_items",
+          "columnsFrom": [
+            "vendor_id"
+          ],
+          "tableTo": "vendors",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "budget_items_select": {
+          "name": "budget_items_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"budget_items\".\"wedding_id\"))"
+        },
+        "budget_items_insert": {
+          "name": "budget_items_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"budget_items\".\"wedding_id\"))"
+        },
+        "budget_items_update": {
+          "name": "budget_items_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"budget_items\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"budget_items\".\"wedding_id\"))"
+        },
+        "budget_items_delete": {
+          "name": "budget_items_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"budget_items\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.payments": {
+      "name": "payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "budget_item_id": {
+          "name": "budget_item_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor": {
+          "name": "valor",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vencimento": {
+          "name": "vencimento",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pago": {
+          "name": "pago",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "pago_em": {
+          "name": "pago_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "forma_pagamento": {
+          "name": "forma_pagamento",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "payments_wedding_id_idx": {
+          "name": "payments_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "payments_budget_item_id_idx": {
+          "name": "payments_budget_item_id_idx",
+          "columns": [
+            {
+              "expression": "budget_item_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "payments_wedding_id_weddings_id_fk": {
+          "name": "payments_wedding_id_weddings_id_fk",
+          "tableFrom": "payments",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "payments_budget_item_id_budget_items_id_fk": {
+          "name": "payments_budget_item_id_budget_items_id_fk",
+          "tableFrom": "payments",
+          "columnsFrom": [
+            "budget_item_id"
+          ],
+          "tableTo": "budget_items",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "payments_select": {
+          "name": "payments_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"payments\".\"wedding_id\"))"
+        },
+        "payments_insert": {
+          "name": "payments_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"payments\".\"wedding_id\"))"
+        },
+        "payments_update": {
+          "name": "payments_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"payments\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"payments\".\"wedding_id\"))"
+        },
+        "payments_delete": {
+          "name": "payments_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"payments\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.tables": {
+      "name": "tables",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capacidade": {
+          "name": "capacidade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "formato": {
+          "name": "formato",
+          "type": "formato_mesa",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'redonda'"
+        },
+        "pos_x": {
+          "name": "pos_x",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "pos_y": {
+          "name": "pos_y",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "tables_wedding_id_idx": {
+          "name": "tables_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "tables_wedding_id_weddings_id_fk": {
+          "name": "tables_wedding_id_weddings_id_fk",
+          "tableFrom": "tables",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "tables_select": {
+          "name": "tables_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"tables\".\"wedding_id\"))"
+        },
+        "tables_insert": {
+          "name": "tables_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"tables\".\"wedding_id\"))"
+        },
+        "tables_update": {
+          "name": "tables_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"tables\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"tables\".\"wedding_id\"))"
+        },
+        "tables_delete": {
+          "name": "tables_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"tables\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.guests": {
+      "name": "guests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefone": {
+          "name": "telefone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grupo": {
+          "name": "grupo",
+          "type": "grupo_convidado",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lado": {
+          "name": "lado",
+          "type": "lado_convidado",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "acompanhantes": {
+          "name": "acompanhantes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "crianca": {
+          "name": "crianca",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "restricao_alimentar": {
+          "name": "restricao_alimentar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status_rsvp": {
+          "name": "status_rsvp",
+          "type": "status_rsvp",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pendente'"
+        },
+        "respondido_em": {
+          "name": "respondido_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "table_id": {
+          "name": "table_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "convite_enviado_em": {
+          "name": "convite_enviado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "codigo_rsvp": {
+          "name": "codigo_rsvp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observacoes": {
+          "name": "observacoes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guests_wedding_id_idx": {
+          "name": "guests_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "guests_table_id_idx": {
+          "name": "guests_table_id_idx",
+          "columns": [
+            {
+              "expression": "table_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "guests_wedding_id_weddings_id_fk": {
+          "name": "guests_wedding_id_weddings_id_fk",
+          "tableFrom": "guests",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "guests_table_id_tables_id_fk": {
+          "name": "guests_table_id_tables_id_fk",
+          "tableFrom": "guests",
+          "columnsFrom": [
+            "table_id"
+          ],
+          "tableTo": "tables",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guests_codigo_rsvp_unique": {
+          "name": "guests_codigo_rsvp_unique",
+          "columns": [
+            "codigo_rsvp"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "guests_select": {
+          "name": "guests_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"guests\".\"wedding_id\"))"
+        },
+        "guests_insert": {
+          "name": "guests_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"guests\".\"wedding_id\"))"
+        },
+        "guests_update": {
+          "name": "guests_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"guests\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"guests\".\"wedding_id\"))"
+        },
+        "guests_delete": {
+          "name": "guests_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"guests\".\"wedding_id\"))"
+        },
+        "guests_rsvp_publico_select": {
+          "name": "guests_rsvp_publico_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "(codigo_rsvp = current_setting('request.guest_code', true))"
+        },
+        "guests_rsvp_publico_update": {
+          "name": "guests_rsvp_publico_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "anon"
+          ],
+          "using": "(codigo_rsvp = current_setting('request.guest_code', true))",
+          "withCheck": "(codigo_rsvp = current_setting('request.guest_code', true))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.timeline_events": {
+      "name": "timeline_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "horario": {
+          "name": "horario",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duracao_minutos": {
+          "name": "duracao_minutos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 30
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "responsavel": {
+          "name": "responsavel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "local": {
+          "name": "local",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "timeline_events_wedding_id_idx": {
+          "name": "timeline_events_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "timeline_events_wedding_id_weddings_id_fk": {
+          "name": "timeline_events_wedding_id_weddings_id_fk",
+          "tableFrom": "timeline_events",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "timeline_events_select": {
+          "name": "timeline_events_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"timeline_events\".\"wedding_id\"))"
+        },
+        "timeline_events_insert": {
+          "name": "timeline_events_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"timeline_events\".\"wedding_id\"))"
+        },
+        "timeline_events_update": {
+          "name": "timeline_events_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"timeline_events\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"timeline_events\".\"wedding_id\"))"
+        },
+        "timeline_events_delete": {
+          "name": "timeline_events_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"timeline_events\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.inspirations": {
+      "name": "inspirations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "imagem_url": {
+          "name": "imagem_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "link_externo": {
+          "name": "link_externo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "categoria": {
+          "name": "categoria",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "inspirations_wedding_id_idx": {
+          "name": "inspirations_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "inspirations_wedding_id_weddings_id_fk": {
+          "name": "inspirations_wedding_id_weddings_id_fk",
+          "tableFrom": "inspirations",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "inspirations_select": {
+          "name": "inspirations_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"inspirations\".\"wedding_id\"))"
+        },
+        "inspirations_insert": {
+          "name": "inspirations_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"inspirations\".\"wedding_id\"))"
+        },
+        "inspirations_update": {
+          "name": "inspirations_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"inspirations\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"inspirations\".\"wedding_id\"))"
+        },
+        "inspirations_delete": {
+          "name": "inspirations_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"inspirations\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.songs": {
+      "name": "songs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "titulo": {
+          "name": "titulo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "artista": {
+          "name": "artista",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "momento": {
+          "name": "momento",
+          "type": "momento_musica",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "spotify_url": {
+          "name": "spotify_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "songs_wedding_id_idx": {
+          "name": "songs_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "songs_wedding_id_weddings_id_fk": {
+          "name": "songs_wedding_id_weddings_id_fk",
+          "tableFrom": "songs",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "songs_select": {
+          "name": "songs_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"songs\".\"wedding_id\"))"
+        },
+        "songs_insert": {
+          "name": "songs_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"songs\".\"wedding_id\"))"
+        },
+        "songs_update": {
+          "name": "songs_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"songs\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"songs\".\"wedding_id\"))"
+        },
+        "songs_delete": {
+          "name": "songs_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"songs\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.gifts": {
+      "name": "gifts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descricao": {
+          "name": "descricao",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "imagem_url": {
+          "name": "imagem_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preco": {
+          "name": "preco",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "link_loja": {
+          "name": "link_loja",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chave_pix": {
+          "name": "chave_pix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reservado_por_nome": {
+          "name": "reservado_por_nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reservado_por_email": {
+          "name": "reservado_por_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reservado_em": {
+          "name": "reservado_em",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recebido": {
+          "name": "recebido",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "gifts_wedding_id_idx": {
+          "name": "gifts_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "gifts_wedding_id_weddings_id_fk": {
+          "name": "gifts_wedding_id_weddings_id_fk",
+          "tableFrom": "gifts",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "gifts_select": {
+          "name": "gifts_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"gifts\".\"wedding_id\"))"
+        },
+        "gifts_insert": {
+          "name": "gifts_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"gifts\".\"wedding_id\"))"
+        },
+        "gifts_update": {
+          "name": "gifts_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"gifts\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"gifts\".\"wedding_id\"))"
+        },
+        "gifts_delete": {
+          "name": "gifts_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"gifts\".\"wedding_id\"))"
+        },
+        "gifts_publico_select": {
+          "name": "gifts_publico_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "exists (select 1 from weddings w where w.id = \"gifts\".\"wedding_id\" and w.publicado = true)"
+        },
+        "gifts_publico_reservar": {
+          "name": "gifts_publico_reservar",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "anon"
+          ],
+          "using": "\n        reservado_por_email is null\n        and exists (select 1 from weddings w where w.id = \"gifts\".\"wedding_id\" and w.publicado = true)\n      ",
+          "withCheck": "exists (select 1 from weddings w where w.id = \"gifts\".\"wedding_id\" and w.publicado = true)"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.trousseau_items": {
+      "name": "trousseau_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comodo": {
+          "name": "comodo",
+          "type": "comodo_enxoval",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantidade": {
+          "name": "quantidade",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "prioridade": {
+          "name": "prioridade",
+          "type": "prioridade_enxoval",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'media'"
+        },
+        "preco_estimado": {
+          "name": "preco_estimado",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comprado": {
+          "name": "comprado",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "trousseau_items_wedding_id_idx": {
+          "name": "trousseau_items_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "trousseau_items_wedding_id_weddings_id_fk": {
+          "name": "trousseau_items_wedding_id_weddings_id_fk",
+          "tableFrom": "trousseau_items",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "trousseau_items_select": {
+          "name": "trousseau_items_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"trousseau_items\".\"wedding_id\"))"
+        },
+        "trousseau_items_insert": {
+          "name": "trousseau_items_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"trousseau_items\".\"wedding_id\"))"
+        },
+        "trousseau_items_update": {
+          "name": "trousseau_items_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"trousseau_items\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"trousseau_items\".\"wedding_id\"))"
+        },
+        "trousseau_items_delete": {
+          "name": "trousseau_items_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"trousseau_items\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.honeymoon": {
+      "name": "honeymoon",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destino": {
+          "name": "destino",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_ida": {
+          "name": "data_ida",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data_volta": {
+          "name": "data_volta",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "orcamento": {
+          "name": "orcamento",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "roteiro": {
+          "name": "roteiro",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "checklist_mala": {
+          "name": "checklist_mala",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "honeymoon_wedding_id_weddings_id_fk": {
+          "name": "honeymoon_wedding_id_weddings_id_fk",
+          "tableFrom": "honeymoon",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "honeymoon_wedding_id_unique": {
+          "name": "honeymoon_wedding_id_unique",
+          "columns": [
+            "wedding_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {
+        "honeymoon_select": {
+          "name": "honeymoon_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"honeymoon\".\"wedding_id\"))"
+        },
+        "honeymoon_insert": {
+          "name": "honeymoon_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"honeymoon\".\"wedding_id\"))"
+        },
+        "honeymoon_update": {
+          "name": "honeymoon_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"honeymoon\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"honeymoon\".\"wedding_id\"))"
+        },
+        "honeymoon_delete": {
+          "name": "honeymoon_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"honeymoon\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.documents": {
+      "name": "documents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome": {
+          "name": "nome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "tipo_documento",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "arquivo_url": {
+          "name": "arquivo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vendor_id": {
+          "name": "vendor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "documents_wedding_id_idx": {
+          "name": "documents_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "documents_vendor_id_idx": {
+          "name": "documents_vendor_id_idx",
+          "columns": [
+            {
+              "expression": "vendor_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "documents_wedding_id_weddings_id_fk": {
+          "name": "documents_wedding_id_weddings_id_fk",
+          "tableFrom": "documents",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "documents_vendor_id_vendors_id_fk": {
+          "name": "documents_vendor_id_vendors_id_fk",
+          "tableFrom": "documents",
+          "columnsFrom": [
+            "vendor_id"
+          ],
+          "tableTo": "vendors",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "documents_select": {
+          "name": "documents_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"documents\".\"wedding_id\"))"
+        },
+        "documents_insert": {
+          "name": "documents_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"documents\".\"wedding_id\"))"
+        },
+        "documents_update": {
+          "name": "documents_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"documents\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"documents\".\"wedding_id\"))"
+        },
+        "documents_delete": {
+          "name": "documents_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"documents\".\"wedding_id\"))"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.guest_photos": {
+      "name": "guest_photos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "caminho": {
+          "name": "caminho",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nome_convidado": {
+          "name": "nome_convidado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guest_photos_wedding_id_idx": {
+          "name": "guest_photos_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "guest_photos_wedding_id_weddings_id_fk": {
+          "name": "guest_photos_wedding_id_weddings_id_fk",
+          "tableFrom": "guest_photos",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "guest_photos_select": {
+          "name": "guest_photos_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"guest_photos\".\"wedding_id\"))"
+        },
+        "guest_photos_insert": {
+          "name": "guest_photos_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"guest_photos\".\"wedding_id\"))"
+        },
+        "guest_photos_update": {
+          "name": "guest_photos_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"guest_photos\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"guest_photos\".\"wedding_id\"))"
+        },
+        "guest_photos_delete": {
+          "name": "guest_photos_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"guest_photos\".\"wedding_id\"))"
+        },
+        "guest_photos_publico_insert": {
+          "name": "guest_photos_publico_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "anon"
+          ],
+          "withCheck": "exists (select 1 from weddings w where w.id = \"guest_photos\".\"wedding_id\" and w.publicado = true)"
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    },
+    "public.page_blocks": {
+      "name": "page_blocks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "wedding_id": {
+          "name": "wedding_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "block_tipo",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ordem": {
+          "name": "ordem",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "visivel": {
+          "name": "visivel",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "config": {
+          "name": "config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "page_blocks_wedding_id_idx": {
+          "name": "page_blocks_wedding_id_idx",
+          "columns": [
+            {
+              "expression": "wedding_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "page_blocks_wedding_id_weddings_id_fk": {
+          "name": "page_blocks_wedding_id_weddings_id_fk",
+          "tableFrom": "page_blocks",
+          "columnsFrom": [
+            "wedding_id"
+          ],
+          "tableTo": "weddings",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {
+        "page_blocks_select": {
+          "name": "page_blocks_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.is_wedding_member(\"page_blocks\".\"wedding_id\"))"
+        },
+        "page_blocks_insert": {
+          "name": "page_blocks_insert",
+          "as": "PERMISSIVE",
+          "for": "INSERT",
+          "to": [
+            "authenticated"
+          ],
+          "withCheck": "(select public.can_edit_wedding(\"page_blocks\".\"wedding_id\"))"
+        },
+        "page_blocks_update": {
+          "name": "page_blocks_update",
+          "as": "PERMISSIVE",
+          "for": "UPDATE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"page_blocks\".\"wedding_id\"))",
+          "withCheck": "(select public.can_edit_wedding(\"page_blocks\".\"wedding_id\"))"
+        },
+        "page_blocks_delete": {
+          "name": "page_blocks_delete",
+          "as": "PERMISSIVE",
+          "for": "DELETE",
+          "to": [
+            "authenticated"
+          ],
+          "using": "(select public.can_edit_wedding(\"page_blocks\".\"wedding_id\"))"
+        },
+        "page_blocks_publico_select": {
+          "name": "page_blocks_publico_select",
+          "as": "PERMISSIVE",
+          "for": "SELECT",
+          "to": [
+            "anon"
+          ],
+          "using": "\n        \"page_blocks\".\"visivel\" = true\n        and exists (select 1 from weddings w where w.id = \"page_blocks\".\"wedding_id\" and w.publicado = true)\n      "
+        }
+      },
+      "checkConstraints": {},
+      "isRLSEnabled": true
+    }
+  },
+  "enums": {
+    "public.block_tipo": {
+      "name": "block_tipo",
+      "schema": "public",
+      "values": [
+        "historia",
+        "nav_rsvp",
+        "nav_presentes",
+        "nav_local",
+        "foto",
+        "galeria",
+        "texto"
+      ]
+    },
+    "public.categoria": {
+      "name": "categoria",
+      "schema": "public",
+      "values": [
+        "local",
+        "buffet",
+        "decoracao",
+        "fotografia",
+        "vestuario",
+        "beleza",
+        "musica",
+        "convites",
+        "documentacao",
+        "transporte",
+        "lembrancinhas",
+        "bolo_doces",
+        "cerimonial",
+        "lua_de_mel",
+        "outros"
+      ]
+    },
+    "public.comodo_enxoval": {
+      "name": "comodo_enxoval",
+      "schema": "public",
+      "values": [
+        "cozinha",
+        "sala",
+        "quarto",
+        "banheiro",
+        "lavanderia",
+        "area_externa",
+        "outros"
+      ]
+    },
+    "public.formato_mesa": {
+      "name": "formato_mesa",
+      "schema": "public",
+      "values": [
+        "redonda",
+        "retangular",
+        "imperial"
+      ]
+    },
+    "public.grupo_convidado": {
+      "name": "grupo_convidado",
+      "schema": "public",
+      "values": [
+        "familia_noiva",
+        "familia_noivo",
+        "amigos_noiva",
+        "amigos_noivo",
+        "trabalho",
+        "outros"
+      ]
+    },
+    "public.lado_convidado": {
+      "name": "lado_convidado",
+      "schema": "public",
+      "values": [
+        "noiva",
+        "noivo",
+        "ambos"
+      ]
+    },
+    "public.momento_musica": {
+      "name": "momento_musica",
+      "schema": "public",
+      "values": [
+        "entrada_noivo",
+        "entrada_padrinhos",
+        "entrada_noiva",
+        "durante_cerimonia",
+        "saida",
+        "recepcao",
+        "valsa",
+        "festa",
+        "nunca_tocar"
+      ]
+    },
+    "public.origem_tarefa": {
+      "name": "origem_tarefa",
+      "schema": "public",
+      "values": [
+        "template",
+        "manual"
+      ]
+    },
+    "public.papel_membro": {
+      "name": "papel_membro",
+      "schema": "public",
+      "values": [
+        "dona",
+        "noivo",
+        "familiar",
+        "padrinho_madrinha",
+        "cerimonialista"
+      ]
+    },
+    "public.permissao_membro": {
+      "name": "permissao_membro",
+      "schema": "public",
+      "values": [
+        "admin",
+        "editor",
+        "leitor"
+      ]
+    },
+    "public.plano_cerimonialista": {
+      "name": "plano_cerimonialista",
+      "schema": "public",
+      "values": [
+        "basico",
+        "premium",
+        "platinum"
+      ]
+    },
+    "public.prioridade_enxoval": {
+      "name": "prioridade_enxoval",
+      "schema": "public",
+      "values": [
+        "alta",
+        "media",
+        "baixa"
+      ]
+    },
+    "public.status_fornecedor": {
+      "name": "status_fornecedor",
+      "schema": "public",
+      "values": [
+        "pesquisando",
+        "contatado",
+        "proposta_recebida",
+        "contratado",
+        "descartado"
+      ]
+    },
+    "public.status_rsvp": {
+      "name": "status_rsvp",
+      "schema": "public",
+      "values": [
+        "pendente",
+        "confirmado",
+        "recusado"
+      ]
+    },
+    "public.tipo_conta": {
+      "name": "tipo_conta",
+      "schema": "public",
+      "values": [
+        "noiva",
+        "cerimonialista"
+      ]
+    },
+    "public.tipo_documento": {
+      "name": "tipo_documento",
+      "schema": "public",
+      "values": [
+        "contrato",
+        "certidao",
+        "orcamento",
+        "recibo",
+        "outro"
+      ]
+    }
+  },
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

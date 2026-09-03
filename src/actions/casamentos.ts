@@ -51,13 +51,22 @@ export async function criarCasamento(input: unknown): Promise<ResultadoAction> {
     return { erro: "Só contas de cerimonialista podem cadastrar mais de um casamento." }
   }
 
+  // Null aqui = sem assinatura ativa (nunca assinou, ou cancelou) — bloqueia
+  // total, diferente de limiteAtingido(null, ...) que devolveria "false"
+  // (esse helper é genérico; quem decide o que "sem plano" significa é
+  // cada chamador — aqui, silêncio total até assinar).
+  if (!perfil.planoCerimonialista) {
+    return {
+      erro: "Assine um plano para cadastrar casamentos. Veja os planos em /planos.",
+    }
+  }
+
   const casamentosAtuais = await getMeusCasamentos()
   if (limiteAtingido(perfil.planoCerimonialista, casamentosAtuais.length)) {
-    const plano = perfil.planoCerimonialista
-    const limite = plano ? LIMITE_CASAMENTOS_POR_PLANO[plano] : null
-    const nomePlano = plano ? PLANO_CERIMONIALISTA_LABELS[plano] : "atual"
+    const limite = LIMITE_CASAMENTOS_POR_PLANO[perfil.planoCerimonialista]
+    const nomePlano = PLANO_CERIMONIALISTA_LABELS[perfil.planoCerimonialista]
     return {
-      erro: `Seu plano ${nomePlano} permite até ${limite} casamentos simultâneos. Fale com a gente para fazer upgrade.`,
+      erro: `Seu plano ${nomePlano} permite até ${limite} casamentos simultâneos. Veja como fazer upgrade em /planos.`,
     }
   }
 
@@ -81,6 +90,10 @@ export async function criarCasamento(input: unknown): Promise<ResultadoAction> {
           nomeNoiva: dados.data.nomeNoiva,
           nomeNoivo: dados.data.nomeNoivo,
           slug: gerarSlugUnico(dados.data.nomeNoiva, dados.data.nomeNoivo),
+          // Coberto pela assinatura da cerimonialista, não pelo pagamento
+          // único da noiva (ver weddings.pago) — sem isso o valor default
+          // (false) bloquearia o casamento no gate de /pagamento à toa.
+          pago: true,
         })
       )
       novoId = idTentativa

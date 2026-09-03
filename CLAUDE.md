@@ -64,6 +64,10 @@ clientes Drizzle, nunca a service key:
    restrito a `drizzle-kit` (migrations) e `src/db/seed.ts`. **Nunca** importar
    em código que atende requisição de usuário — a role de conexão não tem as
    políticas de RLS aplicadas da mesma forma que a role `authenticated`.
+   Duas exceções pontuais, ambas documentadas em "Fase 14 — Pagamentos via
+   Stripe": o webhook do Stripe (sem sessão de usuária pra passar por
+   `rls()`) e a escrita de `profiles.stripeCustomerId` (coluna com UPDATE
+   revogado da role `authenticated` de propósito).
 2. `src/db/rls.ts` (`createDrizzleSupabaseClient().rls(callback)`) — uso em
    toda Server Action e Server Component que lê/grava dado do casamento. Abre
    uma transação Postgres, aplica `set_config('request.jwt.claims', ...)` e
@@ -587,6 +591,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
 - [x] **Fase 12 — Conta cerimonialista (multi-casamento)** (`/casamentos`).
 - [x] **Fase 13 — Planos e preços** (noiva: pagamento único; cerimonialista:
       Básico/Premium/Platinum mensais).
+- [x] **Fase 14 — Pagamentos via Stripe** (checkout, webhook, `/pagamento`,
+      `/planos`) — modo teste, sem CNPJ validado ainda.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -870,6 +876,132 @@ Premium, Platinum), preço e limite diferentes cada um.
   trigger grava `plano_cerimonialista = 'basico'` pra conta cerimonialista
   nova e `null` pra conta noiva; 5 casamentos (limite do Básico) são
   criados e contados corretamente via RLS.
+
+## Fase 14 — Pagamentos via Stripe
+
+Pedido explícito: integrar o Stripe de verdade (checkout + webhook) pros 2
+modelos de cobrança definidos na Fase 13. **Modo teste** (chaves
+`sk_test_`/`pk_test_`) — o CNPJ da dona ainda está em processo; trocar pras
+chaves de produção quando existir conta Stripe validada, sem mudar nenhuma
+linha de código (só as env vars).
+
+- **`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` guardada mas não usada ainda**: o
+  checkout é 100% hosted (Server Action cria a Session e redireciona pra
+  URL do Stripe) — não tem Stripe.js/Elements embutido no front, que é o
+  único caso que precisaria da chave pública. Guardada no `.env` pra
+  quando/se algum dia trocar pra checkout embutido.
+- **Produtos/preços criados uma vez via script** (`scripts/stripe-setup.ts`,
+  `npm run stripe:setup`), não no Dashboard manualmente — usa
+  `src/lib/planos.ts` como fonte dos valores (mesma fonte da página de
+  preços e do limite aplicado no app, nunca 3 lugares divergentes) e
+  `lookup_key` pra ser idempotente (rodar de novo não duplica produto).
+- **Gate de pagamento decidido com o usuário antes de implementar** (3
+  perguntas — muda semântica de acesso pra quem já usa o app):
+  contas que já existiam (inclusive o casamento de produção da dona) foram
+  **grandfatheadas como pagas** — `weddings.pago` nasceu com `default true`
+  na migration (backfill de quem já existia) e só depois o default virou
+  `false` pra casamento novo dali pra frente. Noiva paga **depois** do
+  wizard de onboarding inteiro, só ao tentar entrar em `/app` — ela já viu
+  o valor do produto preenchido antes de decidir pagar. Cerimonialista com
+  assinatura cancelada só perde a capacidade de cadastrar casamento novo —
+  os que já tinha continuam intactos e acessíveis.
+- **`weddings.pago`** (boolean): gate do pagamento único da noiva, checado
+  em `(app)/app/layout.tsx` — só se aplica a casamento de conta noiva;
+  casamento criado por conta cerimonialista já nasce com `pago: true`
+  (coberto pela assinatura dela, não por uma cobrança avulsa por
+  casamento).
+- **Cerimonialista deixou de ganhar plano "basico" de graça no cadastro**:
+  a Fase 12/13 auto-atribuía `basico` a toda conta cerimonialista nova
+  (`handle_new_user`); agora que existe cobrança de verdade, ela nasce
+  **sem plano** (`plano_cerimonialista = null`) e só ganha um quando o
+  webhook confirmar a primeira assinatura. `criarCasamento` trata
+  `null` como bloqueio total (nunca assinou ou cancelou) — diferente de
+  `limiteAtingido(null, ...)`, que por si só devolveria "sem limite"; quem
+  decide o que "sem plano" significa é o chamador. Contas cerimonialista
+  que já tinham `basico` de graça de antes desta fase **não foram
+  mexidas** (mesmo espírito de grandfathering do `weddings.pago` acima).
+- **Correlação webhook → conta/casamento é só por `metadata`, sem tabela de
+  mapeamento**: checkout de pagamento único carrega
+  `metadata: { tipo: "noiva", weddingId }` direto na Session; checkout de
+  assinatura grava o metadata em `subscription_data.metadata` (não só na
+  Session) — isso persiste no objeto `subscription` em si, então **todo
+  evento futuro** sobre aquela assinatura (renovação, cancelamento) já
+  chega com `userId`/`plano` de graça, sem precisar consultar nada. A
+  única coisa que precisou de bookkeeping próprio foi
+  `profiles.stripeCustomerId` (pro botão "Gerenciar assinatura" —
+  `stripe.billingPortal.sessions.create` exige um customer id).
+- **`profiles.stripeCustomerId` é a única escrita de Server Action que usa
+  o client administrativo (`db`, normalmente restrito a migrations/seed —
+  ver "Acesso a dados" no topo deste arquivo)**: essa coluna teve UPDATE
+  revogado da role `authenticated` (ver hardening abaixo), então nem o
+  próprio código do app consegue mais gravá-la via `rls()`. É bookkeeping
+  de sistema, não dado de negócio do casamento, e a linha afetada é sempre
+  a da própria usuária autenticada (`user.id` vem da sessão verificada do
+  Supabase, nunca de input do cliente) — documentado com o mesmo cuidado
+  em `src/db/index.ts`. O webhook (`src/app/api/stripe/webhook/route.ts`)
+  é a segunda exceção: não tem sessão de usuária pra passar por `rls()`
+  (é o Stripe chamando o servidor, não uma pessoa logada), autenticidade
+  vem só da assinatura HMAC (`stripe.webhooks.constructEvent`) verificada
+  antes de qualquer escrita.
+- **Bug de segurança real encontrado só testando contra o Postgres de
+  verdade** (mesma categoria dos outros já documentados neste arquivo — só
+  aparece com banco real, nunca em build/typecheck/lint): a primeira
+  tentativa de bloquear `weddings.pago`/`profiles.planoCerimonialista` de
+  edição pela própria usuária foi
+  `revoke update (coluna) on tabela from authenticated` — e isso **não
+  teve efeito nenhum**. Causa: `authenticated` já tinha UPDATE concedido a
+  nível de **tabela inteira** (grant padrão do Supabase); no modelo de ACL
+  do Postgres, revogar uma coluna específica só desfaz algo que tivesse
+  sido concedido naquele mesmo nível de coluna — não recorta uma exceção
+  de dentro de um grant mais amplo já existente. Confirmado com uma
+  consulta direta a `information_schema.column_privileges` depois de
+  aplicar a migration: as 4 colunas sensíveis continuavam com UPDATE
+  liberado pra `authenticated`, ou seja, **qualquer conta autenticada
+  podia chamar a REST API do Supabase diretamente (por fora deste app,
+  sem passar por nenhuma Server Action) e se autoconceder pagamento ou
+  plano de graça**. Corrigido numa migration de fix (mesmo padrão já usado
+  pra `anon` desde a Fase 2): `revoke update on tabela from authenticated`
+  (tabela inteira, só o UPDATE) seguido de `grant update (lista exata de
+  colunas editáveis) on tabela to authenticated`. De brinde, `owner_id` de
+  `weddings` ficou de fora da lista de colunas liberadas — fecha uma
+  brecha que já existia antes desta fase (um membro "admin" via
+  `wedding_members`, sem ser a dona, podia em tese tentar se autoconceder
+  a propriedade do casamento com um update direto).
+- **Verificado com RLS de verdade contra produção, em 2 camadas** (script
+  com rollback forçado, uma transação isolada por cenário — descoberto que
+  reaproveitar a mesma transação depois de um erro esperado engana o
+  teste; melhor
+  isolar cada asserção): (1) `authenticated` continua editando colunas
+  normais (`weddings.nomeNoiva`, `profiles.nome`) depois do hardening —
+  nada quebrou; `authenticated` é bloqueado de setar `pago`/`planoCerimonialista`
+  direto, tanto em `weddings` quanto em `profiles`. (2) Webhook de ponta a
+  ponta contra o servidor `next dev` rodando de verdade: eventos
+  `checkout.session.completed`/`customer.subscription.created`/`deleted`
+  assinados de verdade (`stripe.webhooks.generateTestHeaderString`) e
+  enviados por HTTP pro endpoint real — `weddings.pago` e
+  `profiles.planoCerimonialista` mudam exatamente como esperado, e uma
+  assinatura forjada é rejeitada com 400 antes de qualquer escrita.
+- **Teste local do webhook**: `stripe listen --forward-to
+localhost:3000/api/stripe/webhook` (Stripe CLI, instalado via
+  `brew install stripe/stripe-cli/stripe`) imprime um `whsec_...` — vai em
+  `STRIPE_WEBHOOK_SECRET` no `.env.local`. Em produção/Vercel, o mesmo
+  endpoint é cadastrado no Dashboard (Developers > Webhooks) apontando pra
+  URL de produção, com seu próprio `whsec_` — variável de ambiente
+  diferente da local, mesma forma de configurar (Vercel env vars).
+- **`/pagamento/sucesso` não confirma nada sozinha**: o layout pai
+  (`/pagamento/layout.tsx`) já redireciona pra `/app` assim que
+  `wedding.pago` vira `true` — a página de sucesso só existe pra cobrir o
+  intervalo entre o redirect do Stripe de volta e o webhook chegar
+  (tipicamente 1-2s), com um `router.refresh()` a cada 2s até o layout
+  pegar a mudança. Nunca se confia no redirect de sucesso do Checkout por
+  si só pra liberar acesso — só o webhook, confirmado pela assinatura,
+  decide isso.
+- **"Gerenciar assinatura" usa o Customer Portal padrão do Stripe**
+  (`stripe.billingPortal.sessions.create`), sem UI própria de trocar
+  cartão/cancelar — cobre cancelamento e atualização de pagamento de
+  imediato; trocar de plano pelo portal (em vez de assinar um novo) exige
+  habilitar "subscription update" na configuração do portal no Dashboard
+  do Stripe, não feito nesta fase (ainda em modo teste).
 
 ## Como rodar localmente
 
