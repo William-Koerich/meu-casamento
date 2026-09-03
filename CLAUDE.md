@@ -541,6 +541,23 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
     `(app)/app`) — a página pública do casal (`/c/[slug]`) e o marketing
     mantêm a paleta clara fixa de propósito (ver decisão de Paleta acima),
     sem toggle.
+- **Convite de equipe sem e-mail de verdade nunca expunha o link pra dona
+  enviar**: `convidarMembro` (Equipe) sempre gerou um `conviteToken`
+  (`/convite/[token]`), mas o retorno da Server Action descartava o token e
+  o diálogo só fechava com "Convidado com sucesso" — não existe envio de
+  e-mail automático (diferente do que "convidar por e-mail" sugere), então
+  a pessoa convidada nunca recebia nada e não tinha como saber que existia
+  um convite esperando por ela ou "logar" em algo. Corrigido em duas
+  frentes: (1) `convidarMembro` agora devolve o `conviteToken`, e o
+  diálogo, ao criar o convite, mostra o link `/convite/[token]` pronto pra
+  copiar (mesma ideia do link de RSVP dos convidados, Fase 6) em vez de só
+  fechar; (2) cada linha "Convite pendente" em `/app/equipe` ganhou um
+  botão "Copiar link" próprio, pra recuperar o link depois caso a dona
+  feche o diálogo sem copiar. O fluxo em si (a pessoa abre o link, cria
+  conta com o e-mail que quiser — não precisa bater com o e-mail digitado
+  no convite, o token secreto é que autoriza — e `aceitarConvite` já
+  vincula o `user_id`) já funcionava desde a Fase 3; faltava só a dona
+  conseguir entregar o link.
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,
