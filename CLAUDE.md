@@ -1,8 +1,9 @@
-# CLAUDE.md — Meu Casamento
+# CLAUDE.md — Organiza meu Casamento
 
-SaaS de planejamento de casamento em português do Brasil. "Meu Casamento" é
-nome provisório — está isolado em `src/lib/site.ts` (constante `NOME_PRODUTO`)
-para trocar em um lugar só quando definirem o nome final.
+SaaS de planejamento de casamento em português do Brasil. Nome do produto
+("Organiza meu Casamento", trocado do nome provisório "Meu Casamento" na
+Fase 16) isolado em `src/lib/site.ts` (constante `NOME_PRODUTO`) para trocar
+em um lugar só se mudar de novo.
 
 Usuária principal: a noiva. Ela convida noivo, familiares, madrinhas/padrinhos
 e cerimonialista para colaborar no planejamento (ver `wedding_members`).
@@ -179,7 +180,8 @@ seed; a lógica oficial de geração no onboarding é implementada na Fase 3).
 
 ## Decisões registradas (spec ambígua → opção mais simples)
 
-- **Nome do produto**: "Meu Casamento" isolado em `src/lib/site.ts`.
+- **Nome do produto**: "Organiza meu Casamento" (trocado de "Meu Casamento"
+  na Fase 16, ver seção própria) isolado em `src/lib/site.ts`.
 - **shadcn/ui**: CLI atual gera o preset "nova" sobre a base **Radix**
   (`npx shadcn@latest init -b radix -p nova`) em vez do preset "base-nova"
   (Base UI) — Radix é o ecossistema mais maduro/documentado para os
@@ -614,6 +616,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       `/planos`) — modo teste, sem CNPJ validado ainda.
 - [x] **Fase 15 — Rebranding da landing page** (`/`) — visual mais expressivo
       pra converter visita em cadastro.
+- [x] **Fase 16 — Nome definitivo**: "Meu Casamento" → "Organiza meu
+      Casamento".
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1081,6 +1085,32 @@ tracking-widest uppercase`, ex. "TUDO INCLUSO", "PREÇOS", "DÚVIDAS") acima
   de `NOME_PRODUTO` ao lado do nome por extenso — mesma ideia visual do
   favicon (`src/app/icon.tsx`, Fase 9), reforçando marca no topo da página
   que mais gente vê.
+
+## Fase 16 — Nome definitivo
+
+Pedido explícito da dona: trocar o nome provisório "Meu Casamento" por
+"Organiza meu Casamento" — principal motivo, alinhar o nome exibido com o
+domínio já em uso em produção (`organiza-meu-casamento.vercel.app`), que
+antes não batiam.
+
+- **Só mexeu em `NOME_PRODUTO`** (`src/lib/site.ts`) — nenhuma outra string
+  hardcoded com "Meu Casamento" existia no código (confirmado por busca);
+  era exatamente o isolamento que a Fase 1 previu ("trocar aqui quando
+  definirem o nome final").
+- **Monograma do favicon (`icon.tsx`/`apple-icon.tsx`) trocado de "M" pra
+  "O"** — o header da landing (Fase 15) já usa
+  `NOME_PRODUTO.charAt(0)` dinamicamente pro círculo ao lado do nome; sem
+  trocar o favicon junto, a aba do navegador mostraria "M" e o header
+  mostraria "O" pro mesmo produto.
+- **`short_name` do manifest (PWA) não é mais igual a `name`**: "Organiza
+  meu Casamento" inteiro não cabe no rótulo do ícone de tela inicial
+  (Android/iOS truncam perto de 12 caracteres) — `short_name` virou
+  "Organiza", só `name` (usado em outros contextos, sem limite de
+  caracteres) continua com o nome completo.
+- **README.md atualizado** pro nome novo (era só usado como título do
+  repositório, não afeta nada em runtime).
+- Nome ainda pode não ser 100% definitivo apesar do título desta fase —
+  `NOME_PRODUTO` continua isolado num lugar só exatamente por isso.
 
 ## Como rodar localmente
 

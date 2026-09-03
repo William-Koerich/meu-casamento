@@ -18,7 +18,7 @@ export default function Icon() {
         fontFamily: "serif",
       }}
     >
-      M
+      O
     </div>,
     { ...size }
   )

@@ -5,7 +5,9 @@ import { NOME_PRODUTO } from "@/lib/site"
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: NOME_PRODUTO,
-    short_name: NOME_PRODUTO,
+    // Ícone da tela inicial (Android/iOS) trunca short_name perto de 12
+    // caracteres — "Organiza meu Casamento" inteiro não caberia.
+    short_name: "Organiza",
     description: "Planeje cada detalhe do seu casamento em um só lugar.",
     start_url: "/",
     display: "standalone",

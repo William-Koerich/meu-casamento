@@ -1,7 +1,7 @@
-# Meu Casamento
+# Organiza meu Casamento
 
-SaaS de planejamento de casamento em português do Brasil. Nome provisório —
-veja `src/lib/site.ts`.
+SaaS de planejamento de casamento em português do Brasil. Nome do produto
+isolado em `src/lib/site.ts`.
 
 ## Stack
 

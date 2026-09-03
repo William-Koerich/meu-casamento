@@ -1,5 +1,5 @@
-// Nome provisório do produto — trocar aqui quando o nome final for definido.
-export const NOME_PRODUTO = "Meu Casamento"
+// Nome do produto — isolado aqui pra trocar num lugar só se mudar de novo.
+export const NOME_PRODUTO = "Organiza meu Casamento"
 export const DESCRICAO_PRODUTO = "Planeje cada detalhe do seu casamento em um só lugar."
 
 /**
