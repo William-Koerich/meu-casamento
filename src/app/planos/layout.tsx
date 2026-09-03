@@ -17,7 +17,7 @@ export default async function PlanosLayout({ children }: { children: React.React
   return (
     <div className="bg-background flex min-h-screen flex-col items-center px-6 py-12">
       <p className="font-heading mb-10 text-xl">{NOME_PRODUTO}</p>
-      <div className="w-full max-w-4xl">{children}</div>
+      <div className="w-full max-w-6xl">{children}</div>
     </div>
   )
 }

@@ -57,13 +57,13 @@ export default async function PlanosPage() {
         {planoAtual && <GerenciarAssinaturaButton />}
       </div>
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      <div className="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-3">
         {PLANOS.map(({ plano, destaque, descricao, itens }) => {
           const limite = LIMITE_CASAMENTOS_POR_PLANO[plano]
           const ehAtual = planoAtual === plano
           return (
-            <Card key={plano} className={destaque ? "border-primary" : undefined}>
-              <CardContent className="space-y-4">
+            <Card key={plano} className={destaque ? "border-primary h-full" : "h-full"}>
+              <CardContent className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-heading text-xl">
                     {PLANO_CERIMONIALISTA_LABELS[plano]}
@@ -75,7 +75,7 @@ export default async function PlanosPage() {
                   {formatCurrency(PRECO_MENSAL_POR_PLANO[plano])}
                   <span className="text-muted-foreground text-sm font-normal">/mês</span>
                 </p>
-                <ul className="text-muted-foreground space-y-2 text-sm">
+                <ul className="text-muted-foreground flex-1 space-y-2 text-sm">
                   <li className="text-foreground font-medium">
                     {limite
                       ? `Até ${limite} casamentos simultâneos`
