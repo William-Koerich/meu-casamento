@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Check, Sparkles } from "lucide-react"
+import { Check, ListChecks, Sparkles, Users } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { NOME_PRODUTO } from "@/lib/site"
@@ -70,6 +70,15 @@ export function Hero() {
     <section className="relative overflow-hidden">
       <div
         aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-50"
+        style={{
+          backgroundImage: "radial-gradient(var(--border) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          maskImage: "radial-gradient(ellipse at center, black, transparent 75%)",
+        }}
+      />
+      <div
+        aria-hidden
         className="from-primary/15 via-background to-background pointer-events-none absolute inset-0 bg-gradient-to-br"
       />
       <div
@@ -112,7 +121,29 @@ export function Hero() {
           </ul>
         </div>
 
-        <PreviaPainel />
+        <div className="relative mx-auto w-full max-w-sm">
+          <PreviaPainel />
+
+          <div className="border-border bg-card absolute -top-5 -left-6 hidden items-center gap-2 rounded-xl border px-3 py-2 shadow-lg shadow-black/5 sm:flex">
+            <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-full">
+              <ListChecks className="size-3.5" strokeWidth={1.5} />
+            </span>
+            <div className="text-xs">
+              <p className="font-medium">68 tarefas</p>
+              <p className="text-muted-foreground">geradas na hora</p>
+            </div>
+          </div>
+
+          <div className="border-border bg-card absolute -right-4 -bottom-5 hidden items-center gap-2 rounded-xl border px-3 py-2 shadow-lg shadow-black/5 sm:flex">
+            <span className="bg-primary/10 text-primary flex size-7 shrink-0 items-center justify-center rounded-full">
+              <Users className="size-3.5" strokeWidth={1.5} />
+            </span>
+            <div className="text-xs">
+              <p className="font-medium">Equipe toda</p>
+              <p className="text-muted-foreground">num só lugar</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )

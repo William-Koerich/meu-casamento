@@ -1,3 +1,4 @@
+import { ComoFunciona } from "@/components/marketing/como-funciona"
 import { FaqSection } from "@/components/marketing/faq-section"
 import { FeaturesGrid } from "@/components/marketing/features-grid"
 import { FinalCta } from "@/components/marketing/final-cta"
@@ -10,6 +11,7 @@ export default function LandingPage() {
   return (
     <div>
       <Hero />
+      <ComoFunciona />
       <ProblemaSolucao />
       <FeaturesGrid />
       <SocialProof />

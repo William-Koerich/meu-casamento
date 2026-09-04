@@ -622,6 +622,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       pra converter visita em cadastro.
 - [x] **Fase 16 — Nome definitivo**: "Meu Casamento" → "Organiza meu
       Casamento".
+- [x] **Fase 17 — 2º rebranding da landing page**: seção "Como funciona",
+      grid de funcionalidades em bento, mais textura visual no hero.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1132,6 +1134,48 @@ antes não batiam.
   repositório, não afeta nada em runtime).
 - Nome ainda pode não ser 100% definitivo apesar do título desta fase —
   `NOME_PRODUTO` continua isolado num lugar só exatamente por isso.
+
+## Fase 17 — 2º rebranding da landing page
+
+Pedido explícito da dona, depois de já ter passado pelo rebranding da Fase
+15: "algo melhor e mais atrativo" pra `/`. Diferente da Fase 15 (que foi a
+primeira vez que a landing ganhou qualquer tratamento visual — gradiente,
+sombra, mockup), esta fase é uma 2ª iteração em cima de uma base que já
+tinha identidade — o objetivo foi adicionar textura e variedade visual sem
+recomeçar do zero nem mexer no que já funcionava (paleta, tipografia,
+larguras `max-w-6xl`).
+
+- **Seção nova "Como funciona"** (`como-funciona.tsx`), entre o hero e
+  "Problema/Solução": 3 passos numerados (contar sobre o casamento → receber
+  checklist/orçamento prontos → organizar com a equipe) ligados por uma
+  linha horizontal atrás dos círculos numerados (`sm:` pra cima; empilha sem
+  linha no mobile). Não existia nenhuma seção explicando o fluxo de uso
+  antes de vender preço — só "o que tem" (`FeaturesGrid`), nunca "como é
+  usar".
+- **`FeaturesGrid` virou um grid "bento"**: antes 8 cards uniformes (ícone +
+  título + descrição, todos do mesmo tamanho); agora o primeiro card
+  ("Site público do casal") ocupa 2 colunas e ganhou um mini mockup de
+  navegador ao lado (barra de URL falsa + tarja com gradiente + nome do
+  casal) — mesma técnica CSS-only da Fase 9 (sem screenshot nem asset),
+  chamando atenção pro recurso mais visual do produto (a página pública,
+  Fase 8/10) em vez de deixá-lo como mais um ícone igual aos outros.
+- **Hero ganhou profundidade**: fundo com grid de pontos sutil
+  (`radial-gradient` repetido via `backgroundSize`, mascarado com
+  `mask-image` radial pra sumir nas bordas) atrás do gradiente que já
+  existia, mais 2 cartõezinhos flutuantes sobre o mockup do painel ("68
+  tarefas geradas na hora", "Equipe toda num só lugar") — escondidos abaixo
+  de `sm:` pra não brigar por espaço no mobile, onde o mockup já ocupa a
+  largura toda.
+- **Depoimentos ganharam avatar** (círculo com iniciais, mesma cor de
+  destaque) no lugar de só o nome do papel abaixo de uma linha — reforça
+  "pessoa de verdade falando" mesmo sem foto real disponível.
+- **`FinalCta` ganhou 2 círculos decorativos desfocados** (mesma técnica do
+  hero) atrás do texto, pro banner de fechamento não ficar uma cor sólida
+  lisa demais.
+- **Conteúdo/copy não mudou** (textos de funcionalidades, preços, FAQ,
+  problema/solução) — o pedido era visual, não de mensagem; mexer em copy
+  que já tinha sido revisado (Fase 15) sem pedido explícito seria risco
+  desnecessário.
 
 ## Como rodar localmente
 
