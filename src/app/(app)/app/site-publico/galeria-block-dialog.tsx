@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 
@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import type { Block } from "@/db/queries/page-blocks"
 import type { BlockConfigGaleria } from "@/db/schema"
@@ -21,19 +20,30 @@ import { createClient } from "@/lib/supabase/client"
 export function GaleriaBlockDialog({
   weddingId,
   bloco,
-  trigger,
+  open,
+  onOpenChange,
 }: {
   weddingId: string
   bloco?: Block
-  trigger: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const config = bloco?.config as BlockConfigGaleria | undefined
 
-  const [aberto, setAberto] = useState(false)
   const [fotos, setFotos] = useState<{ url: string }[]>(config?.fotos ?? [])
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Mesmo motivo do FotoBlockDialog: diálogo sempre montado (controlado,
+  // sem DialogTrigger aninhado no DropdownMenu), então reseta sozinho ao
+  // abrir em vez de depender de desmontar/remontar.
+  useEffect(() => {
+    if (!open) return
+    setFotos(config?.fotos ?? [])
+    setErro(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, bloco])
 
   function selecionar(evento: React.ChangeEvent<HTMLInputElement>) {
     const arquivos = Array.from(evento.target.files ?? [])
@@ -79,13 +89,12 @@ export function GaleriaBlockDialog({
         setErro(resultado.erro)
         return
       }
-      setAberto(false)
+      onOpenChange(false)
     })
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={setAberto}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{bloco ? "Editar galeria" : "Nova galeria"}</DialogTitle>

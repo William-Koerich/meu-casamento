@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 import Image from "next/image"
 
 import { adicionarBloco, atualizarConfigBloco } from "@/actions/page-blocks"
@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
@@ -32,15 +31,16 @@ function clamp(valor: number, min: number, max: number) {
 export function FotoBlockDialog({
   weddingId,
   bloco,
-  trigger,
+  open,
+  onOpenChange,
 }: {
   weddingId: string
   bloco?: Block
-  trigger: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
   const config = bloco?.config as BlockConfigFoto | undefined
 
-  const [aberto, setAberto] = useState(false)
   const [preview, setPreview] = useState<string | null>(config?.url ?? null)
   const [posicao, setPosicao] = useState<Posicao>({
     x: config?.posicaoX ?? 50,
@@ -50,6 +50,20 @@ export function FotoBlockDialog({
   const [arrastando, setArrastando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
+
+  // O diálogo fica sempre montado (controlado por `open`, sem
+  // DialogTrigger) pra não depender de ficar aninhado dentro do
+  // DropdownMenu "Adicionar bloco" — ver bug documentado no CLAUDE.md.
+  // Como consequência, o estado local não reseta sozinho entre uma
+  // adição e outra: reinicializa aqui sempre que o diálogo abre.
+  useEffect(() => {
+    if (!open) return
+    setPreview(config?.url ?? null)
+    setPosicao({ x: config?.posicaoX ?? 50, y: config?.posicaoY ?? 50 })
+    setZoom(config?.zoom ?? 100)
+    setErro(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, bloco])
 
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -128,7 +142,7 @@ export function FotoBlockDialog({
         setErro(resultado.erro)
         return
       }
-      setAberto(false)
+      onOpenChange(false)
     })
   }
 
@@ -139,8 +153,7 @@ export function FotoBlockDialog({
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={setAberto}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{bloco ? "Editar foto" : "Nova foto"}</DialogTitle>

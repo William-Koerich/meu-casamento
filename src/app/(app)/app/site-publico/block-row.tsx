@@ -32,6 +32,7 @@ const TIPOS_REMOVIVEIS = ["foto", "galeria", "texto"] as const
 
 export function BlockRow({ bloco, weddingId }: { bloco: Block; weddingId: string }) {
   const [visivel, setVisivel] = useState(bloco.visivel)
+  const [editarAberto, setEditarAberto] = useState(false)
   const [pendente, iniciarTransicao] = useTransition()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: bloco.id })
@@ -45,12 +46,6 @@ export function BlockRow({ bloco, weddingId }: { bloco: Block; weddingId: string
       if (resultado?.erro) setVisivel(!valor)
     })
   }
-
-  const editarTrigger = (
-    <Button type="button" variant="ghost" size="sm">
-      Editar
-    </Button>
-  )
 
   return (
     <div
@@ -78,14 +73,38 @@ export function BlockRow({ bloco, weddingId }: { bloco: Block; weddingId: string
           </p>
         )}
       </div>
+      {(bloco.tipo === "texto" || bloco.tipo === "foto" || bloco.tipo === "galeria") && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditarAberto(true)}
+        >
+          Editar
+        </Button>
+      )}
       {bloco.tipo === "texto" && (
-        <TextoBlockDialog bloco={bloco} trigger={editarTrigger} />
+        <TextoBlockDialog
+          bloco={bloco}
+          open={editarAberto}
+          onOpenChange={setEditarAberto}
+        />
       )}
       {bloco.tipo === "foto" && (
-        <FotoBlockDialog weddingId={weddingId} bloco={bloco} trigger={editarTrigger} />
+        <FotoBlockDialog
+          weddingId={weddingId}
+          bloco={bloco}
+          open={editarAberto}
+          onOpenChange={setEditarAberto}
+        />
       )}
       {bloco.tipo === "galeria" && (
-        <GaleriaBlockDialog weddingId={weddingId} bloco={bloco} trigger={editarTrigger} />
+        <GaleriaBlockDialog
+          weddingId={weddingId}
+          bloco={bloco}
+          open={editarAberto}
+          onOpenChange={setEditarAberto}
+        />
       )}
       {removivel && (
         <AlertDialog>

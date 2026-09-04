@@ -672,16 +672,56 @@ conteúdo livre novos: foto, galeria de fotos e texto.
   que regrava `ordem` de todos os ids num loop (aceito como troca simples
   de N+1, mesma decisão já registrada acima pra checklist/cronograma/
   playlist).
-- **Dialogs de bloco seguem o padrão `trigger: ReactNode` já usado em todo
-  o app** (`SongFormDialog`, `GuestFormDialog`...) — o mesmo componente
-  serve pra criar (chamado no menu "Adicionar bloco") e editar (chamado a
-  partir da própria linha do bloco), diferenciado por receber ou não um
-  `bloco` existente.
+- **Dialogs de bloco recebem `open`/`onOpenChange` controlados** (não o
+  padrão `trigger: ReactNode` usado em outros dialogs do app, como
+  `SongFormDialog`/`GuestFormDialog`) — motivo é o bug documentado logo
+  abaixo: precisavam poder abrir sem estar aninhados dentro do
+  `DropdownMenu` "Adicionar bloco". O mesmo componente ainda serve pra
+  criar e editar, diferenciado por receber ou não um `bloco` existente; a
+  edição (chamada a partir da própria linha do bloco, fora de qualquer
+  menu) controla o `open` com um `useState` local na própria linha.
 - **Verificado com RLS de verdade antes de considerar pronto**: script à
   parte (fora do app, com rollback de transação) confirmou insert+select
   como `authenticated` e select como `anon` na tabela nova, contra o banco
   de produção — mesmo tipo de checagem que pegou o bug real de `rls()` na
   Fase 2.
+- **Bug real pós-lançamento: "Adicionar bloco" > Foto/Galeria não criava
+  nada, sem erro nenhum (nem na tela, nem no console)** — só apareceu
+  depois que a dona usou o construtor de verdade em produção (achado
+  investigando o relato dela, não em teste automatizado). Causa: os 3
+  diálogos de bloco (foto/galeria/texto) nasciam com o padrão
+  `trigger: ReactNode` de sempre, e o item do `DropdownMenuContent` que os
+  abre precisava de `onSelect={(e) => e.preventDefault()}` pra impedir o
+  menu de fechar sozinho — só que isso deixa o `<Dialog>` inteiro (não só o
+  gatilho) **montado dentro da árvore do `DropdownMenuContent`**. Pra
+  "Foto" e "Galeria", o botão "Escolher foto" abre o seletor nativo de
+  arquivo do sistema operacional — uma janela de verdade, fora do
+  navegador. Quando essa janela fecha (arquivo escolhido) e o foco volta
+  pro navegador, o `DismissableLayer` do Radix por trás do `DropdownMenu`
+  (ainda "aberto", já que o fechamento automático tinha sido bloqueado)
+  interpreta a troca de foco como um clique/foco "de fora" e fecha o menu
+  de verdade — desmontando junto todo o `FotoBlockDialog`/`GaleriaBlockDialog`
+  (e o estado local: preview, posição, zoom, fotos escolhidas) antes que
+  "Salvar" fosse sequer possível clicar. "Texto" nunca esbarrava nisso
+  porque não abre nenhuma janela nativa do SO — só um `<textarea>` comum —
+  e por isso não foi notado antes. Confirmado isolando as duas metades:
+  (1) um script à parte (rollback forçado, produção) provou que o INSERT
+  em `page_blocks` com `tipo = 'foto'` passa na RLS sem problema nenhum
+  pela policy `page_blocks_insert`; (2) uma consulta em
+  `storage.objects` mostrou **zero arquivos** já enviados pro bucket
+  `blocos` nessa conta, apesar da dona ter tentado múltiplas vezes — ou
+  seja, o upload nunca chegava a acontecer synchronously, batendo com a
+  teoria de desmontagem prematura em vez de erro de permissão. Corrigido
+  tirando os 3 diálogos de dentro do `DropdownMenuContent`: agora
+  `SitePublicoView` guarda `novoBloco: "foto" | "galeria" | "texto" | null`
+  num `useState`, os itens do menu só fazem `onSelect={() =>
+setNovoBloco("foto")}` (sem precisar de `preventDefault`, o menu fecha
+  normal) e os 3 diálogos ficam sempre montados como irmãos do
+  `DropdownMenu` (fora dele), abrindo/fechando via prop `open` — nunca mais
+  dependem do ciclo de vida do menu. Como ficam sempre montados, o estado
+  interno de cada um (preview da foto, lista de fotos da galeria) passou a
+  reinicializar via `useEffect` toda vez que `open` vira `true`, em vez de
+  confiar em desmontar/remontar entre uma adição e outra.
 
 ## Fase 11 — Fotos enviadas pelos convidados (QR code)
 

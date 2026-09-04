@@ -12,7 +12,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   Form,
@@ -30,12 +29,13 @@ import { textoBlocoSchema, type TextoBlocoInput } from "@/lib/validators/page-bl
 
 export function TextoBlockDialog({
   bloco,
-  trigger,
+  open,
+  onOpenChange,
 }: {
   bloco?: Block
-  trigger: React.ReactNode
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }) {
-  const [aberto, setAberto] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
 
@@ -60,14 +60,13 @@ export function TextoBlockDialog({
         setErro(resultado.erro)
         return
       }
-      setAberto(false)
+      onOpenChange(false)
       if (!bloco) form.reset()
     })
   }
 
   return (
-    <Dialog open={aberto} onOpenChange={setAberto}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{bloco ? "Editar texto" : "Novo bloco de texto"}</DialogTitle>

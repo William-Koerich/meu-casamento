@@ -32,9 +32,7 @@ import { FotoBlockDialog } from "./foto-block-dialog"
 import { GaleriaBlockDialog } from "./galeria-block-dialog"
 import { TextoBlockDialog } from "./texto-block-dialog"
 
-function naoFecharAoSelecionar(evento: Event) {
-  evento.preventDefault()
-}
+type TipoAdicionavel = "foto" | "galeria" | "texto"
 
 export function SitePublicoView({
   weddingId,
@@ -46,6 +44,7 @@ export function SitePublicoView({
   slug: string
 }) {
   const [blocos, setBlocos] = useState(blocosIniciais)
+  const [novoBloco, setNovoBloco] = useState<TipoAdicionavel | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
   )
@@ -85,32 +84,38 @@ export function SitePublicoView({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <TextoBlockDialog
-              trigger={
-                <DropdownMenuItem onSelect={naoFecharAoSelecionar}>
-                  {BLOCK_TIPO_LABELS.texto}
-                </DropdownMenuItem>
-              }
-            />
-            <FotoBlockDialog
-              weddingId={weddingId}
-              trigger={
-                <DropdownMenuItem onSelect={naoFecharAoSelecionar}>
-                  {BLOCK_TIPO_LABELS.foto}
-                </DropdownMenuItem>
-              }
-            />
-            <GaleriaBlockDialog
-              weddingId={weddingId}
-              trigger={
-                <DropdownMenuItem onSelect={naoFecharAoSelecionar}>
-                  {BLOCK_TIPO_LABELS.galeria}
-                </DropdownMenuItem>
-              }
-            />
+            <DropdownMenuItem onSelect={() => setNovoBloco("texto")}>
+              {BLOCK_TIPO_LABELS.texto}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setNovoBloco("foto")}>
+              {BLOCK_TIPO_LABELS.foto}
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setNovoBloco("galeria")}>
+              {BLOCK_TIPO_LABELS.galeria}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Diálogos de criação renderizados fora do DropdownMenu (controlados
+          por `novoBloco`, não por um DialogTrigger aninhado no menu) — ver
+          bug documentado no CLAUDE.md: nascer dentro do DropdownMenuContent
+          fazia o menu desmontar o diálogo (e o estado junto) assim que o
+          seletor nativo de arquivo devolvia o foco à janela. */}
+      <TextoBlockDialog
+        open={novoBloco === "texto"}
+        onOpenChange={(aberto) => setNovoBloco(aberto ? "texto" : null)}
+      />
+      <FotoBlockDialog
+        weddingId={weddingId}
+        open={novoBloco === "foto"}
+        onOpenChange={(aberto) => setNovoBloco(aberto ? "foto" : null)}
+      />
+      <GaleriaBlockDialog
+        weddingId={weddingId}
+        open={novoBloco === "galeria"}
+        onOpenChange={(aberto) => setNovoBloco(aberto ? "galeria" : null)}
+      />
 
       <Card>
         <CardContent>
