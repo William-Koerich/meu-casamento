@@ -14,8 +14,12 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <header className="border-border bg-background/95 sticky top-0 z-30 border-b backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
-            <span className="bg-primary text-primary-foreground font-heading flex size-7 items-center justify-center rounded-full text-sm">
-              {NOME_PRODUTO.charAt(0)}
+            {/* Aliança — mesmo desenho do favicon (icon.tsx), círculos
+                aninhados em vez de ícone importado. */}
+            <span className="bg-primary flex size-7 shrink-0 items-center justify-center rounded-full">
+              <span className="bg-primary-foreground flex size-4 items-center justify-center rounded-full">
+                <span className="bg-primary size-2 rounded-full" />
+              </span>
             </span>
             <span className="font-heading text-lg">{NOME_PRODUTO}</span>
           </Link>

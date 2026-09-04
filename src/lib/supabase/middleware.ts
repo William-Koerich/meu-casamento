@@ -9,6 +9,16 @@ import type { Database } from "@/lib/supabase/types"
 // recuperação) e é redirecionado para cá — se essa rota também mandasse
 // usuárias autenticadas para /app, ninguém conseguiria trocar a senha.
 const PUBLIC_APP_PREFIXES = ["/entrar", "/cadastro", "/recuperar-senha"]
+const APP_PREFIXES = ["/app", "/inicio", "/casamentos", "/pagamento", "/planos"]
+
+// `startsWith` sozinho combina substring, não segmento de rota — "/app"
+// batia com "/apple-icon" (bug real: o ícone da Apple redirecionava pra
+// /entrar pra quem não estava logada, ou seja, pra quase todo mundo que
+// visita o site pela primeira vez). Exige limite de barra, mesma correção
+// já aplicada em itemNavAtivo (src/lib/nav-items.ts).
+function comecaComSegmento(pathname: string, prefixo: string) {
+  return pathname === prefixo || pathname.startsWith(`${prefixo}/`)
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -34,14 +44,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const isAppRoute =
-    pathname.startsWith("/app") ||
-    pathname.startsWith("/inicio") ||
-    pathname.startsWith("/casamentos") ||
-    pathname.startsWith("/pagamento") ||
-    pathname.startsWith("/planos")
-  const isPublicAuthRoute = PUBLIC_APP_PREFIXES.some((prefix) =>
-    pathname.startsWith(prefix)
+  const isAppRoute = APP_PREFIXES.some((prefixo) => comecaComSegmento(pathname, prefixo))
+  const isPublicAuthRoute = PUBLIC_APP_PREFIXES.some((prefixo) =>
+    comecaComSegmento(pathname, prefixo)
   )
 
   if (!user && isAppRoute) {
