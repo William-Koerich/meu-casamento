@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react"
 import { criarDocumento, obterUrlAssinadaDocumento } from "@/actions/documents"
 import { Button } from "@/components/ui/button"
 import type { documents } from "@/db/schema"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 
 type ContractUploadProps = {
@@ -26,7 +27,7 @@ export function ContractUpload({ weddingId, vendorId, documentos }: ContractUplo
     setEnviando(true)
     setErro(null)
 
-    const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+    const caminho = caminhoArquivoStorage(weddingId, arquivo)
     const supabase = createClient()
     const { error } = await supabase.storage.from("documentos").upload(caminho, arquivo)
 

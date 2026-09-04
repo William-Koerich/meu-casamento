@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { TIPO_DOCUMENTO_LABELS } from "@/lib/labels"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 
 const SEM_FORNECEDOR = "nenhum"
@@ -47,7 +48,7 @@ export function DocumentUploadDialog({ weddingId, vendors }: DocumentUploadDialo
     setErro(null)
     iniciarTransicao(async () => {
       const supabase = createClient()
-      const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+      const caminho = caminhoArquivoStorage(weddingId, arquivo)
       const { error } = await supabase.storage.from("documentos").upload(caminho, arquivo)
       if (error) {
         setErro("Não foi possível enviar o arquivo.")

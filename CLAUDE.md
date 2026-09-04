@@ -722,6 +722,30 @@ setNovoBloco("foto")}` (sem precisar de `preventDefault`, o menu fecha
   interno de cada um (preview da foto, lista de fotos da galeria) passou a
   reinicializar via `useEffect` toda vez que `open` vira `true`, em vez de
   confiar em desmontar/remontar entre uma adição e outra.
+- **2º bug real, na sequência do de cima: depois de corrigir o desmonte
+  prematuro, o upload em si passou a dar `400 Bad Request` — mas só com
+  certos nomes de arquivo**, ex. um screenshot do macOS chamado "Captura de
+  Tela 2026-07-17 às 15.49.30.png". Causa: `caminho = "${weddingId}/${crypto.randomUUID()}-${arquivo.name}"`
+  embutia o nome original do arquivo no path do Storage — e o macOS entrega
+  `File.name`, quando lido do sistema de arquivos, em Unicode **decomposto**
+  (NFD: "a" + acento grave combinante, em vez do caractere composto "à"
+  único). A API de Storage do Supabase valida a "key" do objeto e rejeita
+  esse formato com `400 InvalidKey` (confirmado reproduzindo isolado com a
+  service role key contra o bucket `blocos` de produção: o mesmo path com o
+  nome original dá `400`, o path só com uuid+extensão dá sucesso — teste
+  limpo depois, sem deixar arquivo órfão). Esse mesmo padrão
+  `${uuid}-${arquivo.name}` estava copiado em **8 lugares** (todo upload
+  direto do navegador pro Storage: capa, presentes, inspirações,
+  documentos, contrato de fornecedor, fotos de convidados via QR code, e os
+  2 daqui) — qualquer nome de arquivo com acento decomposto, ou outro
+  caractere fora do que a API aceita, quebraria a mesma forma em qualquer
+  um deles, não só no construtor de blocos. Corrigido criando
+  `caminhoArquivoStorage(weddingId, arquivo)` (`src/lib/storage-path.ts`),
+  usado agora nos 8 lugares: o path vira só `{wedding_id}/{uuid}.{extensão
+  sanitizada}`, nunca o nome original. Onde o nome de exibição importa pra
+  usuária ver depois (ex. `documents.nome`), ele já era guardado numa
+  coluna à parte, independente do path do Storage — então nada deixou de
+  funcionar, só o path parou de carregar um nome de arquivo arbitrário.
 
 ## Fase 11 — Fotos enviadas pelos convidados (QR code)
 

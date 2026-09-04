@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 import { inspiracaoSchema, type InspiracaoInput } from "@/lib/validators/inspirations"
 
@@ -45,7 +46,7 @@ export function InspirationFormDialog({ weddingId }: { weddingId: string }) {
 
       if (arquivo) {
         const supabase = createClient()
-        const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+        const caminho = caminhoArquivoStorage(weddingId, arquivo)
         const { error } = await supabase.storage
           .from("inspiracoes")
           .upload(caminho, arquivo)

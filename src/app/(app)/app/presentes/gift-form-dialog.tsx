@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import type { Gift } from "@/db/queries/gifts"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 import { presenteSchema, type PresenteInput } from "@/lib/validators/gifts"
 
@@ -60,7 +61,7 @@ export function GiftFormDialog({ weddingId, gift, trigger }: GiftFormDialogProps
 
       if (arquivo) {
         const supabase = createClient()
-        const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+        const caminho = caminhoArquivoStorage(weddingId, arquivo)
         const { error } = await supabase.storage
           .from("presentes")
           .upload(caminho, arquivo)

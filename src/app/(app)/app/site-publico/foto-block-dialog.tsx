@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import type { Block } from "@/db/queries/page-blocks"
 import type { BlockConfigFoto } from "@/db/schema"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -80,7 +81,7 @@ export function FotoBlockDialog({
     setErro(null)
     iniciarTransicao(async () => {
       const supabase = createClient()
-      const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+      const caminho = caminhoArquivoStorage(weddingId, arquivo)
       const { error } = await supabase.storage.from("blocos").upload(caminho, arquivo)
       if (error) {
         setErro("Não foi possível enviar a foto.")

@@ -6,6 +6,7 @@ import { enviarFotosConvidado } from "@/actions/public-rsvp"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 
 export function UploadFotosForm({ weddingId }: { weddingId: string }) {
@@ -31,7 +32,7 @@ export function UploadFotosForm({ weddingId }: { weddingId: string }) {
       const supabase = createClient()
       const caminhos: string[] = []
       for (const arquivo of arquivos) {
-        const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+        const caminho = caminhoArquivoStorage(weddingId, arquivo)
         const { error } = await supabase.storage
           .from("fotos-convidados")
           .upload(caminho, arquivo)

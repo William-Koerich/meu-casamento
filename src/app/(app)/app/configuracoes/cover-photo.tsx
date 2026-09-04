@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
@@ -65,7 +66,7 @@ export function CoverPhoto({
     setErro(null)
     iniciarTransicao(async () => {
       const supabase = createClient()
-      const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+      const caminho = caminhoArquivoStorage(weddingId, arquivo)
       const { error } = await supabase.storage.from("capas").upload(caminho, arquivo)
       if (error) {
         setErro("Não foi possível enviar a foto.")

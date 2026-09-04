@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog"
 import type { Block } from "@/db/queries/page-blocks"
 import type { BlockConfigGaleria } from "@/db/schema"
+import { caminhoArquivoStorage } from "@/lib/storage-path"
 import { createClient } from "@/lib/supabase/client"
 
 export function GaleriaBlockDialog({
@@ -54,7 +55,7 @@ export function GaleriaBlockDialog({
       const supabase = createClient()
       const novasFotos: { url: string }[] = []
       for (const arquivo of arquivos) {
-        const caminho = `${weddingId}/${crypto.randomUUID()}-${arquivo.name}`
+        const caminho = caminhoArquivoStorage(weddingId, arquivo)
         const { error } = await supabase.storage.from("blocos").upload(caminho, arquivo)
         if (error) continue
         const url = supabase.storage.from("blocos").getPublicUrl(caminho).data.publicUrl
