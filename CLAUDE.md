@@ -381,11 +381,14 @@ durações anteriores`, recalculado e regravado em todas as linhas
   o mercado, precisam ser substituídos antes do lançamento de verdade. Ver
   "Fase 13 — Planos e preços" para o racional completo.
 - **Favicon/ícones gerados por código**: `src/app/icon.tsx` e
-  `apple-icon.tsx` usam `next/og` (`ImageResponse`) pra desenhar o ícone em
-  vez de depender de um arquivo de imagem pronto — não há nenhum arquivo
-  de design disponível ainda. Era um monograma de letra até a Fase 16,
-  depois virou uma aliança (ver essa fase) — troque por um ícone de
-  verdade quando a identidade visual for definida.
+  `apple-icon.tsx` usam `next/og` (`ImageResponse`) para desenhar um
+  monograma ("O", de `NOME_PRODUTO` — trocado de "M" pra "O" na Fase 16
+  junto com o nome do produto) na cor de destaque, em vez de depender de
+  um arquivo de imagem pronto — não há nenhum arquivo de design disponível
+  ainda. Uma versão com desenho de aliança (dois círculos aninhados) foi
+  tentada e revertida na mesma fase — a dona achou o monograma de letra
+  melhor. Troque por um ícone de verdade quando a identidade visual for
+  definida.
 - **Sitemap inclui casamentos publicados**: `src/app/sitemap.ts` consulta
   `weddings` como a role `anon` (via `rls()`, sem usuária logada) — a
   própria policy de RLS (`weddings_select_vitrine_publica`, Fase 2) já
@@ -1098,16 +1101,14 @@ antes não batiam.
   hardcoded com "Meu Casamento" existia no código (confirmado por busca);
   era exatamente o isolamento que a Fase 1 previu ("trocar aqui quando
   definirem o nome final").
-- **Favicon virou uma aliança, não mais monograma de letra**: primeiro
-  trocado de "M" pra "O" (letra inicial do nome novo) e, a pedido
-  seguinte da dona, de "O" pra um desenho de aliança — dois círculos
-  aninhados (`icon.tsx`/`apple-icon.tsx`: círculo cor de destaque por
-  fora, círculo cor de fundo por dentro criando o "furo" do anel) em vez
-  de um ícone importado, então continua sem depender de nenhum arquivo de
-  imagem. O badge do header da landing (`(marketing)/layout.tsx`, Fase 15)
-  ganhou o mesmo desenho em miniatura — antes usava
-  `NOME_PRODUTO.charAt(0)`, o que deixaria a aba do navegador com o anel e
-  o header com uma letra, inconsistente pro mesmo produto.
+- **Favicon: monograma "M" → "O" (letra inicial do nome novo)** — tentamos
+  também uma versão com desenho de aliança (dois círculos aninhados,
+  `icon.tsx`/`apple-icon.tsx`: círculo cor de destaque por fora, círculo
+  cor de fundo por dentro criando o "furo" do anel) no lugar da letra, mas
+  a dona achou que não ficou como imaginava e pediu pra voltar ao
+  monograma — revertido de volta pra "O" no mesmo dia. Fica registrado
+  que a ideia foi tentada e descartada, pra não repetir a mesma sugestão
+  se o tema voltar.
 - **Bug real de middleware encontrado testando o favicon novo**:
   `/apple-icon` redirecionava pra `/entrar` pra quem não estava logada —
   ou seja, pra praticamente todo mundo que visita o site pela primeira
