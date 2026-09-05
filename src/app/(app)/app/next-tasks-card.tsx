@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { Circle } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { tasks } from "@/db/schema"
@@ -23,10 +24,8 @@ export function NextTasksCard({ tarefas }: NextTasksCardProps) {
           ) : (
             <ul className="space-y-2">
               {tarefas.map((tarefa) => (
-                <li
-                  key={tarefa.id}
-                  className="flex items-center justify-between gap-2 text-sm"
-                >
+                <li key={tarefa.id} className="flex items-center gap-2 text-sm">
+                  <Circle className="text-muted-foreground/50 size-3 shrink-0" />
                   <span className="min-w-0 flex-1 truncate">{tarefa.titulo}</span>
                   {tarefa.prazo && (
                     <span className="text-muted-foreground shrink-0 text-xs">

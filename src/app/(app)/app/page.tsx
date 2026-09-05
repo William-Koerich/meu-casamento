@@ -15,7 +15,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <CountdownCard dataCasamento={wedding.dataCasamento} />
+      <CountdownCard
+        dataCasamento={wedding.dataCasamento}
+        localFesta={wedding.localFesta}
+        cidade={wedding.cidade}
+        estado={wedding.estado}
+      />
       <Suspense fallback={<DashboardSkeleton />}>
         <DashboardContent weddingId={wedding.id} />
       </Suspense>

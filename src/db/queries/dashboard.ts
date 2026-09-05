@@ -2,7 +2,14 @@ import { addDays, format } from "date-fns"
 import { and, asc, count, eq, gte, lte, sql } from "drizzle-orm"
 
 import { createDrizzleSupabaseClient } from "@/db/rls"
-import { budgetCategories, budgetItems, guests, payments, tasks } from "@/db/schema"
+import {
+  budgetCategories,
+  budgetItems,
+  guests,
+  payments,
+  tasks,
+  vendors,
+} from "@/db/schema"
 
 export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>
 
@@ -80,6 +87,24 @@ export async function getDashboardData(weddingId: string) {
     const buscarTotalRsvp = (status: (typeof rsvpPorStatus)[number]["status"]) =>
       rsvpPorStatus.find((linha) => linha.status === status)?.total ?? 0
 
+    // Cabeças de verdade (convidado + acompanhantes) entre quem confirmou —
+    // número mais útil pra planejar buffet/lugar do que só a contagem de
+    // linhas de `guests`, que ignora acompanhante.
+    const [pessoasConfirmadasResult] = await tx
+      .select({
+        total: sql<string>`coalesce(sum(1 + ${guests.acompanhantes}), 0)`,
+      })
+      .from(guests)
+      .where(and(eq(guests.weddingId, weddingId), eq(guests.statusRsvp, "confirmado")))
+
+    const [fornecedoresResult] = await tx
+      .select({
+        total: count(),
+        contratados: sql<string>`count(*) filter (where ${vendors.status} = 'contratado')`,
+      })
+      .from(vendors)
+      .where(eq(vendors.weddingId, weddingId))
+
     return {
       checklist: {
         total: checklist?.total ?? 0,
@@ -97,6 +122,11 @@ export async function getDashboardData(weddingId: string) {
         confirmado: buscarTotalRsvp("confirmado"),
         pendente: buscarTotalRsvp("pendente"),
         recusado: buscarTotalRsvp("recusado"),
+        pessoasConfirmadas: Number(pessoasConfirmadasResult?.total ?? 0),
+      },
+      fornecedores: {
+        total: fornecedoresResult?.total ?? 0,
+        contratados: Number(fornecedoresResult?.contratados ?? 0),
       },
     }
   })

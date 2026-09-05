@@ -624,6 +624,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       Casamento".
 - [x] **Fase 17 — 2º rebranding da landing page**: seção "Como funciona",
       grid de funcionalidades em bento, mais textura visual no hero.
+- [x] **Fase 18 — Rebranding do dashboard**: anel de progresso nos cards,
+      card de fornecedores novo, contagem regressiva com data/local.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1240,6 +1242,53 @@ larguras `max-w-6xl`).
   problema/solução) — o pedido era visual, não de mensagem; mexer em copy
   que já tinha sido revisado (Fase 15) sem pedido explícito seria risco
   desnecessário.
+
+## Fase 18 — Rebranding do dashboard
+
+Pedido explícito da dona: "rebranding" do dashboard (`/app`, Fase 4) mais
+"informativos relevantes". Diferente das Fases 15/17 (landing pública, onde
+gradiente/sombra são liberados de propósito — ver decisão de Paleta), o
+dashboard é área logada: a diretriz "sem gradiente, sem sombra pesada" para
+dentro do produto continua valendo integralmente aqui. O trabalho foi todo
+em densidade de informação e hierarquia visual, não em efeitos.
+
+- **`ProgressRing`** (`src/components/app/progress-ring.tsx`): anel de
+  progresso só em CSS (`conic-gradient`), sem trazer recharts (usado hoje só
+  no donut de categorias do orçamento, um Client Component) pro dashboard —
+  um número só não justifica sair do Server Component por padrão. Mesma
+  técnica do mockup estático da landing (`marketing/hero.tsx`, Fase 15),
+  agora com dado real; aceita uma prop `destaque` que troca a cor do anel
+  pra `--destructive` (usada quando o orçamento estourou).
+- **3 cards existentes ganharam o anel**: Checklist (% concluído, já
+  calculado antes só pra alimentar um `<Progress>` linear — trocado pelo
+  anel), Orçamento (% pago do previsto, anel fica na cor de alerta quando
+  contratado > previsto — mesma convenção já usada dentro do módulo de
+  orçamento em si, Fase 5, só que essa comparação nunca tinha chegado ao
+  card do dashboard) e RSVP (% de convidados que já responderam, confirmado
+  ou recusado).
+- **RSVP ganhou "pessoas confirmadas (com acompanhantes)"**: o card só
+  contava linhas de `guests`, então uma confirmação com 2 acompanhantes
+  contava como 1 — inútil pra saber quanta gente vai de verdade (buffet,
+  lugar sentado). `getDashboardData` passou a somar `1 + acompanhantes` só
+  de quem confirmou, virou `rsvp.pessoasConfirmadas`.
+- **Card novo, "Fornecedores"** (`vendors-card.tsx`): contratados de total —
+  módulo que já existia (Fase 5) mas não tinha nenhuma presença no
+  dashboard. Mesma consulta agregada dentro da única transação de
+  `getDashboardData` (sem N+1, mesmo padrão das outras 6 métricas).
+- **`CountdownCard` ganhou data e local**: antes só o número de dias; agora
+  mostra também a data por extenso no formato padrão (`formatDate`,
+  dd/MM/yyyy — sem inventar um formato "por extenso" novo, a convenção de
+  datas do projeto já é essa) e o local da festa (+ cidade/estado, se
+  preenchidos) — dado que já existia em `weddings` e não aparecia em lugar
+  nenhum do dashboard. Fundo `bg-primary/5` sutil (token já usado em outros
+  destaques do app, ex. badge do plano ativo) pra diferenciar da grade de
+  cards comuns sem recorrer a gradiente.
+- **`AlertsCard`/`NextTasksCard` ganharam ícone por linha** (alerta
+  vermelho, tarefa com marcador neutro) — pequeno reforço visual, sem mudar
+  a lógica.
+- **6º card no grid**: `xl:grid-cols-3` já comportava sem quebrar layout (2
+  linhas de 3 em vez de quase-2-linhas de 5); skeleton (`dashboard-skeleton.tsx`)
+  ajustado de 5 pra 6 placeholders pra bater com o real.
 
 ## Como rodar localmente
 

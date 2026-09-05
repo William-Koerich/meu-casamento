@@ -5,6 +5,7 @@ import { BudgetCard } from "./budget-card"
 import { ChecklistCard } from "./checklist-card"
 import { NextTasksCard } from "./next-tasks-card"
 import { RsvpCard } from "./rsvp-card"
+import { VendorsCard } from "./vendors-card"
 
 export async function DashboardContent({ weddingId }: { weddingId: string }) {
   const dados = await getDashboardData(weddingId)
@@ -17,6 +18,7 @@ export async function DashboardContent({ weddingId }: { weddingId: string }) {
       />
       <BudgetCard {...dados.orcamento} />
       <RsvpCard {...dados.rsvp} />
+      <VendorsCard {...dados.fornecedores} />
       <NextTasksCard tarefas={dados.proximasTarefas} />
       <AlertsCard
         tarefasAtrasadas={dados.tarefasAtrasadas}
