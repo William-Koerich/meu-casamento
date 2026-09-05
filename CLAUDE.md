@@ -626,6 +626,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       grid de funcionalidades em bento, mais textura visual no hero.
 - [x] **Fase 18 — Rebranding do dashboard**: anel de progresso nos cards,
       card de fornecedores novo, contagem regressiva com data/local.
+- [x] **Fase 19 — Rebranding do checklist + tela de Alertas**
+      (`/app/alertas`, antes só um card no dashboard).
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1289,6 +1291,94 @@ em densidade de informação e hierarquia visual, não em efeitos.
 - **6º card no grid**: `xl:grid-cols-3` já comportava sem quebrar layout (2
   linhas de 3 em vez de quase-2-linhas de 5); skeleton (`dashboard-skeleton.tsx`)
   ajustado de 5 pra 6 placeholders pra bater com o real.
+
+## Fase 19 — Rebranding do checklist + tela de Alertas
+
+Pedido explícito da dona: "mudar o visual" do checklist pra ficar "mais
+atrativo aos olhos da noiva", e criar uma tela própria de Alertas — hoje
+(desde a Fase 4) alerta só existia como um card dentro do dashboard, sem
+lugar nenhum pra ver a lista de verdade por trás do número.
+
+- **Cabeçalho do checklist ganhou o `ProgressRing`** (mesmo componente da
+  Fase 18, reaproveitado) — `/app/checklist` agora abre já mostrando o
+  anel de conclusão geral ao lado do título, calculado no Server Component
+  da página a partir de todas as tarefas (não só as filtradas), com uma
+  frase de status que vira "Tudo pronto por aqui! 🎉" quando 100%.
+- **Modo "Timeline" virou uma timeline de verdade**: antes eram só cards
+  empilhados com um título de mês em cima de cada um — sem nenhuma linha
+  ou marcador, apesar do nome do modo. Agora tem uma linha vertical
+  contínua (`bg-border`, um único elemento absolutamente posicionado
+  atrás de tudo) com um marcador circular por grupo de mês — preenchido
+  (`bg-primary`) quando o grupo está 100% concluído, vazio
+  (`bg-muted-foreground/40`) enquanto não — e cada cabeçalho de grupo
+  ganhou um contador "X/Y" ao lado do rótulo do mês. Tudo em CSS puro
+  (`position: absolute` + um `div` de 1px de largura), sem lib de
+  timeline nova.
+- **Empty state com ícone**: "nenhuma tarefa encontrada com esses
+  filtros" ganhou um emblema circular com `ListChecks` em vez de só texto
+  solto — mesmo padrão visual (círculo com `bg-accent`, ícone dentro) já
+  usado noutros empty states do app.
+- **`TaskRow` ganhou hover sutil** (`hover:bg-accent/20`) e um ícone
+  `CircleAlert` ao lado do rótulo "Atrasada" — antes era só texto vermelho,
+  sem nenhum reforço visual além da cor (mesma preocupação de contraste já
+  resolvida noutros lugares do app com ícone + cor, nunca só cor).
+- **Sem paleta nova nem cor por categoria**: cogitado (categoria colorida
+  ajudaria a escanear a lista mais rápido) e descartado — o app tem 15
+  categorias de tarefa (`categoriaEnum`), e a paleta do produto é
+  deliberadamente "verde-oliva como única cor de destaque" (ver decisão de
+  Paleta no topo deste arquivo); um badge por categoria quebraria essa
+  regra sem necessidade. O ganho visual veio de hierarquia/densidade
+  (anel, timeline, ícones), não de cor nova.
+
+### Tela de Alertas (`/app/alertas`)
+
+- **Consolidação, não duplicação**: a tela nova é a fonte única da lista
+  de pendências; o card do dashboard (`alerts-card.tsx`) virou um resumo
+  compacto — um número total + "Tudo em dia" ou um emblema
+  vermelho com a contagem — que só linka pra `/app/alertas` em vez de
+  repetir a lista ali dentro (antes ele já tentava mostrar 2 linhas de
+  detalhe dentro de um card pequeno).
+- **3 seções**: tarefas atrasadas (reaproveita `TaskRow` do checklist via
+  import relativo — mesmo componente, mesmo botão de concluir/editar/
+  excluir, sem duplicar código), pagamentos vencidos e pagamentos
+  vencendo nos próximos 7 dias (`payment-alert-row.tsx`, novo — checkbox
+  pra marcar como pago direto na tela, reaproveitando a Server Action
+  `alternarPagamentoPago` já existente). Cada linha de pagamento mostra
+  `formatDistanciaAgora` (utilitário que já existia em `lib/format.ts` e
+  nunca tinha sido usado por ninguém) — "vence em 3 dias"/"venceu há 2
+  dias" — junto da data absoluta.
+- **Bug real de dado encontrado escrevendo a query nova**
+  (`db/queries/alerts.ts`): o critério de "pagamento vencido" nunca
+  existia como conceito na contagem do dashboard — só havia
+  "vencendo nos próximos 7 dias" (`gte(hoje) e lte(hoje+7)`), que por
+  definição **exclui** qualquer vencimento no passado. Ou seja, um
+  pagamento não pago com vencimento **já passado** nunca aparecia em
+  nenhum alerta, nunca foi contado em lugar nenhum — só existia dentro da
+  lista completa de pagamentos em `/app/orcamento` (que já tinha esse
+  conceito, `payments-tab.tsx`, badge "Vencido"). Corrigido adicionando
+  uma consulta de contagem irmã (`pagamentosVencidos`, mesmo filtro
+  `< hoje`) em `getDashboardData`, somada no card resumido do dashboard e
+  com seção própria na tela nova.
+- **2º bug, mesma classe — inconsistência entre "atrasada" no dashboard e
+  no resto do app**: `getDashboardData` contava tarefa atrasada com
+  `lte(prazo, hoje)` (prazo **hoje** já contava como atrasada), enquanto
+  `task-row.tsx`/`checklist-view.tsx` sempre usaram `prazo < hoje`
+  (estrito — prazo hoje ainda não é atrasado). Um dia com tarefa vencendo
+  hoje fazia o card do dashboard mostrar um número que a lista de verdade
+  (checklist, e agora a tela de Alertas) não confirmava. Corrigido
+  trocando pra `lt` no dashboard também — critério único no app inteiro
+  agora.
+- **Revalidação**: `revalidarChecklist()` (`actions/tasks.ts`) e
+  `revalidarOrcamento()` (`actions/budget.ts`) passaram a chamar também
+  `revalidatePath("/app/alertas")` — sem isso, concluir uma tarefa atrasada
+  ou marcar um pagamento vencido como pago não atualizaria a tela de
+  Alertas até uma navegação manual.
+- **Nova entrada na navegação**: "Alertas" (ícone `BellRing`) logo depois
+  de "Início" em `NAV_ITEMS` — não entrou na lista
+  `NAV_ITEMS_MOBILE_PRINCIPAIS` (ficaria em 5 ícones + "Mais", apertado
+  demais pra bottom nav); continua acessível pelo drawer "Mais" no
+  celular e pela sidebar no desktop, mesmo caminho de qualquer outro
+  módulo que não é um dos 4 de uso diário.
 
 ## Como rodar localmente
 

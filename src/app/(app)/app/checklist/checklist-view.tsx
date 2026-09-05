@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { ListChecks } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,6 +19,7 @@ import type { MembroAtribuivel } from "@/db/queries/members"
 import type { TarefaComResponsavel } from "@/db/queries/tasks"
 import { CATEGORIA_LABELS } from "@/lib/labels"
 import { hojeISO } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 import { agruparPorMeses } from "./agrupar"
 import { TaskFormDialog } from "./task-form-dialog"
@@ -132,23 +134,43 @@ export function ChecklistView({ tarefas, membros }: ChecklistViewProps) {
       </Card>
 
       {filtradas.length === 0 ? (
-        <p className="text-muted-foreground py-12 text-center text-sm">
+        <div className="text-muted-foreground flex flex-col items-center gap-3 py-16 text-center text-sm">
+          <span className="bg-accent flex size-12 items-center justify-center rounded-full">
+            <ListChecks className="size-6" strokeWidth={1.5} />
+          </span>
           Nenhuma tarefa encontrada com esses filtros.
-        </p>
+        </div>
       ) : modo === "timeline" ? (
-        <div className="space-y-6">
-          {grupos.map((grupo) => (
-            <div key={grupo.mesesAntes ?? "sem-prazo"}>
-              <h2 className="font-heading mb-2 text-lg">{grupo.rotulo}</h2>
-              <Card>
-                <CardContent>
-                  {grupo.itens.map((tarefa) => (
-                    <TaskRow key={tarefa.id} tarefa={tarefa} membros={membros} />
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          ))}
+        <div className="relative space-y-8">
+          <div aria-hidden className="bg-border absolute top-2 bottom-2 left-1.25 w-px" />
+          {grupos.map((grupo) => {
+            const concluidasGrupo = grupo.itens.filter((t) => t.concluida).length
+            const grupoCompleto = concluidasGrupo === grupo.itens.length
+            return (
+              <div key={grupo.mesesAntes ?? "sem-prazo"} className="relative pl-7">
+                <span
+                  aria-hidden
+                  className={cn(
+                    "border-background absolute top-1.5 left-0 size-3 rounded-full border-2",
+                    grupoCompleto ? "bg-primary" : "bg-muted-foreground/40"
+                  )}
+                />
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h2 className="font-heading text-lg">{grupo.rotulo}</h2>
+                  <span className="text-muted-foreground text-xs">
+                    {concluidasGrupo}/{grupo.itens.length}
+                  </span>
+                </div>
+                <Card>
+                  <CardContent>
+                    {grupo.itens.map((tarefa) => (
+                      <TaskRow key={tarefa.id} tarefa={tarefa} membros={membros} />
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            )
+          })}
         </div>
       ) : (
         <Card>

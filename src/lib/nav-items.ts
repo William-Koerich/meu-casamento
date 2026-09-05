@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import {
+  BellRing,
   CalendarClock,
   Camera,
   Download,
@@ -30,6 +31,7 @@ export type NavItem = {
 // pelo menu mobile (bottom nav + drawer).
 export const NAV_ITEMS: NavItem[] = [
   { rotulo: "Início", href: "/app", icone: Home },
+  { rotulo: "Alertas", href: "/app/alertas", icone: BellRing },
   { rotulo: "Checklist", href: "/app/checklist", icone: ListChecks },
   { rotulo: "Orçamento", href: "/app/orcamento", icone: Wallet },
   { rotulo: "Fornecedores", href: "/app/fornecedores", icone: Store },

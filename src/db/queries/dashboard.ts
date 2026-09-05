@@ -1,5 +1,5 @@
 import { addDays, format } from "date-fns"
-import { and, asc, count, eq, gte, lte, sql } from "drizzle-orm"
+import { and, asc, count, eq, gte, lt, lte, sql } from "drizzle-orm"
 
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import {
@@ -55,6 +55,11 @@ export async function getDashboardData(weddingId: string) {
       limit: 5,
     })
 
+    // `lt` (não `lte`): mesmo critério de "atrasada" que `task-row.tsx`/
+    // `checklist-view.tsx` usam pra mostrar o rótulo vermelho — antes esta
+    // consulta usava `lte` (contava tarefa com prazo hoje como atrasada) e
+    // o card do dashboard podia mostrar um número que a tela de Alertas
+    // (Fase 19) não confirmava.
     const [tarefasAtrasadas] = await tx
       .select({ total: count() })
       .from(tasks)
@@ -62,7 +67,21 @@ export async function getDashboardData(weddingId: string) {
         and(
           eq(tasks.weddingId, weddingId),
           eq(tasks.concluida, false),
-          lte(tasks.prazo, hoje)
+          lt(tasks.prazo, hoje)
+        )
+      )
+
+    // Mesmo critério de "vencido" que `payments-tab.tsx` usa (`< hoje`) —
+    // antes só existia a contagem de "vencendo nos próximos 7 dias", que
+    // não inclui pagamento já vencido nenhum (`gte(hoje)` exclui o passado).
+    const [pagamentosVencidos] = await tx
+      .select({ total: count() })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.weddingId, weddingId),
+          eq(payments.pago, false),
+          lt(payments.vencimento, hoje)
         )
       )
 
@@ -117,6 +136,7 @@ export async function getDashboardData(weddingId: string) {
       },
       proximasTarefas,
       tarefasAtrasadas: tarefasAtrasadas?.total ?? 0,
+      pagamentosVencidos: pagamentosVencidos?.total ?? 0,
       pagamentosVencendo: pagamentosVencendo?.total ?? 0,
       rsvp: {
         confirmado: buscarTotalRsvp("confirmado"),

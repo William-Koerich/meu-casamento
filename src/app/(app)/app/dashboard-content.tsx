@@ -22,6 +22,7 @@ export async function DashboardContent({ weddingId }: { weddingId: string }) {
       <NextTasksCard tarefas={dados.proximasTarefas} />
       <AlertsCard
         tarefasAtrasadas={dados.tarefasAtrasadas}
+        pagamentosVencidos={dados.pagamentosVencidos}
         pagamentosVencendo={dados.pagamentosVencendo}
       />
     </div>

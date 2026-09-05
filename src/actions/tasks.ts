@@ -12,6 +12,7 @@ type ResultadoAction = { erro: string } | { erro?: undefined }
 
 function revalidarChecklist() {
   revalidatePath("/app/checklist")
+  revalidatePath("/app/alertas")
   revalidatePath("/app")
 }
 

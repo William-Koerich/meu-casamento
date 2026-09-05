@@ -11,6 +11,7 @@ type ResultadoAction = { erro: string } | { erro?: undefined }
 
 function revalidarOrcamento() {
   revalidatePath("/app/orcamento")
+  revalidatePath("/app/alertas")
   revalidatePath("/app")
 }
 

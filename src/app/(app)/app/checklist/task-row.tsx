@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { MoreVertical } from "lucide-react"
+import { CircleAlert, MoreVertical } from "lucide-react"
 
 import { alternarConclusao, excluirTarefa } from "@/actions/tasks"
 import {
@@ -62,7 +62,7 @@ export function TaskRow({
   return (
     <div
       className={cn(
-        "border-border flex items-start gap-3 border-b px-1 py-3 last:border-b-0",
+        "border-border hover:bg-accent/20 flex items-start gap-3 rounded-md border-b px-1 py-3 transition-colors last:border-b-0",
         excluindo && "pointer-events-none opacity-50"
       )}
     >
@@ -80,10 +80,11 @@ export function TaskRow({
           {tarefa.prazo && (
             <span
               className={cn(
-                "text-xs",
+                "flex items-center gap-1 text-xs",
                 atrasada ? "text-destructive" : "text-muted-foreground"
               )}
             >
+              {atrasada && <CircleAlert className="size-3 shrink-0" />}
               {atrasada ? "Atrasada — " : ""}
               {formatDate(tarefa.prazo)}
             </span>
