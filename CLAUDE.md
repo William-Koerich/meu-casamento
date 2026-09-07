@@ -1388,10 +1388,14 @@ Pedido explícito da dona: uma tela nova de anotações livres, "tipo post-it",
 com vários quadros pra escrever e organizar — sem prazo, sem categoria, sem
 responsável (isso já é o checklist). `/app/anotacoes`, tabela nova `notes`.
 
-- **Modelo de dados mínimo**: `notes` (`conteudo` text livre, `cor` enum
-  fixo de 5 tons, `ordem`) — sem título, sem prazo, sem `updated_at` mesmo
+- **Modelo de dados mínimo**: `notes` (`titulo` e `conteudo` texto livre,
+  `cor` enum fixo de 5 tons, `ordem`) — sem prazo, sem `updated_at` mesmo
   (ninguém precisa saber quando editou um post-it). RLS no mesmo padrão de
-  sempre (`standardWeddingPolicies`), migration `0012`.
+  sempre (`standardWeddingPolicies`), migration `0012`. `titulo` entrou logo
+  depois (migration `0013`, pedido explícito da dona) — mesmo padrão de
+  autosave com debounce do `conteudo` (timer próprio, pra editar título e
+  corpo em sequência sem um cancelar o save pendente do outro), focando o
+  título em vez do corpo quando a nota nasce (`autoFocar`).
 - **Paleta de 5 cores fixas (`notaCorEnum`), não hex livre**: mesma lógica
   dos outros enums de domínio do projeto — um conjunto pequeno e conhecido
   de opções, mapeado pra classes Tailwind (`CLASSES_POR_COR` em

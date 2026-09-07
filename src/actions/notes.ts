@@ -6,7 +6,11 @@ import { revalidatePath } from "next/cache"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { notes } from "@/db/schema"
-import { notaConteudoSchema, notaCorSchema } from "@/lib/validators/notes"
+import {
+  notaConteudoSchema,
+  notaCorSchema,
+  notaTituloSchema,
+} from "@/lib/validators/notes"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
 
@@ -71,6 +75,28 @@ export async function atualizarConteudoAnotacao(
   // revalidando a rota inteira redesenharia todos os post-its e derrubaria o
   // foco/cursor de quem está digitando num deles. O conteúdo já está
   // salvo no banco; a próxima navegação normal já vem com o dado atual.
+  return {}
+}
+
+export async function atualizarTituloAnotacao(
+  id: string,
+  titulo: unknown
+): Promise<ResultadoAction> {
+  const dados = notaTituloSchema.safeParse(titulo)
+  if (!dados.success)
+    return { erro: dados.error.issues[0]?.message ?? "Título inválido." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) =>
+      tx.update(notes).set({ titulo: dados.data }).where(eq(notes.id, id))
+    )
+  } catch {
+    return { erro: "Não foi possível salvar o título." }
+  }
+
+  // Mesmo motivo de atualizarConteudoAnotacao: sem revalidatePath aqui, pra
+  // não redesenhar a tela inteira a cada pausa de digitação no título.
   return {}
 }
 

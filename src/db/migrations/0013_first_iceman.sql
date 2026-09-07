@@ -1,0 +1,1 @@
+ALTER TABLE "notes" ADD COLUMN "titulo" text DEFAULT '' NOT NULL;

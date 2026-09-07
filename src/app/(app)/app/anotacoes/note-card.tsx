@@ -8,6 +8,7 @@ import { GripVertical, Trash2 } from "lucide-react"
 import {
   atualizarConteudoAnotacao,
   atualizarCorAnotacao,
+  atualizarTituloAnotacao,
   excluirAnotacao,
 } from "@/actions/notes"
 import {
@@ -43,35 +44,57 @@ const CLASSES_POR_COR: Record<CorNota, string> = {
 const CORES = Object.keys(CLASSES_POR_COR) as CorNota[]
 
 export function NoteCard({ nota, autoFocar }: { nota: Nota; autoFocar?: boolean }) {
+  const [titulo, setTitulo] = useState(nota.titulo)
   const [conteudo, setConteudo] = useState(nota.conteudo)
   const [cor, setCor] = useState(nota.cor)
   const [excluindo, setExcluindo] = useState(false)
   const [seletorCorAberto, setSeletorCorAberto] = useState(false)
   const [, iniciarTransicao] = useTransition()
+  const tituloRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timeoutTituloRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timeoutConteudoRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: nota.id })
 
   useEffect(() => {
-    if (autoFocar) textareaRef.current?.focus()
+    if (autoFocar) tituloRef.current?.focus()
   }, [autoFocar])
 
   // Autosave com debounce enquanto digita + salva de novo ao sair do campo
   // (garante que a última pausa curta antes de trocar de nota não se perca).
+  // Título e conteúdo têm timers próprios pra editar os dois em sequência
+  // sem um cancelar o save pendente do outro.
+  function alterarTitulo(valor: string) {
+    setTitulo(valor)
+    if (timeoutTituloRef.current) clearTimeout(timeoutTituloRef.current)
+    timeoutTituloRef.current = setTimeout(() => {
+      iniciarTransicao(async () => {
+        await atualizarTituloAnotacao(nota.id, valor)
+      })
+    }, 800)
+  }
+
+  function salvarTituloAoSair() {
+    if (timeoutTituloRef.current) clearTimeout(timeoutTituloRef.current)
+    iniciarTransicao(async () => {
+      await atualizarTituloAnotacao(nota.id, titulo)
+    })
+  }
+
   function alterarConteudo(valor: string) {
     setConteudo(valor)
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(() => {
+    if (timeoutConteudoRef.current) clearTimeout(timeoutConteudoRef.current)
+    timeoutConteudoRef.current = setTimeout(() => {
       iniciarTransicao(async () => {
         await atualizarConteudoAnotacao(nota.id, valor)
       })
     }, 800)
   }
 
-  function salvarAoSair() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+  function salvarConteudoAoSair() {
+    if (timeoutConteudoRef.current) clearTimeout(timeoutConteudoRef.current)
     iniciarTransicao(async () => {
       await atualizarConteudoAnotacao(nota.id, conteudo)
     })
@@ -167,11 +190,19 @@ export function NoteCard({ nota, autoFocar }: { nota: Nota; autoFocar?: boolean 
           </AlertDialog>
         </div>
       </div>
+      <input
+        ref={tituloRef}
+        value={titulo}
+        onChange={(evento) => alterarTitulo(evento.target.value)}
+        onBlur={salvarTituloAoSair}
+        placeholder="Título"
+        className="text-foreground placeholder:text-foreground/40 font-heading shrink-0 bg-transparent text-sm outline-none"
+      />
       <textarea
         ref={textareaRef}
         value={conteudo}
         onChange={(evento) => alterarConteudo(evento.target.value)}
-        onBlur={salvarAoSair}
+        onBlur={salvarConteudoAoSair}
         placeholder="Escreva aqui..."
         className="text-foreground/90 placeholder:text-foreground/40 flex-1 resize-none overflow-y-auto bg-transparent text-sm outline-none"
       />

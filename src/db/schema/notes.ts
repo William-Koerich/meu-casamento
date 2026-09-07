@@ -5,9 +5,10 @@ import { createdAt, id } from "@/db/schema/helpers"
 import { standardWeddingPolicies } from "@/db/schema/policy-helpers"
 import { weddings } from "@/db/schema/weddings"
 
-// Post-its livres pra organizar lembretes soltos — sem título, sem prazo,
-// sem categoria: só um texto curto e uma cor, num quadro que a dona arrasta
-// como quiser. Não substitui o checklist (que já cobre tarefa com prazo).
+// Post-its livres pra organizar lembretes soltos — sem prazo, sem
+// categoria: só um título opcional, um texto curto e uma cor, num quadro
+// que a dona arrasta como quiser. Não substitui o checklist (que já cobre
+// tarefa com prazo).
 export const notes = pgTable(
   "notes",
   {
@@ -15,6 +16,7 @@ export const notes = pgTable(
     weddingId: uuid("wedding_id")
       .notNull()
       .references(() => weddings.id, { onDelete: "cascade" }),
+    titulo: text("titulo").notNull().default(""),
     conteudo: text("conteudo").notNull().default(""),
     cor: notaCorEnum("cor").notNull().default("amarelo"),
     ordem: integer("ordem").default(0).notNull(),
