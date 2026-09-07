@@ -6,6 +6,7 @@ import type {
   grupoConvidadoEnum,
   ladoConvidadoEnum,
   momentoMusicaEnum,
+  notaCorEnum,
   papelMembroEnum,
   permissaoMembroEnum,
   planoCerimonialistaEnum,
@@ -29,6 +30,7 @@ type PapelMembro = (typeof papelMembroEnum.enumValues)[number]
 type PermissaoMembro = (typeof permissaoMembroEnum.enumValues)[number]
 type BlockTipo = (typeof blockTipoEnum.enumValues)[number]
 type PlanoCerimonialista = (typeof planoCerimonialistaEnum.enumValues)[number]
+type NotaCor = (typeof notaCorEnum.enumValues)[number]
 
 // Rótulos em português dos enums de domínio — únicos usados em toda a UI
 // (não duplicar essas listas em componentes).
@@ -154,4 +156,12 @@ export const PLANO_CERIMONIALISTA_LABELS: Record<PlanoCerimonialista, string> = 
   basico: "Básico",
   premium: "Premium",
   platinum: "Platinum",
+}
+
+export const NOTA_COR_LABELS: Record<NotaCor, string> = {
+  amarelo: "Amarelo",
+  rosa: "Rosa",
+  azul: "Azul",
+  verde: "Verde",
+  lilas: "Lilás",
 }

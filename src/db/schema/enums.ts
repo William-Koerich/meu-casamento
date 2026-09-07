@@ -131,3 +131,16 @@ export const blockTipoEnum = pgEnum("block_tipo", [
   "galeria",
   "texto",
 ])
+
+// Paleta fixa de post-it (5 cores) em vez de hex livre — mesmo espírito dos
+// outros enums de domínio: um conjunto pequeno e conhecido de opções, fácil
+// de mapear pra classes Tailwind (ver NOTE_COR_CLASSES em note-card.tsx).
+// Não é a "cor de destaque única" da paleta do produto (ver CLAUDE.md) —
+// é conteúdo da própria nota, no mesmo espírito de `budgetCategories.cor`.
+export const notaCorEnum = pgEnum("nota_cor", [
+  "amarelo",
+  "rosa",
+  "azul",
+  "verde",
+  "lilas",
+])

@@ -628,6 +628,8 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
       card de fornecedores novo, contagem regressiva com data/local.
 - [x] **Fase 19 — Rebranding do checklist + tela de Alertas**
       (`/app/alertas`, antes só um card no dashboard).
+- [x] **Fase 20 — Quadro de anotações** (`/app/anotacoes`) — post-its livres,
+      arrastáveis, com autosave.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1379,6 +1381,60 @@ lugar nenhum pra ver a lista de verdade por trás do número.
   demais pra bottom nav); continua acessível pelo drawer "Mais" no
   celular e pela sidebar no desktop, mesmo caminho de qualquer outro
   módulo que não é um dos 4 de uso diário.
+
+## Fase 20 — Quadro de anotações
+
+Pedido explícito da dona: uma tela nova de anotações livres, "tipo post-it",
+com vários quadros pra escrever e organizar — sem prazo, sem categoria, sem
+responsável (isso já é o checklist). `/app/anotacoes`, tabela nova `notes`.
+
+- **Modelo de dados mínimo**: `notes` (`conteudo` text livre, `cor` enum
+  fixo de 5 tons, `ordem`) — sem título, sem prazo, sem `updated_at` mesmo
+  (ninguém precisa saber quando editou um post-it). RLS no mesmo padrão de
+  sempre (`standardWeddingPolicies`), migration `0012`.
+- **Paleta de 5 cores fixas (`notaCorEnum`), não hex livre**: mesma lógica
+  dos outros enums de domínio do projeto — um conjunto pequeno e conhecido
+  de opções, mapeado pra classes Tailwind (`CLASSES_POR_COR` em
+  `note-card.tsx`), com par claro/escuro para cada cor (nunca a mesma cor
+  crua nos dois temas, mesmo cuidado do tema escuro em geral). **Isso não é
+  uma exceção à regra de "única cor de destaque"** (ver decisão de Paleta
+  no topo deste arquivo) — a cor do post-it é conteúdo da própria nota,
+  escolhido pela usuária pra organizar visualmente, no mesmo espírito de
+  `budgetCategories.cor` (Fase 2), não uma cor de marca/UI.
+- **Grid arrastável em vez de lista vertical**: primeira tela do app a usar
+  `rectSortingStrategy` do dnd-kit (todas as outras — cronograma, playlist,
+  blocos da página pública — são listas verticais de uma coluna,
+  `verticalListSortingStrategy`); post-it pede um quadro 2D de verdade.
+  Reordenar ainda regrava `ordem` de todos os ids num loop, mesma decisão
+  já aceita pras outras telas com drag (custo simples, baixa frequência).
+- **Autosave com debounce, sem modal e sem revalidar a rota a cada
+  letra**: o texto salva sozinho 800ms depois de parar de digitar (e de
+  novo ao sair do campo, cobrindo o caso de trocar de nota rápido demais
+  pro debounce dar tempo). `atualizarConteudoAnotacao` **não chama
+  `revalidatePath`** de propósito — diferente de toda outra Server Action
+  do app: revalidar a rota inteira a cada pausa de digitação redesenharia
+  todos os post-its na tela e derrubaria o foco/cursor de quem está
+  escrevendo num deles. O texto já está salvo no banco a cada debounce; o
+  estado local do campo é que serve de fonte de verdade pra o que aparece
+  na tela, exatamente como o `InlineCurrencyEditor` do orçamento (Fase 5)
+  já fazia por um motivo parecido (evitar recarregar a UI numa interação
+  contínua). Criar/excluir/reordenar/trocar cor continuam revalidando
+  normalmente — só o conteúdo em si é a exceção.
+- **Nova nota nasce em branco e já focada**: `criarAnotacao` devolve a
+  linha criada (`.returning()`) pro client já saber o id real sem esperar
+  revalidação, e o card correspondente recebe `autoFocar` — o cursor já
+  entra no textarea, sem precisar clicar duas vezes (criar, depois
+  clicar no post-it pra escrever).
+- **`.returning()` verificado antes de usar**: `notes` é filha comum de
+  `weddings` (RLS via `is_wedding_member`, que consulta `weddings`/
+  `wedding_members` — nunca a própria `notes`), então não é candidata à
+  pegadinha de RLS+RETURNING já documentada nas Fases 11/12 (tabela cuja
+  policy de SELECT reconsulta a si mesma via função `security definer`).
+  Confirmado com script à parte (rollback forçado, produção) antes de
+  usar `.returning()` na Server Action de verdade.
+- **Nova entrada na navegação**: "Anotações" (ícone `StickyNote`), logo
+  depois de "Checklist" em `NAV_ITEMS` — mesmo critério das outras fases,
+  não entrou nos 4 principais da bottom nav mobile.
 
 ## Como rodar localmente
 
