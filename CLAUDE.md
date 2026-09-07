@@ -1396,7 +1396,7 @@ responsável (isso já é o checklist). `/app/anotacoes`, tabela nova `notes`.
   autosave com debounce do `conteudo` (timer próprio, pra editar título e
   corpo em sequência sem um cancelar o save pendente do outro), focando o
   título em vez do corpo quando a nota nasce (`autoFocar`).
-- **Paleta de 5 cores fixas (`notaCorEnum`), não hex livre**: mesma lógica
+- **Paleta de cores fixas (`notaCorEnum`), não hex livre**: mesma lógica
   dos outros enums de domínio do projeto — um conjunto pequeno e conhecido
   de opções, mapeado pra classes Tailwind (`CLASSES_POR_COR` em
   `note-card.tsx`), com par claro/escuro para cada cor (nunca a mesma cor
@@ -1404,7 +1404,11 @@ responsável (isso já é o checklist). `/app/anotacoes`, tabela nova `notes`.
   uma exceção à regra de "única cor de destaque"** (ver decisão de Paleta
   no topo deste arquivo) — a cor do post-it é conteúdo da própria nota,
   escolhido pela usuária pra organizar visualmente, no mesmo espírito de
-  `budgetCategories.cor` (Fase 2), não uma cor de marca/UI.
+  `budgetCategories.cor` (Fase 2), não uma cor de marca/UI. Nasceu com 5
+  cores (amarelo/rosa/azul/verde/lilás); `laranja`/`vermelho`/`cinza`
+  entraram depois (migration `0014`, `ALTER TYPE ... ADD VALUE`, pedido
+  explícito da dona por mais opções) — só cresce no fim da lista, um enum
+  Postgres não permite reordenar valor existente sem recriar o tipo.
 - **Grid arrastável em vez de lista vertical**: primeira tela do app a usar
   `rectSortingStrategy` do dnd-kit (todas as outras — cronograma, playlist,
   blocos da página pública — são listas verticais de uma coluna,

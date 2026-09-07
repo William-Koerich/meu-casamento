@@ -132,15 +132,21 @@ export const blockTipoEnum = pgEnum("block_tipo", [
   "texto",
 ])
 
-// Paleta fixa de post-it (5 cores) em vez de hex livre — mesmo espírito dos
+// Paleta fixa de post-it (8 cores) em vez de hex livre — mesmo espírito dos
 // outros enums de domínio: um conjunto pequeno e conhecido de opções, fácil
-// de mapear pra classes Tailwind (ver NOTE_COR_CLASSES em note-card.tsx).
+// de mapear pra classes Tailwind (ver CLASSES_POR_COR em note-card.tsx).
 // Não é a "cor de destaque única" da paleta do produto (ver CLAUDE.md) —
 // é conteúdo da própria nota, no mesmo espírito de `budgetCategories.cor`.
+// "laranja"/"vermelho"/"cinza" entraram depois das 5 originais (pedido
+// explícito da dona por mais opções) — só cresce no fim da lista: um enum
+// Postgres não permite reordenar valores existentes sem recriar o tipo.
 export const notaCorEnum = pgEnum("nota_cor", [
   "amarelo",
   "rosa",
   "azul",
   "verde",
   "lilas",
+  "laranja",
+  "vermelho",
+  "cinza",
 ])

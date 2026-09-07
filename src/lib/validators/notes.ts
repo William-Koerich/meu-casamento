@@ -1,6 +1,15 @@
 import { z } from "zod"
 
-export const notaCorSchema = z.enum(["amarelo", "rosa", "azul", "verde", "lilas"])
+export const notaCorSchema = z.enum([
+  "amarelo",
+  "rosa",
+  "azul",
+  "verde",
+  "lilas",
+  "laranja",
+  "vermelho",
+  "cinza",
+])
 
 // Sem exigir texto não-vazio: a nota nasce em branco (a dona escolhe a cor e
 // só depois escreve) e o autosave grava a cada pausa de digitação.

@@ -39,6 +39,9 @@ const CLASSES_POR_COR: Record<CorNota, string> = {
   azul: "bg-[#d6e8f7] dark:bg-[#20384a]",
   verde: "bg-[#dcecd4] dark:bg-[#28402a]",
   lilas: "bg-[#e7ddf5] dark:bg-[#352a4a]",
+  laranja: "bg-[#fbe0c4] dark:bg-[#523a1e]",
+  vermelho: "bg-[#f6d3d0] dark:bg-[#4f2b28]",
+  cinza: "bg-[#e2e1dc] dark:bg-[#3a3a37]",
 }
 
 const CORES = Object.keys(CLASSES_POR_COR) as CorNota[]

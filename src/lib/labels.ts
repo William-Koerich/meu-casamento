@@ -164,4 +164,7 @@ export const NOTA_COR_LABELS: Record<NotaCor, string> = {
   azul: "Azul",
   verde: "Verde",
   lilas: "Lilás",
+  laranja: "Laranja",
+  vermelho: "Vermelho",
+  cinza: "Cinza",
 }
