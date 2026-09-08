@@ -587,6 +587,31 @@ for=...>` apontava pra um `id` que não existia no DOM em todo formulário
   no convite, o token secreto é que autoriza — e `aceitarConvite` já
   vincula o `user_id`) já funcionava desde a Fase 3; faltava só a dona
   conseguir entregar o link.
+- **Botão "Adicionar item" do orçamento sumia depois de cadastrar um item,
+  só voltava recarregando a tela**: relatado pela dona em produção. Tentei
+  reproduzir de várias formas — categoria vazia e com itens, várias
+  categorias seguidas, build de produção local (`next build && next
+start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
+  via CDP) — usando a conta de demonstração (`mariana@exemplo.com`) num
+  script Puppeteer (`puppeteer-core` + Chrome já instalado, sem baixar
+  browser novo; removido depois de usar) contra o banco de produção real.
+  Nenhuma reprodução automatizada travou (o botão sempre voltava no DOM),
+  o que por si só é uma pista: o botão ficava dentro de
+  `AccordionContent` (Radix), que só existe no DOM enquanto a categoria
+  está expandida — qualquer instabilidade de timing/altura de
+  animação nessa região (algo que checagem por `querySelector` não
+  detecta, só um usuário real olhando a tela notaria) tiraria o botão de
+  vista sem meu script perceber. Corrigido de forma estrutural em vez de
+  perseguir o timing exato: o botão "Adicionar item" saiu de dentro do
+  `AccordionContent` e virou um ícone (+) sempre visível no cabeçalho da
+  categoria, ao lado do valor previsto — irmão do `AccordionTrigger` (mesma
+  regra de não aninhar `<button>` dentro de `<button>` que já valia pro
+  `InlineCurrencyEditor` ali do lado). Assim ele nunca mais depende do
+  estado aberto/fechado do accordion pra existir, eliminando essa classe
+  inteira de instabilidade independente da causa exata — e de brinde não
+  precisa mais expandir a categoria só pra adicionar um item nela.
+  Verificado depois da correção com o mesmo script: botão presente com a
+  categoria fechada, aberta, logo após criar item e fechada de novo.
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,

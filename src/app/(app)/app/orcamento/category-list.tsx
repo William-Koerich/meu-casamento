@@ -1,7 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
-import { Trash2 } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 
 import {
   atualizarValorPrevistoCategoria,
@@ -52,9 +52,14 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
 
         return (
           <AccordionItem key={categoria.id} value={categoria.id}>
-            {/* InlineCurrencyEditor renderiza um <button> — não pode ficar
-                dentro do <button> do AccordionTrigger (HTML inválido, quebra
-                hidratação). Por isso fica como irmão do trigger, não filho. */}
+            {/* InlineCurrencyEditor e o botão "Adicionar item" renderizam
+                <button> — não podem ficar dentro do <button> do
+                AccordionTrigger (HTML inválido, quebra hidratação). Por isso
+                ficam como irmãos do trigger, não filhos. O botão de
+                adicionar também fica de propósito FORA do AccordionContent
+                (que só existe no DOM quando a categoria está expandida) —
+                assim ele nunca depende do estado aberto/fechado do
+                accordion pra aparecer. */}
             <div className="flex items-center gap-3">
               <AccordionTrigger className="flex-none gap-2">
                 <span className="flex items-center gap-2">
@@ -74,6 +79,21 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
                   }
                 />
               </span>
+              <ItemFormDialog
+                categorias={categorias}
+                vendors={vendors}
+                categoriaIdPadrao={categoria.id}
+                trigger={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={`Adicionar item em ${categoria.nome}`}
+                  >
+                    <Plus />
+                  </Button>
+                }
+              />
             </div>
             <AccordionContent>
               {categoria.items.length === 0 ? (
@@ -143,16 +163,6 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
                   ))}
                 </div>
               )}
-              <ItemFormDialog
-                categorias={categorias}
-                vendors={vendors}
-                categoriaIdPadrao={categoria.id}
-                trigger={
-                  <Button variant="outline" size="sm" className="mt-3">
-                    Adicionar item
-                  </Button>
-                }
-              />
             </AccordionContent>
           </AccordionItem>
         )
