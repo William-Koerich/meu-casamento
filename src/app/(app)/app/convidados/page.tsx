@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 
+import { ExportPdfButton } from "@/components/app/export-pdf-button"
 import { getGuests } from "@/db/queries/guests"
 import { getMinhaWedding } from "@/db/queries/weddings"
 
@@ -15,7 +16,10 @@ export default async function ConvidadosPage() {
 
   return (
     <div>
-      <h1 className="font-heading mb-6 text-2xl">Convidados</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-heading text-2xl">Convidados</h1>
+        <ExportPdfButton rotulo="Exportar PDF" />
+      </div>
       <GuestsView guests={guests} slug={wedding.slug} />
     </div>
   )

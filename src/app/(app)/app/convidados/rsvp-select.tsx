@@ -12,15 +12,18 @@ import {
 } from "@/components/ui/select"
 import type { guests } from "@/db/schema"
 import { STATUS_RSVP_LABELS } from "@/lib/labels"
+import { cn } from "@/lib/utils"
 
 type StatusRsvp = (typeof guests.$inferSelect)["statusRsvp"]
 
 export function RsvpSelect({
   guestId,
   statusAtual,
+  className,
 }: {
   guestId: string
   statusAtual: StatusRsvp
+  className?: string
 }) {
   const [status, setStatus] = useState(statusAtual)
   const [, iniciarTransicao] = useTransition()
@@ -36,7 +39,7 @@ export function RsvpSelect({
 
   return (
     <Select value={status} onValueChange={alterar}>
-      <SelectTrigger className="w-36">
+      <SelectTrigger className={cn("w-36", className)}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

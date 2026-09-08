@@ -301,7 +301,16 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   `print:hidden` na sidebar/bottom nav/header em vez de uma lib de PDF nova
   — a pessoa usa "Salvar como PDF" do diálogo de impressão do navegador.
   Mesmo componente (`components/app/export-pdf-button.tsx`) reaproveitado no
-  cronograma e em `/app/exportar`.
+  cronograma, em `/app/convidados` (pedido explícito da dona, depois da
+  Fase 6) e em `/app/exportar`. Em `/app/convidados`: filtros/busca e os
+  botões "Importar"/"Novo convidado" somem no PDF (`print:hidden` no
+  container inteiro), a coluna de ações (editar/excluir) também some
+  coluna a coluna, e o `Select` de RSVP (interativo, não deveria imprimir
+  como controle clicável) vira texto simples só na impressão — os dois
+  ficam lado a lado no mesmo `<TableCell>`, um `hidden print:inline` e o
+  outro `print:hidden`, sem duplicar a célula. O PDF respeita os filtros
+  ativos na tela (busca, grupo, lado, status) — imprimir só "confirmados",
+  por exemplo, é só filtrar antes de clicar em "Exportar PDF".
 - **Cronograma — horário calculado, não digitado**: só o primeiro bloco tem
   horário editável; os demais são `dataCasamento_do_primeiro + soma das
 durações anteriores`, recalculado e regravado em todas as linhas

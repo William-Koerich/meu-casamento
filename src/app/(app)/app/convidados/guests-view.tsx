@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import type { GuestComMesa } from "@/db/queries/guests"
-import { GRUPO_LABELS, LADO_LABELS } from "@/lib/labels"
+import { GRUPO_LABELS, LADO_LABELS, STATUS_RSVP_LABELS } from "@/lib/labels"
 
 import { GuestFormDialog } from "./guest-form-dialog"
 import { GuestRowActions } from "./guest-row-actions"
@@ -90,7 +90,7 @@ export function GuestsView({ guests, slug }: { guests: GuestComMesa[]; slug: str
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <div className="flex flex-wrap gap-2">
           <Input
             placeholder="Buscar por nome ou e-mail"
@@ -170,7 +170,7 @@ export function GuestsView({ guests, slug }: { guests: GuestComMesa[]; slug: str
                 <TableHead>Acompanhantes</TableHead>
                 <TableHead>Mesa</TableHead>
                 <TableHead>RSVP</TableHead>
-                <TableHead className="w-10" />
+                <TableHead className="w-10 print:hidden" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -189,9 +189,16 @@ export function GuestsView({ guests, slug }: { guests: GuestComMesa[]; slug: str
                     {guest.table?.nome ?? "—"}
                   </TableCell>
                   <TableCell>
-                    <RsvpSelect guestId={guest.id} statusAtual={guest.statusRsvp} />
+                    <span className="hidden print:inline">
+                      {STATUS_RSVP_LABELS[guest.statusRsvp]}
+                    </span>
+                    <RsvpSelect
+                      guestId={guest.id}
+                      statusAtual={guest.statusRsvp}
+                      className="print:hidden"
+                    />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="print:hidden">
                     <GuestRowActions guest={guest} slug={slug} />
                   </TableCell>
                 </TableRow>
