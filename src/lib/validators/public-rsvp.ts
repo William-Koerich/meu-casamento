@@ -1,10 +1,11 @@
 import { z } from "zod"
 
+// A confirmação pública só pergunta "vai ou não vai" (pedido explícito da
+// dona) — acompanhantes/criança/restrição alimentar continuam existindo em
+// `guests` e editáveis pela equipe em `/app/convidados`, só não fazem mais
+// parte do formulário que o convidado preenche sozinho.
 export const confirmarPresencaSchema = z.object({
   statusRsvp: z.enum(["confirmado", "recusado"]),
-  acompanhantes: z.number().int().min(0),
-  crianca: z.boolean(),
-  restricaoAlimentar: z.string().trim().optional(),
 })
 
 export type ConfirmarPresencaInput = z.infer<typeof confirmarPresencaSchema>

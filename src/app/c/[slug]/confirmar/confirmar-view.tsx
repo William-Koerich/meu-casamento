@@ -6,11 +6,9 @@ import { buscarConvidadoPorCodigo, buscarConvidadoPublico } from "@/actions/publ
 import { confirmarPresenca } from "@/actions/public-rsvp"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Textarea } from "@/components/ui/textarea"
 import type { getGuestPorCodigo } from "@/db/queries/public-site"
 import type { ResultadoBuscaConvidado } from "@/db/queries/public-site"
 
@@ -103,21 +101,13 @@ function ConfirmForm({
   const [statusRsvp, setStatusRsvp] = useState<"confirmado" | "recusado">(
     convidado.statusRsvp === "recusado" ? "recusado" : "confirmado"
   )
-  const [acompanhantes, setAcompanhantes] = useState(convidado.acompanhantes)
-  const [crianca, setCrianca] = useState(convidado.crianca)
-  const [restricao, setRestricao] = useState(convidado.restricaoAlimentar ?? "")
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
 
   function enviar() {
     setErro(null)
     iniciarTransicao(async () => {
-      const resultado = await confirmarPresenca(convidado.codigoRsvp, {
-        statusRsvp,
-        acompanhantes,
-        crianca,
-        restricaoAlimentar: restricao,
-      })
+      const resultado = await confirmarPresenca(convidado.codigoRsvp, { statusRsvp })
       if (resultado?.erro) {
         setErro(resultado.erro)
         return
@@ -145,35 +135,6 @@ function ConfirmForm({
             <Label htmlFor="recusado">Não poderei ir</Label>
           </div>
         </RadioGroup>
-
-        {statusRsvp === "confirmado" && (
-          <>
-            <div className="space-y-1.5">
-              <Label>Acompanhantes</Label>
-              <Input
-                type="number"
-                min={0}
-                value={acompanhantes}
-                onChange={(evento) => setAcompanhantes(evento.target.valueAsNumber || 0)}
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={crianca}
-                onCheckedChange={(v) => setCrianca(Boolean(v))}
-              />
-              <Label>Vou levar criança</Label>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Restrição alimentar</Label>
-              <Textarea
-                rows={2}
-                value={restricao}
-                onChange={(evento) => setRestricao(evento.target.value)}
-              />
-            </div>
-          </>
-        )}
 
         {erro && <p className="text-destructive text-sm">{erro}</p>}
         <Button type="button" className="w-full" onClick={enviar} disabled={pendente}>

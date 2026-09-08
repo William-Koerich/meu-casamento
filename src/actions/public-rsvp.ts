@@ -26,9 +26,6 @@ export async function confirmarPresenca(
           .update(guests)
           .set({
             statusRsvp: dados.data.statusRsvp,
-            acompanhantes: dados.data.acompanhantes,
-            crianca: dados.data.crianca,
-            restricaoAlimentar: dados.data.restricaoAlimentar || null,
             respondidoEm: new Date(),
           })
           .where(eq(guests.codigoRsvp, codigo))

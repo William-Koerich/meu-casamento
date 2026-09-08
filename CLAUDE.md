@@ -353,6 +353,17 @@ durações anteriores`, recalculado e regravado em todas as linhas
   (`public.buscar_convidados_publico`, migration 0003) que devolve só
   `{id, nome, codigo_rsvp}` de casamentos publicados; o fluxo usa esse
   código para seguir pela policy normal de RSVP.
+- **RSVP público simplificado pra só "vai ou não vai"**: pedido explícito
+  da dona — o formulário de `/c/[slug]/confirmar` pedia acompanhantes,
+  se ia levar criança e restrição alimentar além do sim/não, e ela achou
+  informação demais pro convidado preencher sozinho. `confirmarPresenca`
+  (`actions/public-rsvp.ts`) e `confirmarPresencaSchema`
+  (`lib/validators/public-rsvp.ts`) agora só recebem `statusRsvp`; os 3
+  campos continuam existindo em `guests` e editáveis pela equipe em
+  `/app/convidados` (formulário manual e importação CSV, Fase 6) — só
+  saíram do que o convidado preenche sozinho, não do modelo de dados nem
+  do painel interno. `getGuestPorCodigo` parou de selecionar essas 3
+  colunas (não são mais lidas em nenhum lugar do fluxo público).
 - **Página pública só é visível com `publicado = true`, sem modo de
   pré-visualização para a dona** — segue a spec ao pé da letra ("acessível
   apenas com publicado = true"); se um dia quiserem que a dona veja a
