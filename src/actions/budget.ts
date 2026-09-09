@@ -57,6 +57,7 @@ export async function criarItemOrcamento(input: unknown): Promise<ResultadoActio
           categoria.valorPrevisto != null ? String(categoria.valorPrevisto) : null,
         valorContratado:
           categoria.valorContratado != null ? String(categoria.valorContratado) : null,
+        observacoes: categoria.observacoes || null,
       })
     })
   } catch {
@@ -88,6 +89,7 @@ export async function atualizarItemOrcamento(
             dados.data.valorContratado != null
               ? String(dados.data.valorContratado)
               : null,
+          observacoes: dados.data.observacoes || null,
         })
         .where(eq(budgetItems.id, id))
     )

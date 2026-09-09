@@ -632,6 +632,18 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
   precisa mais expandir a categoria só pra adicionar um item nela.
   Verificado depois da correção com o mesmo script: botão presente com a
   categoria fechada, aberta, logo após criar item e fechada de novo.
+- **`budgetItems.observacoes`**: pedido explícito da dona — precisava anotar
+  o que está incluso num valor negociado (ex. "buffet inclui decoração e
+  som, DJ à parte"), informação que não cabe em nenhum dos campos
+  numéricos existentes. Coluna `text` nullable (migration `0015`, sem
+  grant de coluna pra `anon` — `budget_items` não é uma tabela com vitrine
+  pública, ver "Grants de coluna para anon"), campo opcional no mesmo
+  `ItemFormDialog` de sempre (`Textarea` de 3 linhas, mesmo rótulo
+  "Observações" já usado no formulário de fornecedor). Exibido como texto
+  pequeno e mudo abaixo da descrição/fornecedor na lista
+  (`category-list.tsx`, `whitespace-pre-line` pra respeitar quebras de
+  linha digitadas) e incluído como coluna a mais no CSV de
+  `exportarOrcamento` (`/app/exportar`).
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,

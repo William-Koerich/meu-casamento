@@ -48,6 +48,7 @@ export const budgetItems = pgTable(
     descricao: text("descricao").notNull(),
     valorPrevisto: numeric("valor_previsto", { precision: 12, scale: 2 }),
     valorContratado: numeric("valor_contratado", { precision: 12, scale: 2 }),
+    observacoes: text("observacoes"),
     createdAt: createdAt(),
   },
   (table) => [

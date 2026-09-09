@@ -6,6 +6,7 @@ export const itemOrcamentoSchema = z.object({
   descricao: z.string().trim().min(2, "Informe uma descrição."),
   valorPrevisto: z.number().min(0).optional(),
   valorContratado: z.number().min(0).optional(),
+  observacoes: z.string().trim().optional(),
 })
 
 export type ItemOrcamentoInput = z.infer<typeof itemOrcamentoSchema>

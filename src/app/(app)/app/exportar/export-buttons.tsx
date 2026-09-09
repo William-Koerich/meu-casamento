@@ -89,7 +89,14 @@ export function ExportButtons({
   }
 
   function exportarOrcamento() {
-    const cabecalho = ["Categoria", "Item", "Fornecedor", "Previsto", "Contratado"]
+    const cabecalho = [
+      "Categoria",
+      "Item",
+      "Fornecedor",
+      "Previsto",
+      "Contratado",
+      "Observações",
+    ]
     const linhas = categorias.flatMap((categoria) =>
       categoria.items.length > 0
         ? categoria.items.map((item) => [
@@ -98,8 +105,9 @@ export function ExportButtons({
             item.vendor?.nome ?? "",
             item.valorPrevisto ?? "",
             item.valorContratado ?? "",
+            item.observacoes ?? "",
           ])
-        : [[categoria.nome, "", "", categoria.valorPrevisto, ""]]
+        : [[categoria.nome, "", "", categoria.valorPrevisto, "", ""]]
     )
     baixarCsv("orcamento.csv", arrayParaCsv([cabecalho, ...linhas]))
   }

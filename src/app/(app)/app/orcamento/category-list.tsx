@@ -114,6 +114,11 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
                             {item.vendor.nome}
                           </p>
                         )}
+                        {item.observacoes && (
+                          <p className="text-muted-foreground mt-1 text-xs whitespace-pre-line">
+                            {item.observacoes}
+                          </p>
+                        )}
                       </div>
                       <div className="flex shrink-0 flex-wrap items-center gap-4 text-xs">
                         <span className="text-muted-foreground">

@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import type { CategoriaComItens } from "@/db/queries/budget"
 import type { vendors } from "@/db/schema"
 import { itemOrcamentoSchema, type ItemOrcamentoInput } from "@/lib/validators/budget"
@@ -64,6 +65,7 @@ export function ItemFormDialog({
       descricao: item?.descricao ?? "",
       valorPrevisto: item?.valorPrevisto ? Number(item.valorPrevisto) : undefined,
       valorContratado: item?.valorContratado ? Number(item.valorContratado) : undefined,
+      observacoes: item?.observacoes ?? "",
     },
   })
 
@@ -187,6 +189,23 @@ export function ItemFormDialog({
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="observacoes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={3}
+                      placeholder="Ex.: inclui decoração e som, buffet à parte..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             {erro && <p className="text-destructive text-sm">{erro}</p>}
             <DialogFooter>
               <Button type="submit" disabled={pendente}>
