@@ -644,6 +644,14 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
   (`category-list.tsx`, `whitespace-pre-line` pra respeitar quebras de
   linha digitadas) e incluído como coluna a mais no CSV de
   `exportarOrcamento` (`/app/exportar`).
+- **Scroll interno na lista de itens de uma categoria**: categoria com
+  muitos itens (ex. "Local", vários fornecedores cotados) empurrava o
+  restante da página pra baixo sem limite, dificultando ver as categorias
+  seguintes — relatado pela dona com print de uma categoria expandida
+  cortando a tela. Corrigido com `max-h-112 overflow-y-auto` no `div` que
+  lista os itens dentro de `AccordionContent` (categorias com poucos itens
+  não são afetadas, só cresce até esse limite e daí em diante rola por
+  dentro).
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,

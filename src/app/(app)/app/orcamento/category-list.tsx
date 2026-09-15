@@ -101,7 +101,7 @@ export function CategoryList({ categorias, vendors }: CategoryListProps) {
                   Nenhum item nesta categoria ainda.
                 </p>
               ) : (
-                <div className="space-y-3">
+                <div className="max-h-112 space-y-3 overflow-y-auto pr-1">
                   {categoria.items.map((item) => (
                     <div
                       key={item.id}
