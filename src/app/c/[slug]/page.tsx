@@ -7,12 +7,26 @@ import { getBlocosPublicos, getWeddingPublicaPorSlug } from "@/db/queries/public
 import { diasParaCasamento, textoContagemCompacta } from "@/lib/countdown"
 import { formatDate } from "@/lib/format"
 
+import { PaginaMarkdownPublica } from "./pagina-markdown"
 import { PublicBlock } from "./public-block"
 
 export default async function PaginaPublicaCasal({ params }: PageProps<"/c/[slug]">) {
   const { slug } = await params
   const wedding = await getWeddingPublicaPorSlug(slug)
   if (!wedding) notFound()
+
+  // Modo Markdown (Fase 21) substitui a página inteira, hero incluído — a
+  // dona escreve tudo, do título aos marcadores de navegação, com liberdade
+  // total. Ver decisão em CLAUDE.md.
+  if (wedding.paginaMarkdownAtiva) {
+    return (
+      <PaginaMarkdownPublica
+        conteudo={wedding.paginaMarkdown ?? ""}
+        fundoUrl={wedding.paginaFundoUrl}
+        slug={slug}
+      />
+    )
+  }
 
   const dias = diasParaCasamento(wedding.dataCasamento)
   const blocos = await getBlocosPublicos(wedding.id)

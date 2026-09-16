@@ -47,6 +47,13 @@ export const weddings = pgTable(
     // out" além disso deixaria espaço vazio na capa.
     fotoCapaZoom: integer("foto_capa_zoom").notNull().default(100),
     dressCode: text("dress_code"),
+    // Modo alternativo à página por blocos (Fase 10): a página pública
+    // inteira vira o markdown de `paginaMarkdown`, com "[[rsvp]]",
+    // "[[presentes]]" e "[[local]]" como marcadores pra posicionar os
+    // cartões de navegação em qualquer ponto do texto — ver Fase 21.
+    paginaMarkdownAtiva: boolean("pagina_markdown_ativa").default(false).notNull(),
+    paginaMarkdown: text("pagina_markdown"),
+    paginaFundoUrl: text("pagina_fundo_url"),
     slug: text("slug").notNull().unique(),
     publicado: boolean("publicado").default(false).notNull(),
     // Pagamento único da noiva (Fase 14) — sempre `true` pra casamento de

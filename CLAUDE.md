@@ -695,6 +695,8 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
       (`/app/alertas`, antes só um card no dashboard).
 - [x] **Fase 20 — Quadro de anotações** (`/app/anotacoes`) — post-its livres,
       arrastáveis, com autosave.
+- [x] **Fase 21 — Página pública por Markdown** — modo alternativo ao
+      construtor por blocos (Fase 10), liberdade total de texto/imagens.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -813,7 +815,7 @@ setNovoBloco("foto")}` (sem precisar de `preventDefault`, o menu fecha
   um deles, não só no construtor de blocos. Corrigido criando
   `caminhoArquivoStorage(weddingId, arquivo)` (`src/lib/storage-path.ts`),
   usado agora nos 8 lugares: o path vira só `{wedding_id}/{uuid}.{extensão
-  sanitizada}`, nunca o nome original. Onde o nome de exibição importa pra
+sanitizada}`, nunca o nome original. Onde o nome de exibição importa pra
   usuária ver depois (ex. `documents.nome`), ele já era guardado numa
   coluna à parte, independente do path do Storage — então nada deixou de
   funcionar, só o path parou de carregar um nome de arquivo arbitrário.
@@ -961,7 +963,7 @@ cobrança):
   `update where id = ...` muda só o casamento certo e não vaza pro outro
   dono da mesma conta (a correção do bug acima); exclusão por id remove só
   1. Foi nesse script que o bug do `.returning()` acima apareceu e foi
-  isolado.
+     isolado.
 
 ### Rotas e navegação
 
@@ -1013,8 +1015,7 @@ Premium, Platinum), preço e limite diferentes cada um.
   evitei prometer feature que não existe de verdade.
 - **`profiles.planoCerimonialista`** (`pgEnum` novo, `plano_cerimonialista`:
   `basico` | `premium` | `platinum`, nullable — null pra conta noiva, não
-  se aplica). `handle_new_user()` (trigger da Fase 2, já mexida nas Fases
-  12) grava `'basico'` automaticamente pra toda conta que nasce
+  se aplica). `handle_new_user()` (trigger da Fase 2, já mexida nas Fases 12) grava `'basico'` automaticamente pra toda conta que nasce
   `tipo_conta = 'cerimonialista'`. **Sem Stripe ainda** (decisão já tomada
   na Fase 12): não existe checkout nem cobrança de verdade — trocar de
   plano é uma atualização manual dessa coluna (por você, direto no banco
@@ -1128,7 +1129,7 @@ linha de código (só as env vars).
   plano de graça**. Corrigido numa migration de fix (mesmo padrão já usado
   pra `anon` desde a Fase 2): `revoke update on tabela from authenticated`
   (tabela inteira, só o UPDATE) seguido de `grant update (lista exata de
-  colunas editáveis) on tabela to authenticated`. De brinde, `owner_id` de
+colunas editáveis) on tabela to authenticated`. De brinde, `owner_id` de
   `weddings` ficou de fora da lista de colunas liberadas — fecha uma
   brecha que já existia antes desta fase (um membro "admin" via
   `wedding_members`, sem ser a dona, podia em tese tentar se autoconceder
@@ -1508,6 +1509,88 @@ responsável (isso já é o checklist). `/app/anotacoes`, tabela nova `notes`.
 - **Nova entrada na navegação**: "Anotações" (ícone `StickyNote`), logo
   depois de "Checklist" em `NAV_ITEMS` — mesmo critério das outras fases,
   não entrou nos 4 principais da bottom nav mobile.
+
+## Fase 21 — Página pública por Markdown
+
+Pedido explícito da dona: poder editar a página pública inteira escrevendo
+em Markdown, com liberdade de organizar texto e imagens, em vez de ficar
+restrita ao construtor por blocos da Fase 10 (arrastar/ocultar cada seção
+numa lista separada). Ela quis manter a possibilidade de posicionar os
+antigos "checks" de visibilidade — na prática, os cartões de navegação de
+RSVP/presentes/local, que dependem de lógica de verdade (não são só texto)
+— em qualquer ponto do conteúdo escrito, não numa lista à parte. Decisão de
+escopo tomada com o usuário antes de implementar (não havia imagem de
+referência anexada, só a ideia em texto): o modo Markdown é **uma opção
+nova, lado a lado** com o construtor por blocos — não o substitui. A dona
+escolhe qual dos dois usar; a página pública lê `weddings.paginaMarkdownAtiva`
+pra decidir qual renderizar.
+
+- **3 colunas novas em `weddings`**, sem tabela nova: `paginaMarkdownAtiva`
+  (boolean), `paginaMarkdown` (texto livre) e `paginaFundoUrl` (imagem de
+  fundo opcional). Preferido a uma tabela própria porque é conteúdo único
+  por casamento (não uma lista de itens, como `page_blocks`) — mesmo
+  espírito de `historiaCasal`, só que agora cobrindo a página inteira.
+  Migration `0016`, com as 2 allowlists de coluna que toda coluna nova em
+  `weddings` precisa (ver "Grants de coluna para anon" e a migration `0011`
+  que revogou UPDATE de tabela inteira de `authenticated`) — esquecer
+  qualquer uma das duas quebraria silenciosamente (leitura pública ou
+  gravação pela dona) sem nenhum erro em build/typecheck, mesma pegadinha
+  já documentada nas Fases 4/5 da foto de capa.
+- **Marcadores `[[rsvp]]`/`[[presentes]]`/`[[local]]`, cada um sozinho numa
+  linha**: `dividirMarkdownPublico` (`src/lib/markdown-publico.ts`) separa o
+  conteúdo em segmentos de texto normal e esses 3 marcadores: texto vira
+  Markdown renderizado (`react-markdown` + `remark-gfm`, sem HTML bruto —
+  `rehype-raw` não foi habilitado de propósito, senão a dona poderia colar
+  `<script>` ou qualquer HTML arbitrário numa página que qualquer visitante
+  carrega sem estar logado), marcador vira o mesmo cartão de navegação que
+  a Fase 10 já usa. "Nossa história" não ganhou marcador — nesse modo a
+  dona escreve a própria história como texto comum, sem precisar de um
+  bloco especial pra prosa.
+- **`react-markdown`/`remark-gfm` nasceram como dependência de verdade**
+  (não dev-only, não removida depois) — diferente da metodologia de
+  reprodução de bugs com Puppeteer usada noutras fases, isso é código de
+  produto: renderiza o Markdown tanto na página pública (`/c/[slug]`,
+  Server Component — o parsing roda no servidor, não pesa no bundle do
+  visitante) quanto na prévia ao vivo do editor (`/app/site-publico`, Client
+  Component — aí sim entra no bundle, refletido no tamanho maior dessa rota
+  no build).
+- **`PaginaMarkdownConteudo`/`PaginaMarkdownPublica`** (`src/app/c/[slug]/pagina-markdown.tsx`)
+  reaproveitados dos dois lados: a página pública usa `PaginaMarkdownPublica`
+  (conteúdo + fundo), o editor usa só `PaginaMarkdownConteudo` (sem fundo)
+  pra prévia ao vivo — mesmo arquivo co-localizado dentro da rota pública,
+  seguindo o precedente já existente de `public-block.tsx` (componente de
+  view dentro da própria pasta de rota, não em `components/`), importado
+  cross-rota pelo editor em `(app)/app/site-publico`.
+- **Autosave com debounce, sem `revalidatePath` no conteúdo** — mesmo
+  padrão e mesmo motivo já registrados em `atualizarConteudoAnotacao`
+  (Fase 20): o textarea é grande, a prévia já renderiza a partir do estado
+  local do componente (não de uma revalidação do servidor), e revalidar a
+  rota a cada pausa de digitação derrubaria o cursor sem ganho nenhum. Só
+  ativar/desativar o modo e trocar a imagem de fundo revalidam (ações raras,
+  não durante digitação).
+- **Fundo de página simples, sem arrastar/zoom**: diferente da foto de capa
+  (Fase 9) e das fotos de bloco (Fase 10), aqui é só upload + `background-size:
+cover` fixo com uma camada `bg-background/85` por cima pra manter o texto
+  legível — não pedido pela dona, então não implementado (evita
+  over-engineering uma tela que ninguém pediu pra ter enquadramento fino).
+  Reaproveita o mesmo bucket público `blocos` e `caminhoArquivoStorage` já
+  usados pelas fotos de bloco da Fase 10.
+- **Modo Markdown substitui a página pública inteira, hero incluído** — ao
+  contrário do construtor por blocos (que sempre mostra o cabeçalho fixo
+  com nomes/contagem regressiva antes dos blocos), aqui a dona escreve
+  literalmente tudo, do título aos marcadores de navegação. Foi a leitura
+  mais direta de "liberdade total" no pedido dela — o cabeçalho fixo faria
+  parte do conteúdo dela ser sempre precedido por algo que ela não escolheu.
+- **Verificado de ponta a ponta contra produção** (mesmo método das Fases
+  10-13, mas com Puppeteer em vez de script SQL isolado, já que aqui o que
+  importa é o fluxo do editor + prévia + página pública real): login na
+  conta de demonstração, digitar Markdown com um marcador `[[rsvp]]` no
+  meio, conferir que a prévia ao vivo mostra tanto o texto quanto o cartão
+  de "Confirmar presença", ativar o modo, conferir que `/c/[slug]` de
+  verdade mostra o mesmo conteúdo E o cartão funcional. Dados de teste
+  limpos da conta de demonstração depois (`paginaMarkdown`/`paginaMarkdownAtiva`/
+  `paginaFundoUrl` resetados) — mesmo cuidado já registrado nas fases
+  anteriores por compartilhar o banco de produção com a conta de demo.
 
 ## Como rodar localmente
 
