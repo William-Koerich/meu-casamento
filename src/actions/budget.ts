@@ -166,6 +166,34 @@ export async function criarPagamento(input: unknown): Promise<ResultadoAction> {
   return {}
 }
 
+export async function atualizarPagamento(
+  id: string,
+  input: unknown
+): Promise<ResultadoAction> {
+  const dados = pagamentoSchema.safeParse(input)
+  if (!dados.success) return { erro: "Preencha os campos obrigatórios." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) =>
+      tx
+        .update(payments)
+        .set({
+          budgetItemId: dados.data.budgetItemId,
+          descricao: dados.data.descricao,
+          valor: String(dados.data.valor),
+          vencimento: dados.data.vencimento,
+          formaPagamento: dados.data.formaPagamento || null,
+        })
+        .where(eq(payments.id, id))
+    )
+  } catch {
+    return { erro: "Não foi possível salvar o pagamento." }
+  }
+  revalidarOrcamento()
+  return {}
+}
+
 export async function alternarPagamentoPago(
   id: string,
   pago: boolean

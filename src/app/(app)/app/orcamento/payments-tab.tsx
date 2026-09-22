@@ -1,8 +1,20 @@
 "use client"
 
 import { useMemo, useState, useTransition } from "react"
+import { Pencil, Trash2 } from "lucide-react"
 
-import { alternarPagamentoPago } from "@/actions/budget"
+import { alternarPagamentoPago, excluirPagamento } from "@/actions/budget"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -121,11 +133,17 @@ export function PaymentsTab({
                 <TableHead>Vencimento</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtrados.map((pagamento) => (
-                <PagamentoRow key={pagamento.id} pagamento={pagamento} hoje={hoje} />
+                <PagamentoRow
+                  key={pagamento.id}
+                  pagamento={pagamento}
+                  hoje={hoje}
+                  itens={itens}
+                />
               ))}
             </TableBody>
           </Table>
@@ -138,9 +156,11 @@ export function PaymentsTab({
 function PagamentoRow({
   pagamento,
   hoje,
+  itens,
 }: {
   pagamento: PagamentoComItem
   hoje: string
+  itens: ItemOpcao[]
 }) {
   const [pago, setPago] = useState(pagamento.pago)
   const [, iniciarTransicao] = useTransition()
@@ -170,6 +190,65 @@ function PagamentoRow({
           {ROTULO_STATUS[status]}
         </Badge>
       </TableCell>
+      <TableCell>
+        <div className="flex items-center justify-end gap-1">
+          <PagamentoFormDialog
+            itens={itens}
+            pagamento={pagamento}
+            trigger={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Editar pagamento ${pagamento.descricao}`}
+              >
+                <Pencil />
+              </Button>
+            }
+          />
+          <ExcluirPagamentoButton id={pagamento.id} descricao={pagamento.descricao} />
+        </div>
+      </TableCell>
     </TableRow>
+  )
+}
+
+function ExcluirPagamentoButton({ id, descricao }: { id: string; descricao: string }) {
+  const [pendente, iniciarTransicao] = useTransition()
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Excluir pagamento ${descricao}`}
+        >
+          <Trash2 />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir pagamento?</AlertDialogTitle>
+          <AlertDialogDescription>
+            &ldquo;{descricao}&rdquo; será removido do orçamento.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={pendente}
+            onClick={() =>
+              iniciarTransicao(async () => {
+                await excluirPagamento(id)
+              })
+            }
+          >
+            {pendente ? "Excluindo..." : "Excluir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }

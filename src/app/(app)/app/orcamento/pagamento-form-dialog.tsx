@@ -4,7 +4,7 @@ import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
-import { criarPagamento } from "@/actions/budget"
+import { atualizarPagamento, criarPagamento } from "@/actions/budget"
 import { CurrencyInput } from "@/components/app/currency-input"
 import { DatePickerField } from "@/components/app/date-picker-field"
 import { Button } from "@/components/ui/button"
@@ -32,11 +32,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import type { PagamentoComItem } from "@/db/queries/budget"
 import { pagamentoSchema, type PagamentoInput } from "@/lib/validators/budget"
 
 type ItemOpcao = { id: string; descricao: string }
 
-export function PagamentoFormDialog({ itens }: { itens: ItemOpcao[] }) {
+type PagamentoFormDialogProps = {
+  itens: ItemOpcao[]
+  pagamento?: PagamentoComItem
+  trigger?: React.ReactNode
+}
+
+export function PagamentoFormDialog({
+  itens,
+  pagamento,
+  trigger,
+}: PagamentoFormDialogProps) {
   const [aberto, setAberto] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [pendente, iniciarTransicao] = useTransition()
@@ -44,35 +55,37 @@ export function PagamentoFormDialog({ itens }: { itens: ItemOpcao[] }) {
   const form = useForm<PagamentoInput>({
     resolver: zodResolver(pagamentoSchema),
     defaultValues: {
-      budgetItemId: itens[0]?.id ?? "",
-      descricao: "",
-      valor: undefined,
-      vencimento: "",
-      formaPagamento: "",
+      budgetItemId: pagamento?.budgetItemId ?? itens[0]?.id ?? "",
+      descricao: pagamento?.descricao ?? "",
+      valor: pagamento ? Number(pagamento.valor) : undefined,
+      vencimento: pagamento?.vencimento ?? "",
+      formaPagamento: pagamento?.formaPagamento ?? "",
     },
   })
 
   function onSubmit(dados: PagamentoInput) {
     setErro(null)
     iniciarTransicao(async () => {
-      const resultado = await criarPagamento(dados)
+      const resultado = pagamento
+        ? await atualizarPagamento(pagamento.id, dados)
+        : await criarPagamento(dados)
       if (resultado?.erro) {
         setErro(resultado.erro)
         return
       }
       setAberto(false)
-      form.reset()
+      if (!pagamento) form.reset()
     })
   }
 
   return (
     <Dialog open={aberto} onOpenChange={setAberto}>
       <DialogTrigger asChild>
-        <Button variant="outline">Novo pagamento</Button>
+        {trigger ?? <Button variant="outline">Novo pagamento</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Novo pagamento</DialogTitle>
+          <DialogTitle>{pagamento ? "Editar pagamento" : "Novo pagamento"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
