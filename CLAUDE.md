@@ -697,6 +697,8 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
       arrastáveis, com autosave.
 - [x] **Fase 21 — Página pública por Markdown** — modo alternativo ao
       construtor por blocos (Fase 10), liberdade total de texto/imagens.
+- [x] **Fase 22 — PWA**: instalável (ícones 192/512/maskable, manifest),
+      service worker mínimo com tela de "offline" própria.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1591,6 +1593,79 @@ cover` fixo com uma camada `bg-background/85` por cima pra manter o texto
   limpos da conta de demonstração depois (`paginaMarkdown`/`paginaMarkdownAtiva`/
   `paginaFundoUrl` resetados) — mesmo cuidado já registrado nas fases
   anteriores por compartilhar o banco de produção com a conta de demo.
+
+## Fase 22 — PWA
+
+Pedido explícito da dona: transformar o app num PWA de verdade (instalável,
+ícone na tela de início). O manifest (`src/app/manifest.ts`) já existia
+desde a Fase 4 (só pra ter um `short_name` decente, ver Fase 16), mas sem os
+dois requisitos reais de instalabilidade: ícones grandes o bastante e um
+service worker.
+
+- **Ícones 192/512/512-maskable novos** (`src/app/icons/{192,512,512-maskable}/route.tsx`):
+  o Chrome/Android exige pelo menos um ícone >= 192px no manifest pra
+  considerar o site instalável — o único ícone existente (`/icon`, 32x32,
+  Fase 9) só servia de favicon. Mesma técnica de sempre (`next/og`
+  `ImageResponse`, sem asset de design nenhum — ver decisão "Favicon/ícones
+  gerados por código"), como **Route Handlers** (`route.tsx` com `GET`) em
+  vez de mais arquivos de convenção tipo `icon.tsx`, porque a convenção só
+  suporta 1 tamanho por arquivo (ou `generateImageMetadata`, com URLs
+  geradas automaticamente que o `manifest.ts` não consegue referenciar de
+  forma explícita) — um Route Handler dá uma URL fixa e previsível
+  (`/icons/192`) fácil de apontar no manifest. `export const dynamic =
+"force-static"` nos 3, senão um Route Handler é dinâmico por padrão e
+  recalcularia a imagem a cada acesso à toa (não depende de nada da
+  request). A variante `512-maskable` (`purpose: "maskable"`) usa a mesma
+  letra "O" só que menor — ícone maskable pode ser recortado até um círculo
+  de 80% do tamanho pelo Android (forma de ícone adaptativo), e uma letra do
+  mesmo tamanho do ícone comum ficaria cortada.
+- **Service worker escrito à mão** (`public/sw.js`), sem Workbox/next-pwa/
+  Serwist: o app é dado dinâmico protegido por RLS (checklist, orçamento,
+  convidados...), então "funcionar 100% offline" não é uma meta real pra
+  quase nenhuma tela — não faz sentido trazer uma lib inteira de cache
+  estratégico pra isso. Único objetivo: (1) existir um service worker com
+  handler de `fetch` — é um dos requisitos que o Chrome/Android checa antes
+  de disparar o prompt de instalação (`beforeinstallprompt`), mesmo que o
+  handler não faça cache de nada relevante; (2) mostrar uma tela própria de
+  "você está offline" (`/offline`, Server Component 100% estático, sem
+  busca de dado) no lugar do erro genérico do navegador quando uma
+  navegação falha sem internet. `fetch` handler só intercepta
+  `request.mode === "navigate"` — pedido de API/dado nunca passa pelo
+  cache, sempre vai direto pra rede.
+- **Registrado só em produção** (`ServiceWorkerRegister`,
+  `src/components/service-worker-register.tsx`, `useEffect` guardado por
+  `process.env.NODE_ENV !== "production"`): em `next dev` o service worker
+  cachearia a página offline desatualizada a cada mudança de código e
+  atrapalharia o hot reload, sem nenhum ganho (instalabilidade só importa
+  no app publicado).
+- **`viewport`/`appleWebApp` no layout raiz**: Next 14+ moveu `themeColor`
+  pra um export `viewport` próprio (não mais dentro de `metadata`), então
+  `theme-color` (usado pela barra do navegador/splash screen do Android) e
+  `viewport-fit: cover` (pra telas com notch) entraram como `export const
+viewport`. `appleWebApp: { capable: true, statusBarStyle, title }` faz o
+  Safari/iOS abrir o app instalado sem a barra de endereço, mas só gera o
+  meta novo sem prefixo (`mobile-web-app-capable`) — iOS mais antigo só
+  reconhece o `apple-mobile-web-app-capable`, então esse entrou à mão via
+  `metadata.other` pra cobrir os dois.
+- **`/sw.js` saiu do matcher do middleware**: sem isso, cada checagem
+  periódica que o navegador faz pra ver se o service worker mudou passaria
+  pela consulta de sessão do Supabase à toa (não é uma rota de `/app`, não
+  precisa de nenhuma checagem de auth) — entrou na mesma exclusão que já
+  existia pras extensões de imagem.
+- **Sem prompt de instalação customizado nem `beforeinstallprompt`**: não
+  pedido pela dona: o navegador já mostra o próprio prompt/ícone de
+  instalar (barra de endereço no Chrome desktop, menu "Adicionar à tela de
+  início" no Android/iOS) assim que os critérios de instalabilidade acima
+  são atendidos — uma UI própria de "instalar agora" é trabalho futuro se
+  algum dia quiserem chamar mais atenção pra isso.
+- **Verificado com `next build && next start`** (produção local, não
+  `next dev` — o service worker só registra em produção): os 3 ícones
+  novos respondem `image/png` do tamanho certo e viraram estáticos
+  (confirmado no output do build, `○` em vez de `ƒ`), `/manifest.webmanifest`
+  lista os 4 ícones, `/sw.js` responde com `application/javascript`,
+  `/offline` responde 200, e os 4 metas de app instalável (`theme-color`,
+  `apple-mobile-web-app-capable`, `mobile-web-app-capable`,
+  `apple-touch-icon`) aparecem no HTML da home.
 
 ## Como rodar localmente
 

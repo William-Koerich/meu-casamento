@@ -1,6 +1,7 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Fraunces, Inter } from "next/font/google"
 
+import { ServiceWorkerRegister } from "@/components/service-worker-register"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
@@ -31,6 +32,22 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     type: "website",
   },
+  // Injeta os meta "apple-mobile-web-app-*" — sem eles o Safari/iOS ainda
+  // adiciona à tela de início, mas abre dentro do próprio Safari (barra de
+  // endereço visível) em vez de como um app instalado.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Organiza",
+  },
+  // `appleWebApp.capable` só gera o meta novo sem prefixo
+  // ("mobile-web-app-capable") — iOS mais antigo só reconhece o prefixado.
+  other: { "apple-mobile-web-app-capable": "yes" },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#6f7350",
+  viewportFit: "cover",
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -51,6 +68,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Toaster position="top-center" />
           </TooltipProvider>
         </ThemeProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   )
