@@ -25,7 +25,7 @@ export function ChecklistCard({ total, concluidas }: ChecklistCardProps) {
           ) : (
             <div className="flex items-center gap-4">
               <ProgressRing percentual={percentual} />
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground min-w-0 text-sm">
                 <span className="text-foreground font-medium">{concluidas}</span> de{" "}
                 {total} tarefas concluídas
               </p>

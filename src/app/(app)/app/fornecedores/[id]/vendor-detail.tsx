@@ -92,7 +92,7 @@ export function VendorDetail({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
           <CardContent className="space-y-2 text-sm">
             <h2 className="font-heading mb-1 text-lg">Contato</h2>

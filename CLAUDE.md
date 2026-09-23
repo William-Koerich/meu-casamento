@@ -652,6 +652,30 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
   lista os itens dentro de `AccordionContent` (categorias com poucos itens
   não são afetadas, só cresce até esse limite e daí em diante rola por
   dentro).
+- **2ª ocorrência, causa raiz diferente da 1ª: scroll lateral no dashboard
+  no celular, relatado pela dona usando o app instalado como PWA** (Fase
+  22 deixou isso mais fácil de notar, mas o bug já existia em qualquer
+  navegador estreito, não é específico de PWA). Os 4 cards com
+  `ProgressRing` (Checklist/Orçamento/RSVP/Fornecedores, Fase 18) tinham a
+  mesma falta de `min-w-0` já documentada acima (`<p>`/`<dl flex-1>` ao
+  lado do anel, dentro de um `flex`) — corrigido do mesmo jeito nos 4. Mas
+  isso sozinho não bastou: a causa maior era o **grid do dashboard**
+  (`dashboard-content.tsx`) declarar só `md:grid-cols-2 xl:grid-cols-3`,
+  sem nenhum `grid-cols-1` na base — sem coluna explícita no mobile, o
+  CSS Grid usa uma coluna implícita de largura `auto`, que se ajusta ao
+  **conteúdo mais largo entre todos os cards da grade** (mesma lógica de
+  `table-layout: auto`); como só existe 1 coluna nesse breakpoint, isso
+  empurra a página inteira pra a largura do card mais largo, mesmo os
+  cards que já tinham `min-w-0`/`truncate` certinho. `grid-cols-1` (que no
+  Tailwind vira `repeat(1, minmax(0, 1fr))`, não só `auto`) resolve porque
+  dá um teto real de largura pra track, permitindo truncamento/quebra de
+  linha funcionar de verdade. Mesmo padrão (`grid` com breakpoint maior
+  mas sem coluna-base) encontrado e corrigido de brinde em
+  `vendor-detail.tsx` (Fase 7) e `markdown-editor-view.tsx` (Fase 21) antes
+  de virar o mesmo relato depois. Verificado com Puppeteer num viewport de
+  360px (tamanho comum de celular) em `/app`, `/app/fornecedores`,
+  `/app/orcamento` e `/app/site-publico` — `scrollWidth` bate exatamente
+  com `clientWidth` nas 4 rotas depois da correção.
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,

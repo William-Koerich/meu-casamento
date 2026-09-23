@@ -35,7 +35,7 @@ export function RsvpCard({
             <>
               <div className="flex items-center gap-4">
                 <ProgressRing percentual={percentualRespondido} />
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground min-w-0 text-sm">
                   <span className="text-foreground font-medium">
                     {pessoasConfirmadas}
                   </span>{" "}

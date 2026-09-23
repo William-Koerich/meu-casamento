@@ -11,7 +11,7 @@ export async function DashboardContent({ weddingId }: { weddingId: string }) {
   const dados = await getDashboardData(weddingId)
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <ChecklistCard
         total={dados.checklist.total}
         concluidas={dados.checklist.concluidas}

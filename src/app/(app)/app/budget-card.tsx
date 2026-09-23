@@ -29,22 +29,27 @@ export function BudgetCard({ previsto, contratado, pago }: BudgetCardProps) {
           ) : (
             <div className="flex items-center gap-4">
               <ProgressRing percentual={percentualPago} destaque={estourou} />
-              <dl className="grid flex-1 grid-cols-3 gap-2 text-center">
-                <div>
+              <dl className="grid min-w-0 flex-1 grid-cols-3 gap-2 text-center">
+                <div className="min-w-0">
                   <dt className="text-muted-foreground text-xs">Previsto</dt>
-                  <dd className="text-sm font-medium">{formatCurrency(previsto)}</dd>
+                  <dd className="truncate text-sm font-medium">
+                    {formatCurrency(previsto)}
+                  </dd>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <dt className="text-muted-foreground text-xs">Contratado</dt>
                   <dd
-                    className={cn("text-sm font-medium", estourou && "text-destructive")}
+                    className={cn(
+                      "truncate text-sm font-medium",
+                      estourou && "text-destructive"
+                    )}
                   >
                     {formatCurrency(contratado)}
                   </dd>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <dt className="text-muted-foreground text-xs">Pago</dt>
-                  <dd className="text-sm font-medium">{formatCurrency(pago)}</dd>
+                  <dd className="truncate text-sm font-medium">{formatCurrency(pago)}</dd>
                 </div>
               </dl>
             </div>
