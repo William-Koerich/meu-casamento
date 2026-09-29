@@ -187,7 +187,16 @@ export function MarkdownEditorView({
           }
           className="font-mono text-sm"
         />
-        <div className="border-border max-h-128 overflow-y-auto rounded border">
+        <div className="border-border relative isolate max-h-128 overflow-y-auto rounded border">
+          {fundoUrl && (
+            <>
+              <div
+                className="absolute inset-0 -z-20 bg-cover bg-center"
+                style={{ backgroundImage: `url(${fundoUrl})` }}
+              />
+              <div className="bg-background/85 absolute inset-0 -z-10" />
+            </>
+          )}
           <PaginaMarkdownConteudo conteudo={conteudo} slug={slug} />
         </div>
       </div>

@@ -1954,6 +1954,41 @@ antes de apagar.
   cards de navegação) sem erro de console; `/app/site-publico` logada como
   a conta demo mostra só o editor de Markdown, sem "Blocos" nem "Adicionar
   bloco" em lugar nenhum da tela.
+- **Bug real relatado pela dona logo em seguida: imagem de fundo enviada não
+  aparecia nem na página pública nem na prévia do editor** — a imagem
+  normal inserida no meio do texto (`selecionarImagem`, `<img>` comum)
+  funcionava, só o fundo (`fundoUrl`, técnica de `position: fixed` com
+  `z-index` negativo por trás do conteúdo) não. Causa: nem `<body>`
+  (`src/app/layout.tsx`) nem o `<div>` do layout público
+  (`src/app/c/[slug]/layout.tsx`) têm `position` ou `isolation` — então,
+  pela ordem de pintura do CSS (CSS2.1 Appendix E), o fundo opaco
+  (`bg-background`) deles é só mais um "descendente não-posicionado em
+  fluxo normal" do stacking context raiz, pintado **depois** de qualquer
+  elemento com `z-index` negativo daquele mesmo contexto — mesmo a imagem
+  estando "atrás" visualmente (z-index -20/-10), ela ficava por baixo do
+  fundo sólido do body na ordem de pintura real. Sem um banco ou API
+  envolvidos, só `tsc`/build/lint nunca pegariam isso — só apareceu
+  testando a tela de verdade com Puppeteer e comparando o pixel
+  renderizado, não só a presença do elemento no DOM. Corrigido adicionando
+  `isolate` (`isolation: isolate`) no `<div>` que envolve o fundo +
+  conteúdo em `PaginaMarkdownPublica` (`pagina-markdown.tsx`) — isso faz
+  esse `<div>` formar o próprio stacking context, então o fundo
+  `-z-20`/overlay `-z-10` passam a ser internos a ele (pintados corretos
+  entre si) e o bloco inteiro entra na árvore de pintura do documento como
+  uma unidade só, na posição normal (depois do fundo do body/layout, como
+  esperado). Mesma correção aplicada na prévia do editor
+  (`markdown-editor-view.tsx`, que antes nem tentava mostrar o fundo — só
+  o conteúdo — e ganhou a mesma técnica com `position: absolute` em vez de
+  `fixed`, contida dentro da caixa de prévia).
+- **Pegadinha à parte, encontrada verificando o build antes de reiniciar o
+  servidor**: `pkill -f "next start"` não mata o processo real
+  (`next-server`, que o `ps aux` mostra sem a string literal "next start"
+  no argv) — rodar `next build` de novo e "reiniciar" com esse `pkill` só
+  falha silenciosamente em religar na porta 3000 (já ocupada) e o servidor
+  antigo, intocado, continua respondendo com o build anterior. Descoberto
+  comparando o HTML servido (sem a classe `isolate` nova) com o código-fonte
+  (já com ela) — pareceu que a correção "não tinha funcionado" até matar o
+  PID de verdade (`lsof -i :3000`) e subir de novo.
 
 ## Como rodar localmente
 

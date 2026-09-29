@@ -76,7 +76,17 @@ export function PaginaMarkdownPublica({
   slug: string
 }) {
   return (
-    <div className="relative">
+    // `isolate` é essencial aqui, não decoração: sem criar um stacking
+    // context próprio, os dois `fixed ... -z-*` abaixo "escapam" pra
+    // disputar camada com o body/layout ancestrais (que não têm stacking
+    // context nenhum) — e como o fundo opaco do body (`bg-background` em
+    // src/app/layout.tsx) é pintado depois de qualquer elemento com
+    // z-index negativo nesse mesmo contexto (ordem de pintura do CSS,
+    // Appendix E), a imagem de fundo ficava sempre atrás dele, invisível.
+    // `isolate` faz este div formar seu próprio contexto — o fundo negativo
+    // passa a ser interno a ele, e o bloco inteiro (fundo + conteúdo) pinta
+    // na posição normal da árvore, acima do fundo do body.
+    <div className="relative isolate">
       {fundoUrl && (
         <>
           <div
