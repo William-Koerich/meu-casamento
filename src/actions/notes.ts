@@ -3,6 +3,11 @@
 import { count, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { notes } from "@/db/schema"
@@ -13,6 +18,7 @@ import {
 } from "@/lib/validators/notes"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Anotacao = typeof notes.$inferSelect
 
 function revalidar() {
   revalidatePath("/app/anotacoes")
@@ -118,12 +124,26 @@ export async function atualizarCorAnotacao(
   return {}
 }
 
-export async function excluirAnotacao(id: string): Promise<ResultadoAction> {
+export async function excluirAnotacao(id: string): Promise<ResultadoExclusao<Anotacao>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Anotacao | null
   try {
-    await rls((tx) => tx.delete(notes).where(eq(notes.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, notes, notes.id, id))
   } catch {
     return { erro: "Não foi possível excluir a anotação." }
+  }
+  if (!linha) return { erro: "Anotação não encontrada." }
+
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarAnotacao(anotacao: Anotacao): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, notes, anotacao))
+  } catch {
+    return { erro: "Não foi possível restaurar a anotação." }
   }
 
   revalidar()

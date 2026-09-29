@@ -5,7 +5,8 @@ import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical, Trash2 } from "lucide-react"
 
-import { excluirMusica } from "@/actions/songs"
+import { excluirMusica, restaurarMusica } from "@/actions/songs"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import type { Song } from "@/db/queries/songs"
 import { cn } from "@/lib/utils"
 
@@ -69,7 +70,14 @@ export function SongRow({ musica }: { musica: Song }) {
         disabled={pendente}
         onClick={() =>
           iniciarTransicao(async () => {
-            await excluirMusica(musica.id)
+            const resultado = await excluirMusica(musica.id)
+            if (resultado.linha) {
+              notificarExclusao({
+                linha: resultado.linha,
+                mensagem: `"${musica.titulo}" excluída.`,
+                restaurar: restaurarMusica,
+              })
+            }
           })
         }
         className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"

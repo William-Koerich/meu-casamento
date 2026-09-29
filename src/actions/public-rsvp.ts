@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { gifts, guestPhotos, guests } from "@/db/schema"
+import { dentroDoLimite, MENSAGEM_LIMITE_EXCEDIDO } from "@/lib/rate-limit"
 import {
   confirmarPresencaSchema,
   reservarPresenteSchema,
@@ -15,6 +16,10 @@ export async function confirmarPresenca(
   codigo: string,
   input: unknown
 ): Promise<ResultadoAction> {
+  if (!(await dentroDoLimite("confirmar-presenca", 10, 60))) {
+    return { erro: MENSAGEM_LIMITE_EXCEDIDO }
+  }
+
   const dados = confirmarPresencaSchema.safeParse(input)
   if (!dados.success) return { erro: "Preencha os campos obrigatórios." }
 
@@ -44,6 +49,10 @@ export async function reservarPresente(
   giftId: string,
   input: unknown
 ): Promise<ResultadoAction> {
+  if (!(await dentroDoLimite("reservar-presente", 10, 60))) {
+    return { erro: MENSAGEM_LIMITE_EXCEDIDO }
+  }
+
   const dados = reservarPresenteSchema.safeParse(input)
   if (!dados.success) return { erro: "Preencha os campos obrigatórios." }
 
@@ -76,6 +85,9 @@ export async function enviarFotosConvidado(
   caminhos: string[],
   nomeConvidado: string
 ): Promise<ResultadoAction> {
+  if (!(await dentroDoLimite("enviar-fotos-convidado", 10, 60))) {
+    return { erro: MENSAGEM_LIMITE_EXCEDIDO }
+  }
   if (caminhos.length === 0) return { erro: "Selecione ao menos uma foto." }
 
   const { rls } = await createDrizzleSupabaseClient()

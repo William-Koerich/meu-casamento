@@ -3,12 +3,18 @@
 import { count, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { songs } from "@/db/schema"
 import { musicaSchema } from "@/lib/validators/songs"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Musica = typeof songs.$inferSelect
 
 function revalidar() {
   revalidatePath("/app/playlist")
@@ -74,12 +80,26 @@ export async function atualizarMusica(
   return {}
 }
 
-export async function excluirMusica(id: string): Promise<ResultadoAction> {
+export async function excluirMusica(id: string): Promise<ResultadoExclusao<Musica>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Musica | null
   try {
-    await rls((tx) => tx.delete(songs).where(eq(songs.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, songs, songs.id, id))
   } catch {
     return { erro: "Não foi possível excluir a música." }
+  }
+  if (!linha) return { erro: "Música não encontrada." }
+
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarMusica(musica: Musica): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, songs, musica))
+  } catch {
+    return { erro: "Não foi possível restaurar a música." }
   }
 
   revalidar()

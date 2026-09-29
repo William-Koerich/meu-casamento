@@ -3,7 +3,11 @@
 import { useMemo, useState, useTransition } from "react"
 import { Pencil, Trash2 } from "lucide-react"
 
-import { alternarPagamentoPago, excluirPagamento } from "@/actions/budget"
+import {
+  alternarPagamentoPago,
+  excluirPagamento,
+  restaurarPagamento,
+} from "@/actions/budget"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import type { PagamentoComItem } from "@/db/queries/budget"
 import { arrayParaCsv, baixarCsv } from "@/lib/csv"
 import { formatCurrency, formatDate, hojeISO } from "@/lib/format"
@@ -241,7 +246,14 @@ function ExcluirPagamentoButton({ id, descricao }: { id: string; descricao: stri
             disabled={pendente}
             onClick={() =>
               iniciarTransicao(async () => {
-                await excluirPagamento(id)
+                const resultado = await excluirPagamento(id)
+                if (resultado.linha) {
+                  notificarExclusao({
+                    linha: resultado.linha,
+                    mensagem: `"${descricao}" excluído.`,
+                    restaurar: restaurarPagamento,
+                  })
+                }
               })
             }
           >

@@ -5,7 +5,12 @@ import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical, Trash2 } from "lucide-react"
 
-import { alternarVisibilidadeBloco, removerBloco } from "@/actions/page-blocks"
+import {
+  alternarVisibilidadeBloco,
+  removerBloco,
+  restaurarBloco,
+} from "@/actions/page-blocks"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,7 +135,14 @@ export function BlockRow({ bloco, weddingId }: { bloco: Block; weddingId: string
                 disabled={pendente}
                 onClick={() =>
                   iniciarTransicao(async () => {
-                    await removerBloco(bloco.id)
+                    const resultado = await removerBloco(bloco.id)
+                    if (resultado.linha) {
+                      notificarExclusao({
+                        linha: resultado.linha,
+                        mensagem: `"${BLOCK_TIPO_LABELS[bloco.tipo]}" removido.`,
+                        restaurar: restaurarBloco,
+                      })
+                    }
                   })
                 }
               >

@@ -3,10 +3,17 @@
 import { count, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { pageBlocks, weddings, type BlockConfig } from "@/db/schema"
 import { textoBlocoSchema } from "@/lib/validators/page-blocks"
+
+type Bloco = typeof pageBlocks.$inferSelect
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
 
@@ -145,12 +152,26 @@ export async function alternarVisibilidadeBloco(
   return {}
 }
 
-export async function removerBloco(id: string): Promise<ResultadoAction> {
+export async function removerBloco(id: string): Promise<ResultadoExclusao<Bloco>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Bloco | null
   try {
-    await rls((tx) => tx.delete(pageBlocks).where(eq(pageBlocks.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, pageBlocks, pageBlocks.id, id))
   } catch {
     return { erro: "Não foi possível remover o bloco." }
+  }
+  if (!linha) return { erro: "Bloco não encontrado." }
+
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarBloco(bloco: Bloco): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, pageBlocks, bloco))
+  } catch {
+    return { erro: "Não foi possível restaurar o bloco." }
   }
 
   revalidar()

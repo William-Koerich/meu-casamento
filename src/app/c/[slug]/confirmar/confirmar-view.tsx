@@ -31,6 +31,8 @@ export function ConfirmarView({ weddingId }: { weddingId: string }) {
         setConvidado(resultado.convidado)
       } else if (resultado.tipo === "candidatos") {
         setCandidatos(resultado.candidatos)
+      } else if (resultado.tipo === "limite") {
+        setErro("Muitas tentativas. Tente novamente em alguns minutos.")
       } else {
         setErro("Não encontramos ninguém com esse nome ou código. Confira a grafia.")
       }

@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import { CircleAlert, MoreVertical } from "lucide-react"
 
-import { alternarConclusao, excluirTarefa } from "@/actions/tasks"
+import { alternarConclusao, excluirTarefa, restaurarTarefa } from "@/actions/tasks"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,7 +56,14 @@ export function TaskRow({
   function excluir() {
     setExcluindo(true)
     iniciarTransicao(async () => {
-      await excluirTarefa(tarefa.id)
+      const resultado = await excluirTarefa(tarefa.id)
+      if (resultado.linha) {
+        notificarExclusao({
+          linha: resultado.linha,
+          mensagem: `"${tarefa.titulo}" excluída.`,
+          restaurar: restaurarTarefa,
+        })
+      }
     })
   }
 
@@ -129,8 +137,8 @@ export function TaskRow({
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir tarefa?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  &ldquo;{tarefa.titulo}&rdquo; será removida do checklist. Essa ação não
-                  pode ser desfeita.
+                  &ldquo;{tarefa.titulo}&rdquo; será removida do checklist. Dá pra
+                  desfazer logo em seguida, se precisar.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

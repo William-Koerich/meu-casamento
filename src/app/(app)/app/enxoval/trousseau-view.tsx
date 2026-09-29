@@ -2,7 +2,12 @@
 
 import { useMemo, useState, useTransition } from "react"
 
-import { alternarComprado, excluirItemEnxoval } from "@/actions/trousseau"
+import {
+  alternarComprado,
+  excluirItemEnxoval,
+  restaurarItemEnxoval,
+} from "@/actions/trousseau"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -132,7 +137,14 @@ function TrousseauRow({ item }: { item: ItemEnxoval }) {
         disabled={pendente}
         onClick={() =>
           iniciarTransicao(async () => {
-            await excluirItemEnxoval(item.id)
+            const resultado = await excluirItemEnxoval(item.id)
+            if (resultado.linha) {
+              notificarExclusao({
+                linha: resultado.linha,
+                mensagem: `"${item.nome}" excluído.`,
+                restaurar: restaurarItemEnxoval,
+              })
+            }
           })
         }
         className="text-destructive shrink-0 text-xs underline disabled:opacity-50"

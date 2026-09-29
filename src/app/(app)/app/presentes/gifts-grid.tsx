@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import Image from "next/image"
 
-import { alternarRecebido, excluirPresente } from "@/actions/gifts"
+import { alternarRecebido, excluirPresente, restaurarPresente } from "@/actions/gifts"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -91,7 +92,14 @@ function GiftCard({ gift, weddingId }: { gift: Gift; weddingId: string }) {
               disabled={pendente}
               onClick={() =>
                 iniciarTransicao(async () => {
-                  await excluirPresente(gift.id)
+                  const resultado = await excluirPresente(gift.id)
+                  if (resultado.linha) {
+                    notificarExclusao({
+                      linha: resultado.linha,
+                      mensagem: `"${gift.nome}" excluído.`,
+                      restaurar: restaurarPresente,
+                    })
+                  }
                 })
               }
               className="text-destructive underline disabled:opacity-50"

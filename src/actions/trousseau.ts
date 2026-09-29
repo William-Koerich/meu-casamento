@@ -3,12 +3,18 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { trousseauItems } from "@/db/schema"
 import { itemEnxovalSchema } from "@/lib/validators/trousseau"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type ItemEnxoval = typeof trousseauItems.$inferSelect
 
 function revalidar() {
   revalidatePath("/app/enxoval")
@@ -91,12 +97,30 @@ export async function alternarComprado(
   return {}
 }
 
-export async function excluirItemEnxoval(id: string): Promise<ResultadoAction> {
+export async function excluirItemEnxoval(
+  id: string
+): Promise<ResultadoExclusao<ItemEnxoval>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: ItemEnxoval | null
   try {
-    await rls((tx) => tx.delete(trousseauItems).where(eq(trousseauItems.id, id)))
+    linha = await rls((tx) =>
+      excluirComRetorno(tx, trousseauItems, trousseauItems.id, id)
+    )
   } catch {
     return { erro: "Não foi possível excluir o item." }
+  }
+  if (!linha) return { erro: "Item não encontrado." }
+
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarItemEnxoval(item: ItemEnxoval): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, trousseauItems, item))
+  } catch {
+    return { erro: "Não foi possível restaurar o item." }
   }
 
   revalidar()

@@ -7,8 +7,10 @@ import {
   atualizarValorPrevistoCategoria,
   atualizarValoresItem,
   excluirItemOrcamento,
+  restaurarItemOrcamento,
 } from "@/actions/budget"
 import { InlineCurrencyEditor } from "@/components/app/inline-currency-editor"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -204,7 +206,14 @@ function DeleteItemButton({ id, descricao }: { id: string; descricao: string }) 
             disabled={pendente}
             onClick={() =>
               iniciarTransicao(async () => {
-                await excluirItemOrcamento(id)
+                const resultado = await excluirItemOrcamento(id)
+                if (resultado.linha) {
+                  notificarExclusao({
+                    linha: resultado.linha,
+                    mensagem: `"${descricao}" excluído.`,
+                    restaurar: restaurarItemOrcamento,
+                  })
+                }
               })
             }
           >

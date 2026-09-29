@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react"
 import { MoreVertical } from "lucide-react"
 
-import { excluirConvidado } from "@/actions/guests"
+import { excluirConvidado, restaurarConvidado } from "@/actions/guests"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,7 +98,14 @@ export function GuestRowActions({ guest, slug }: { guest: GuestComMesa; slug: st
                 disabled={pendente}
                 onClick={() =>
                   iniciarTransicao(async () => {
-                    await excluirConvidado(guest.id)
+                    const resultado = await excluirConvidado(guest.id)
+                    if (resultado.linha) {
+                      notificarExclusao({
+                        linha: resultado.linha,
+                        mensagem: `"${guest.nome}" excluído.`,
+                        restaurar: restaurarConvidado,
+                      })
+                    }
                   })
                 }
               >

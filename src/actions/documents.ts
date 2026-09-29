@@ -1,15 +1,20 @@
 "use server"
 
-import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 import { obterUrlAssinada } from "@/actions/storage"
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { documents } from "@/db/schema"
 import { documentoSchema } from "@/lib/validators/documents"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Documento = typeof documents.$inferSelect
 
 export async function criarDocumento(input: unknown): Promise<ResultadoAction> {
   const dados = documentoSchema.safeParse(input)
@@ -38,12 +43,29 @@ export async function criarDocumento(input: unknown): Promise<ResultadoAction> {
   return {}
 }
 
-export async function excluirDocumento(id: string): Promise<ResultadoAction> {
+export async function excluirDocumento(
+  id: string
+): Promise<ResultadoExclusao<Documento>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Documento | null
   try {
-    await rls((tx) => tx.delete(documents).where(eq(documents.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, documents, documents.id, id))
   } catch {
     return { erro: "Não foi possível excluir o documento." }
+  }
+  if (!linha) return { erro: "Documento não encontrado." }
+
+  revalidatePath("/app/fornecedores")
+  revalidatePath("/app/documentos")
+  return { linha }
+}
+
+export async function restaurarDocumento(documento: Documento): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, documents, documento))
+  } catch {
+    return { erro: "Não foi possível restaurar o documento." }
   }
 
   revalidatePath("/app/fornecedores")

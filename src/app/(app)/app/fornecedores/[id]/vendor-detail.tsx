@@ -4,7 +4,8 @@ import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Trash2 } from "lucide-react"
 
-import { excluirFornecedor } from "@/actions/vendors"
+import { excluirFornecedor, restaurarFornecedor } from "@/actions/vendors"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,8 +70,8 @@ export function VendorDetail({
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir fornecedor?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  &ldquo;{vendor.nome}&rdquo; será removido, junto com os itens de
-                  orçamento ligados a ele.
+                  &ldquo;{vendor.nome}&rdquo; será removido — itens de orçamento e
+                  documentos ligados a ele continuam, só deixam de estar vinculados.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -79,7 +80,14 @@ export function VendorDetail({
                   disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
-                      await excluirFornecedor(vendor.id)
+                      const resultado = await excluirFornecedor(vendor.id)
+                      if (resultado.linha) {
+                        notificarExclusao({
+                          linha: resultado.linha,
+                          mensagem: `"${vendor.nome}" excluído.`,
+                          restaurar: restaurarFornecedor,
+                        })
+                      }
                       router.push("/app/fornecedores")
                     })
                   }

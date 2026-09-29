@@ -3,7 +3,12 @@
 import { useState, useTransition } from "react"
 import { Trash2 } from "lucide-react"
 
-import { adicionarDiaRoteiro, removerDiaRoteiro } from "@/actions/honeymoon"
+import {
+  adicionarDiaRoteiro,
+  removerDiaRoteiro,
+  restaurarDiaRoteiro,
+} from "@/actions/honeymoon"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -51,7 +56,15 @@ export function RoteiroList({ roteiro }: { roteiro: RoteiroDia[] }) {
                   disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
-                      await removerDiaRoteiro(indice)
+                      const resultado = await removerDiaRoteiro(indice)
+                      if (resultado.item) {
+                        notificarExclusao({
+                          linha: { item: resultado.item, indice: resultado.indice },
+                          mensagem: `Dia "${dia.titulo}" removido.`,
+                          restaurar: ({ item, indice }) =>
+                            restaurarDiaRoteiro(item, indice),
+                        })
+                      }
                     })
                   }
                   className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"

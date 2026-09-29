@@ -10,7 +10,9 @@ import {
   atualizarCorAnotacao,
   atualizarTituloAnotacao,
   excluirAnotacao,
+  restaurarAnotacao,
 } from "@/actions/notes"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -114,7 +116,14 @@ export function NoteCard({ nota, autoFocar }: { nota: Nota; autoFocar?: boolean 
   function excluir() {
     setExcluindo(true)
     iniciarTransicao(async () => {
-      await excluirAnotacao(nota.id)
+      const resultado = await excluirAnotacao(nota.id)
+      if (resultado.linha) {
+        notificarExclusao({
+          linha: resultado.linha,
+          mensagem: "Anotação excluída.",
+          restaurar: restaurarAnotacao,
+        })
+      }
     })
   }
 
@@ -182,7 +191,7 @@ export function NoteCard({ nota, autoFocar }: { nota: Nota; autoFocar?: boolean 
               <AlertDialogHeader>
                 <AlertDialogTitle>Excluir anotação?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Essa ação não pode ser desfeita.
+                  Dá pra desfazer logo em seguida, se precisar.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

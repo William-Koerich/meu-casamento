@@ -3,6 +3,11 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { guests } from "@/db/schema"
@@ -14,6 +19,7 @@ import {
 } from "@/lib/validators/guests"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Guest = typeof guests.$inferSelect
 
 function revalidarConvidados() {
   revalidatePath("/app/convidados")
@@ -118,12 +124,25 @@ export async function atualizarRsvpInline(
   return {}
 }
 
-export async function excluirConvidado(id: string): Promise<ResultadoAction> {
+export async function excluirConvidado(id: string): Promise<ResultadoExclusao<Guest>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Guest | null
   try {
-    await rls((tx) => tx.delete(guests).where(eq(guests.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, guests, guests.id, id))
   } catch {
     return { erro: "Não foi possível excluir o convidado." }
+  }
+  if (!linha) return { erro: "Convidado não encontrado." }
+  revalidarConvidados()
+  return { linha }
+}
+
+export async function restaurarConvidado(convidado: Guest): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, guests, convidado))
+  } catch {
+    return { erro: "Não foi possível restaurar o convidado." }
   }
 
   revalidarConvidados()

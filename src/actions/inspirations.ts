@@ -1,14 +1,19 @@
 "use server"
 
-import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { inspirations } from "@/db/schema"
 import { inspiracaoSchema } from "@/lib/validators/inspirations"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Inspiracao = typeof inspirations.$inferSelect
 
 function revalidar() {
   revalidatePath("/app/inspiracoes")
@@ -44,12 +49,30 @@ export async function criarInspiracao(input: unknown): Promise<ResultadoAction> 
   return {}
 }
 
-export async function excluirInspiracao(id: string): Promise<ResultadoAction> {
+export async function excluirInspiracao(
+  id: string
+): Promise<ResultadoExclusao<Inspiracao>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Inspiracao | null
   try {
-    await rls((tx) => tx.delete(inspirations).where(eq(inspirations.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, inspirations, inspirations.id, id))
   } catch {
     return { erro: "Não foi possível excluir." }
+  }
+  if (!linha) return { erro: "Inspiração não encontrada." }
+
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarInspiracao(
+  inspiracao: Inspiracao
+): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, inspirations, inspiracao))
+  } catch {
+    return { erro: "Não foi possível restaurar." }
   }
 
   revalidar()

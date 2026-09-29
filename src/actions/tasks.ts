@@ -3,12 +3,18 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { tasks } from "@/db/schema"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { tarefaSchema } from "@/lib/validators/tasks"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Tarefa = typeof tasks.$inferSelect
 
 function revalidarChecklist() {
   revalidatePath("/app/checklist")
@@ -73,12 +79,26 @@ export async function atualizarTarefa(
   return {}
 }
 
-export async function excluirTarefa(id: string): Promise<ResultadoAction> {
+export async function excluirTarefa(id: string): Promise<ResultadoExclusao<Tarefa>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Tarefa | null
   try {
-    await rls((tx) => tx.delete(tasks).where(eq(tasks.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, tasks, tasks.id, id))
   } catch {
     return { erro: "Não foi possível excluir a tarefa." }
+  }
+  if (!linha) return { erro: "Tarefa não encontrada." }
+
+  revalidarChecklist()
+  return { linha }
+}
+
+export async function restaurarTarefa(tarefa: Tarefa): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, tasks, tarefa))
+  } catch {
+    return { erro: "Não foi possível restaurar a tarefa." }
   }
 
   revalidarChecklist()

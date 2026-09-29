@@ -5,7 +5,8 @@ import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical, Trash2, X } from "lucide-react"
 
-import { atribuirConvidadoMesa, excluirMesa } from "@/actions/tables"
+import { atribuirConvidadoMesa, excluirMesa, restaurarMesa } from "@/actions/tables"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -100,7 +101,14 @@ export function TableBox({
                   disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
-                      await excluirMesa(mesa.id)
+                      const resultado = await excluirMesa(mesa.id)
+                      if (resultado.linha) {
+                        notificarExclusao({
+                          linha: resultado.linha,
+                          mensagem: `"${mesa.nome}" excluída.`,
+                          restaurar: restaurarMesa,
+                        })
+                      }
                     })
                   }
                 >

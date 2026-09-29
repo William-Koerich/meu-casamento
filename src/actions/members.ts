@@ -7,13 +7,13 @@ import { revalidatePath } from "next/cache"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { weddingMembers } from "@/db/schema"
+import { dentroDoLimite, MENSAGEM_LIMITE_EXCEDIDO } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 import { convidarMembroSchema } from "@/lib/validators/members"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
 type ResultadoConvite =
-  | { erro: string; conviteToken?: undefined }
-  | { erro?: undefined; conviteToken: string }
+  { erro: string; conviteToken?: undefined } | { erro?: undefined; conviteToken: string }
 
 function revalidarEquipe() {
   revalidatePath("/app/equipe")
@@ -81,6 +81,10 @@ export async function revogarMembro(id: string): Promise<ResultadoAction> {
 }
 
 export async function aceitarConvite(token: string): Promise<ResultadoAction> {
+  if (!(await dentroDoLimite("aceitar-convite", 10, 60))) {
+    return { erro: MENSAGEM_LIMITE_EXCEDIDO }
+  }
+
   const supabase = await createClient()
   const {
     data: { user },

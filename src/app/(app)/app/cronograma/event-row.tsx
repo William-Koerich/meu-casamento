@@ -5,7 +5,8 @@ import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { GripVertical, Trash2 } from "lucide-react"
 
-import { excluirEvento } from "@/actions/timeline"
+import { excluirEvento, restaurarEvento } from "@/actions/timeline"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -100,7 +101,14 @@ export function EventRow({
               disabled={pendente}
               onClick={() =>
                 iniciarTransicao(async () => {
-                  await excluirEvento(evento.id)
+                  const resultado = await excluirEvento(evento.id)
+                  if (resultado.linha) {
+                    notificarExclusao({
+                      linha: resultado.linha,
+                      mensagem: `"${evento.titulo}" excluído.`,
+                      restaurar: restaurarEvento,
+                    })
+                  }
                 })
               }
             >

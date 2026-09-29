@@ -3,12 +3,18 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { budgetItems, vendors } from "@/db/schema"
 import { fornecedorSchema } from "@/lib/validators/vendors"
 
 type ResultadoAction = { erro: string } | { erro?: undefined; id?: string }
+type Fornecedor = typeof vendors.$inferSelect
 
 function revalidarFornecedores() {
   revalidatePath("/app/fornecedores")
@@ -76,12 +82,33 @@ export async function atualizarFornecedor(
   return { id }
 }
 
-export async function excluirFornecedor(id: string): Promise<ResultadoAction> {
+export async function excluirFornecedor(
+  id: string
+): Promise<ResultadoExclusao<Fornecedor>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Fornecedor | null
   try {
-    await rls((tx) => tx.delete(vendors).where(eq(vendors.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, vendors, vendors.id, id))
   } catch {
     return { erro: "Não foi possível excluir o fornecedor." }
+  }
+  if (!linha) return { erro: "Fornecedor não encontrado." }
+
+  revalidarFornecedores()
+  return { linha }
+}
+
+// Restaura só o fornecedor — itens de orçamento/documentos que apontavam
+// pra ele (`vendorId`, "set null" ao excluir) não voltam a ficar ligados
+// automaticamente.
+export async function restaurarFornecedor(
+  fornecedor: Fornecedor
+): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, vendors, fornecedor))
+  } catch {
+    return { erro: "Não foi possível restaurar o fornecedor." }
   }
 
   revalidarFornecedores()

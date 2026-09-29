@@ -3,11 +3,18 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { budgetCategories, budgetItems, payments } from "@/db/schema"
 import { itemOrcamentoSchema, pagamentoSchema } from "@/lib/validators/budget"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type BudgetItem = typeof budgetItems.$inferSelect
+type Pagamento = typeof payments.$inferSelect
 
 function revalidarOrcamento() {
   revalidatePath("/app/orcamento")
@@ -126,12 +133,30 @@ export async function atualizarValoresItem(
   return {}
 }
 
-export async function excluirItemOrcamento(id: string): Promise<ResultadoAction> {
+export async function excluirItemOrcamento(
+  id: string
+): Promise<ResultadoExclusao<BudgetItem>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: BudgetItem | null
   try {
-    await rls((tx) => tx.delete(budgetItems).where(eq(budgetItems.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, budgetItems, budgetItems.id, id))
   } catch {
     return { erro: "Não foi possível excluir o item." }
+  }
+  if (!linha) return { erro: "Item não encontrado." }
+  revalidarOrcamento()
+  return { linha }
+}
+
+// Restaura só o item — pagamentos apagados junto por cascata (ver aviso no
+// diálogo de exclusão) não voltam, mesma ressalva documentada em
+// `excluirComRetorno`.
+export async function restaurarItemOrcamento(item: BudgetItem): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, budgetItems, item))
+  } catch {
+    return { erro: "Não foi possível restaurar o item." }
   }
   revalidarOrcamento()
   return {}
@@ -213,12 +238,27 @@ export async function alternarPagamentoPago(
   return {}
 }
 
-export async function excluirPagamento(id: string): Promise<ResultadoAction> {
+export async function excluirPagamento(
+  id: string
+): Promise<ResultadoExclusao<Pagamento>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Pagamento | null
   try {
-    await rls((tx) => tx.delete(payments).where(eq(payments.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, payments, payments.id, id))
   } catch {
     return { erro: "Não foi possível excluir o pagamento." }
+  }
+  if (!linha) return { erro: "Pagamento não encontrado." }
+  revalidarOrcamento()
+  return { linha }
+}
+
+export async function restaurarPagamento(pagamento: Pagamento): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, payments, pagamento))
+  } catch {
+    return { erro: "Não foi possível restaurar o pagamento." }
   }
   revalidarOrcamento()
   return {}

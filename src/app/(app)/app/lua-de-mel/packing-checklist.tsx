@@ -3,7 +3,13 @@
 import { useState, useTransition } from "react"
 import { Trash2 } from "lucide-react"
 
-import { adicionarItemMala, alternarItemMala, removerItemMala } from "@/actions/honeymoon"
+import {
+  adicionarItemMala,
+  alternarItemMala,
+  removerItemMala,
+  restaurarItemMala,
+} from "@/actions/honeymoon"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -67,7 +73,15 @@ export function PackingChecklist({ checklist }: { checklist: ChecklistMalaItem[]
                   disabled={pendente}
                   onClick={() =>
                     iniciarTransicao(async () => {
-                      await removerItemMala(indice)
+                      const resultado = await removerItemMala(indice)
+                      if (resultado.item) {
+                        notificarExclusao({
+                          linha: { item: resultado.item, indice: resultado.indice },
+                          mensagem: `"${item.item}" removido da mala.`,
+                          restaurar: ({ item, indice }) =>
+                            restaurarItemMala(item, indice),
+                        })
+                      }
                     })
                   }
                   className="text-muted-foreground hover:text-destructive disabled:opacity-50"

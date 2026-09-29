@@ -4,7 +4,8 @@ import { useTransition } from "react"
 import Image from "next/image"
 import { Trash2 } from "lucide-react"
 
-import { excluirFotoConvidado } from "@/actions/guest-photos"
+import { excluirFotoConvidado, restaurarFotoConvidado } from "@/actions/guest-photos"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,7 +75,7 @@ function FotoCard({ foto }: { foto: FotoComUrl }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir foto?</AlertDialogTitle>
             <AlertDialogDescription>
-              Essa foto não pode ser recuperada depois de excluída.
+              Dá pra desfazer logo em seguida, se precisar.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -83,7 +84,14 @@ function FotoCard({ foto }: { foto: FotoComUrl }) {
               disabled={pendente}
               onClick={() =>
                 iniciarTransicao(async () => {
-                  await excluirFotoConvidado(foto.id)
+                  const resultado = await excluirFotoConvidado(foto.id)
+                  if (resultado.linha) {
+                    notificarExclusao({
+                      linha: resultado.linha,
+                      mensagem: "Foto excluída.",
+                      restaurar: restaurarFotoConvidado,
+                    })
+                  }
                 })
               }
             >

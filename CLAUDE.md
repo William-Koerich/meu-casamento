@@ -723,6 +723,9 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
       construtor por blocos (Fase 10), liberdade total de texto/imagens.
 - [x] **Fase 22 — PWA**: instalável (ícones 192/512/maskable, manifest),
       service worker mínimo com tela de "offline" própria.
+- [x] **Fase 23 — Desfazer exclusão + proteção contra abuso**: toast de
+      "Desfazer" em toda exclusão do app; limite de taxa nas rotas públicas
+      sem login.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1690,6 +1693,139 @@ viewport`. `appleWebApp: { capable: true, statusBarStyle, title }` faz o
   `/offline` responde 200, e os 4 metas de app instalável (`theme-color`,
   `apple-mobile-web-app-capable`, `mobile-web-app-capable`,
   `apple-touch-icon`) aparecem no HTML da home.
+
+## Fase 23 — Desfazer exclusão + proteção contra abuso
+
+Pedidos explícitos da dona, os dois vindos de uma conversa sobre "o que
+mais eu deveria melhorar no produto": (1) exclusões só tinham um "tem
+certeza?" — um clique errado perdia dado de verdade; (2) as rotas públicas
+sem login (RSVP, reservar presente, upload de foto, busca de convidado,
+aceitar convite) não tinham nenhum limite de taxa, então alguém com o link
+podia martelar essas ações. Escopo confirmado com a dona antes de
+implementar (afeta quase todo módulo do app): desfazer entrou em **todos**
+os botões de excluir do produto, mantendo o `AlertDialog` de "tem certeza?"
+que já existia em cada tela (2 redes de segurança, não uma substituindo a
+outra); rate limit entrou nas 5 rotas citadas, implementado com uma tabela
+nova no Postgres (sem trazer Redis/Upstash pro projeto).
+
+### Desfazer exclusão
+
+- **Padrão único para as ~15 tabelas com exclusão de linha**
+  (`src/db/delete-helpers.ts`): `excluirComRetorno(tx, tabela, coluna, id)`
+  faz o `DELETE ... RETURNING` e devolve a linha apagada;
+  `restaurarLinha(tx, tabela, dados)` reinsere exatamente essa linha (mesmo
+  `id`, mesmo `createdAt`). Toda `excluirX` no app passou a devolver
+  `ResultadoExclusao<T>` (`{ erro }` ou `{ linha }`) em vez de só
+  `{ erro? }`, e ganhou uma `restaurarX` irmã — evita repetir a mesma
+  lógica de DELETE+RETURNING em 15 arquivos de `src/actions/*.ts`
+  diferentes.
+- **`.returning()` é seguro nessas tabelas** pelo mesmo motivo já
+  documentado nas Fases 11/12/20: são todas filhas comuns de `weddings`
+  (RLS via `is_wedding_member`, que nunca reconsulta a própria tabela) —
+  a pegadinha de RLS+RETURNING só afeta `weddings`/`guest_photos` (e
+  `guest_photos` aqui só usa `.returning()` no fluxo da **equipe**
+  excluindo/restaurando uma foto, via `authenticated`, que tem policy de
+  SELECT — o insert público do convidado, `anon`, nunca passa por essa
+  função).
+- **Toast com "Desfazer" (`src/components/app/notificar-exclusao.tsx`)**:
+  usa o `Toaster`/`toast()` do `sonner`, já montado no layout raiz desde a
+  Fase 1 mas nunca usado de verdade até agora — primeira feature do app a
+  chamar `toast()`. Duração de 8s, botão de ação chama a `restaurarX`
+  correspondente e mostra sucesso/erro num 2º toast. Um helper genérico só
+  em vez de um componente próprio por módulo porque a única parte
+  realmente repetida é "mostrar toast, chamar a action de restaurar" — o
+  gatilho (ícone, item de dropdown, botão de texto) já variava muito entre
+  os módulos antes disso, então cada tela manteve o próprio JSX de
+  exclusão, só trocando `await excluirX(id)` por capturar `resultado.linha`
+  e chamar `notificarExclusao`.
+- **2 casos fora do padrão genérico de tabela**: `honeymoon.roteiro` e
+  `honeymoon.checklistMala` são arrays JSONB (Fase 7), não linhas — não tem
+  `id` pra reinserir. `removerDiaRoteiro`/`removerItemMala` devolvem o
+  item removido **e o índice original** (`ResultadoExclusaoIndice<T>`, novo
+  tipo em `delete-helpers.ts`), e `restaurarDiaRoteiro`/`restaurarItemMala`
+  usam `array.splice(indice, 0, item)` pra devolver ao mesmo lugar em vez
+  de jogar no fim da lista.
+- **Cronograma precisa recalcular horários nas duas pontas**:
+  `excluirEvento` já rodava `recalcularHorarios` depois de apagar (Fase 7);
+  como isso reescreve o horário dos blocos restantes, `restaurarEvento`
+  chama `recalcularHorarios` de novo depois de reinserir — sem isso os
+  minutos ficariam inconsistentes com o bloco que voltou.
+- **Cascatas de FK não são desfeitas, e o app não finge que são**: excluir
+  um item de orçamento apaga os pagamentos ligados via
+  `onDelete: "cascade"` (aviso já existia no `AlertDialog` desde a Fase 5);
+  excluir uma mesa ou um fornecedor só desvincula (`onDelete: "set null"`)
+  convidados/itens de orçamento/documentos, nunca apaga. Restaurar a linha
+  principal não traz de volta o que foi apagado em cascata nem
+  re-vincula o que foi desvinculado — documentado em comentário no código
+  (`delete-helpers.ts`, `tables.ts`, `vendors.ts`) em vez de fingir uma
+  garantia que não existe.
+- **2 textos de confirmação corrigidos por ficarem factualmente errados**:
+  "Essa foto não pode ser recuperada" (fotos de convidados) e "Essa ação
+  não pode ser desfeita" (anotações e tarefas) — verdade antes desta fase,
+  falso depois que desfazer existe. Trocados por "Dá pra desfazer logo em
+  seguida, se precisar." O texto do fornecedor também estava
+  **desatualizado desde antes desta fase** (dizia que os itens de
+  orçamento eram removidos junto, mas a FK sempre foi `set null`, nunca
+  cascade) — corrigido de brinde. `danger-zone.tsx`
+  (excluir conta) e `casamento-card.tsx` (excluir casamento) mantiveram o
+  aviso de "não pode ser desfeito" — são exclusões cascateantes demais pra
+  um desfazer simples (apagam o casamento inteiro ou a conta), ficaram de
+  fora do escopo desta fase de propósito.
+- **Verificado com Puppeteer contra produção** (conta de demonstração):
+  excluir um presente faz o card sumir da grade e um toast "Desfazer"
+  aparecer (confirmado inspecionando o DOM do `sonner` diretamente,
+  `[data-sonner-toaster] button` — checar só `innerText` da página inteira
+  dá falso negativo porque o texto do item excluído também aparece dentro
+  da mensagem do toast, ex. "excluir Liquidificador" deixa "Liquidificador"
+  no texto da página via o próprio toast); clicar "Desfazer" devolve o
+  presente à grade. Dados de teste restaurados/limpos na conta de demo
+  depois.
+
+### Proteção contra abuso (rate limit)
+
+- **Tabela `rate_limits`** (migration `0017`): `chave` (texto, formato
+  `"<ação>:<ip>"`) + `janela` (inteiro, epoch em segundos truncado pela
+  duração da janela) + `contagem`, chave primária composta
+  `(chave, janela)`. Sem nenhuma `pgPolicy` — `.enableRLS()` sozinha já
+  nega tudo pra `anon`/`authenticated` por padrão (mais um
+  `revoke all ... from anon, authenticated` na migration, defesa em
+  profundidade, mesmo cuidado do hardening da Fase 14) — só o client
+  administrativo (`src/db/index.ts`) consegue ler/gravar, **3ª exceção**
+  registrada ali (as outras duas são do webhook do Stripe e de
+  `profiles.stripeCustomerId`, Fase 14).
+- **`dentroDoLimite(acao, limite, janelaSegundos)`** (`src/lib/rate-limit.ts`):
+  um único `INSERT ... ON CONFLICT DO UPDATE SET contagem = contagem + 1
+RETURNING contagem` — atômico, sem ler-e-regravar em dois passos (evitaria
+  corrida entre requisições simultâneas do mesmo IP). IP vem de
+  `headers()` (`x-forwarded-for`, com fallback pra `x-real-ip` e por fim
+  `"desconhecido"`) — Server Actions não recebem o objeto da requisição
+  direto, só os headers.
+- **5 rotas cobertas, 10-20 por minuto por IP conforme o risco**:
+  `confirmarPresenca`, `reservarPresente`, `enviarFotosConvidado`
+  (`actions/public-rsvp.ts`, 10/min cada), `buscarConvidadoPublico`/
+  `buscarConvidadoPorCodigo` (`actions/public-search.ts`, 20/min — busca
+  como-você-digita precisa de mais margem que uma escrita) e
+  `aceitarConvite` (`actions/members.ts`, 10/min — mesmo exigindo login,
+  o token em si pode ser adivinhado por tentativa e erro pela mesma conta).
+  Checado logo na 1ª linha de cada função, antes de qualquer validação ou
+  acesso ao banco de negócio.
+- **`buscarConvidadoPublico` ganhou um 4º caso no union type**
+  (`{ tipo: "limite" }`, em `actions/public-search.ts`) em vez de
+  reaproveitar `{ tipo: "nenhum" }` — a tela (`confirmar-view.tsx`) mostra
+  uma mensagem diferente ("muitas tentativas" vs. "não encontramos
+  ninguém"), pra não confundir bloqueio por abuso com busca sem resultado.
+- **Verificado em duas camadas**: (1) a mecânica de contagem/bloqueio
+  (upsert atômico incrementando) testada direto contra a tabela de
+  produção — 25 chamadas sequenciais com a mesma chave/janela incrementam
+  corretamente de 1 a 25, confirmando que a 21ª chamada teria batido no
+  limite de 20; (2) tentativa de reproduzir o bloqueio pela UI de verdade
+  (cliques repetidos no formulário de busca) não chegou nas 20 chamadas
+  reais dentro da janela — o botão desabilita enquanto uma busca está
+  pendente (`disabled={pendente}`), então cliques automatizados mais
+  rápidos que o round-trip do servidor em dev (lento por causa da
+  compilação a frio do Next) viravam no-op em vez de nova requisição. Não
+  é um bug do rate limit em si, só um limite de como testar clique-rápido
+  contra um servidor de desenvolvimento lento.
 
 ## Como rodar localmente
 

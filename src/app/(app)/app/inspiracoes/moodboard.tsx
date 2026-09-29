@@ -5,7 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Trash2 } from "lucide-react"
 
-import { excluirInspiracao } from "@/actions/inspirations"
+import { excluirInspiracao, restaurarInspiracao } from "@/actions/inspirations"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import type { Inspiracao } from "@/db/queries/inspirations"
 
@@ -121,7 +122,14 @@ function ExcluirBotao({ id, aoExcluir }: { id: string; aoExcluir: () => void }) 
       disabled={pendente}
       onClick={() =>
         iniciarTransicao(async () => {
-          await excluirInspiracao(id)
+          const resultado = await excluirInspiracao(id)
+          if (resultado.linha) {
+            notificarExclusao({
+              linha: resultado.linha,
+              mensagem: "Inspiração excluída.",
+              restaurar: restaurarInspiracao,
+            })
+          }
           aoExcluir()
         })
       }

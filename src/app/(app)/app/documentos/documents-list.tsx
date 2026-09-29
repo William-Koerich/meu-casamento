@@ -3,7 +3,12 @@
 import { useTransition } from "react"
 import { FileText, Trash2 } from "lucide-react"
 
-import { excluirDocumento, obterUrlAssinadaDocumento } from "@/actions/documents"
+import {
+  excluirDocumento,
+  obterUrlAssinadaDocumento,
+  restaurarDocumento,
+} from "@/actions/documents"
+import { notificarExclusao } from "@/components/app/notificar-exclusao"
 import { Card, CardContent } from "@/components/ui/card"
 import type { DocumentoComFornecedor } from "@/db/queries/documents"
 import { TIPO_DOCUMENTO_LABELS } from "@/lib/labels"
@@ -74,7 +79,14 @@ function DocumentRow({ documento }: { documento: DocumentoComFornecedor }) {
         disabled={pendente}
         onClick={() =>
           iniciarTransicao(async () => {
-            await excluirDocumento(documento.id)
+            const resultado = await excluirDocumento(documento.id)
+            if (resultado.linha) {
+              notificarExclusao({
+                linha: resultado.linha,
+                mensagem: `"${documento.nome}" excluído.`,
+                restaurar: restaurarDocumento,
+              })
+            }
           })
         }
         className="text-muted-foreground hover:text-destructive shrink-0 disabled:opacity-50"

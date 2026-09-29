@@ -3,12 +3,18 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { guests, tables } from "@/db/schema"
 import { mesaSchema } from "@/lib/validators/tables"
 
 type ResultadoAction = { erro: string } | { erro?: undefined; id?: string }
+type Mesa = typeof tables.$inferSelect
 
 function revalidarMesas() {
   revalidatePath("/app/convidados/mesas")
@@ -90,12 +96,28 @@ export async function atualizarPosicaoMesa(
   return {}
 }
 
-export async function excluirMesa(id: string): Promise<ResultadoAction> {
+export async function excluirMesa(id: string): Promise<ResultadoExclusao<Mesa>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Mesa | null
   try {
-    await rls((tx) => tx.delete(tables).where(eq(tables.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, tables, tables.id, id))
   } catch {
     return { erro: "Não foi possível excluir a mesa." }
+  }
+  if (!linha) return { erro: "Mesa não encontrada." }
+  revalidarMesas()
+  return { linha }
+}
+
+// Restaura só a mesa — convidados que estavam nela (`guests.tableId`, "set
+// null" ao excluir) não voltam a ficar sentados sozinhos, precisam ser
+// realocados manualmente.
+export async function restaurarMesa(mesa: Mesa): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, tables, mesa))
+  } catch {
+    return { erro: "Não foi possível restaurar a mesa." }
   }
   revalidarMesas()
   return {}

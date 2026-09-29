@@ -3,9 +3,10 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import type { ResultadoExclusaoIndice } from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
-import { honeymoon, type ChecklistMalaItem } from "@/db/schema"
+import { honeymoon, type ChecklistMalaItem, type RoteiroDia } from "@/db/schema"
 import { honeymoonDadosSchema, roteiroDiaSchema } from "@/lib/validators/honeymoon"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
@@ -95,7 +96,41 @@ export async function adicionarDiaRoteiro(input: unknown): Promise<ResultadoActi
   return {}
 }
 
-export async function removerDiaRoteiro(indice: number): Promise<ResultadoAction> {
+export async function removerDiaRoteiro(
+  indice: number
+): Promise<ResultadoExclusaoIndice<RoteiroDia>> {
+  const wedding = await getMinhaWedding()
+  if (!wedding) return { erro: "Casamento não encontrado." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  let item: RoteiroDia | undefined
+  try {
+    await rls(async (tx) => {
+      const atual = await tx.query.honeymoon.findFirst({
+        where: eq(honeymoon.weddingId, wedding.id),
+      })
+      const roteiroAtual = atual?.roteiro ?? []
+      item = roteiroAtual[indice]
+      const roteiro = roteiroAtual.filter((_, i) => i !== indice)
+      await tx
+        .update(honeymoon)
+        .set({ roteiro })
+        .where(eq(honeymoon.weddingId, wedding.id))
+    })
+  } catch {
+    return { erro: "Não foi possível remover o dia." }
+  }
+  if (!item) return { erro: "Dia não encontrado." }
+
+  revalidar()
+  return { item, indice }
+}
+
+/** Reinsere o dia na mesma posição — chamado pelo "Desfazer" do toast. */
+export async function restaurarDiaRoteiro(
+  item: RoteiroDia,
+  indice: number
+): Promise<ResultadoAction> {
   const wedding = await getMinhaWedding()
   if (!wedding) return { erro: "Casamento não encontrado." }
 
@@ -105,14 +140,15 @@ export async function removerDiaRoteiro(indice: number): Promise<ResultadoAction
       const atual = await tx.query.honeymoon.findFirst({
         where: eq(honeymoon.weddingId, wedding.id),
       })
-      const roteiro = (atual?.roteiro ?? []).filter((_, i) => i !== indice)
+      const roteiro = [...(atual?.roteiro ?? [])]
+      roteiro.splice(indice, 0, item)
       await tx
         .update(honeymoon)
         .set({ roteiro })
         .where(eq(honeymoon.weddingId, wedding.id))
     })
   } catch {
-    return { erro: "Não foi possível remover o dia." }
+    return { erro: "Não foi possível restaurar o dia." }
   }
 
   revalidar()
@@ -179,7 +215,40 @@ export async function alternarItemMala(
   return {}
 }
 
-export async function removerItemMala(indice: number): Promise<ResultadoAction> {
+export async function removerItemMala(
+  indice: number
+): Promise<ResultadoExclusaoIndice<ChecklistMalaItem>> {
+  const wedding = await getMinhaWedding()
+  if (!wedding) return { erro: "Casamento não encontrado." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  let item: ChecklistMalaItem | undefined
+  try {
+    await rls(async (tx) => {
+      const atual = await tx.query.honeymoon.findFirst({
+        where: eq(honeymoon.weddingId, wedding.id),
+      })
+      const malaAtual = atual?.checklistMala ?? []
+      item = malaAtual[indice]
+      const checklistMala = malaAtual.filter((_, i) => i !== indice)
+      await tx
+        .update(honeymoon)
+        .set({ checklistMala })
+        .where(eq(honeymoon.weddingId, wedding.id))
+    })
+  } catch {
+    return { erro: "Não foi possível remover o item." }
+  }
+  if (!item) return { erro: "Item não encontrado." }
+
+  revalidar()
+  return { item, indice }
+}
+
+export async function restaurarItemMala(
+  item: ChecklistMalaItem,
+  indice: number
+): Promise<ResultadoAction> {
   const wedding = await getMinhaWedding()
   if (!wedding) return { erro: "Casamento não encontrado." }
 
@@ -189,14 +258,15 @@ export async function removerItemMala(indice: number): Promise<ResultadoAction> 
       const atual = await tx.query.honeymoon.findFirst({
         where: eq(honeymoon.weddingId, wedding.id),
       })
-      const checklistMala = (atual?.checklistMala ?? []).filter((_, i) => i !== indice)
+      const checklistMala = [...(atual?.checklistMala ?? [])]
+      checklistMala.splice(indice, 0, item)
       await tx
         .update(honeymoon)
         .set({ checklistMala })
         .where(eq(honeymoon.weddingId, wedding.id))
     })
   } catch {
-    return { erro: "Não foi possível remover o item." }
+    return { erro: "Não foi possível restaurar o item." }
   }
 
   revalidar()

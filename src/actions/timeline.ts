@@ -3,6 +3,11 @@
 import { asc, eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient, type Transaction } from "@/db/rls"
 import { timelineEvents } from "@/db/schema"
@@ -10,6 +15,7 @@ import { somarMinutos } from "@/lib/time"
 import { eventoSchema } from "@/lib/validators/timeline"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Evento = typeof timelineEvents.$inferSelect
 
 function revalidarCronograma() {
   revalidatePath("/app/cronograma")
@@ -121,15 +127,36 @@ export async function atualizarEvento(
   return {}
 }
 
-export async function excluirEvento(id: string): Promise<ResultadoAction> {
+export async function excluirEvento(id: string): Promise<ResultadoExclusao<Evento>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Evento | null
   try {
-    await rls(async (tx) => {
-      await tx.delete(timelineEvents).where(eq(timelineEvents.id, id))
-      await recalcularHorarios(tx)
+    linha = await rls(async (tx) => {
+      const removido = await excluirComRetorno(tx, timelineEvents, timelineEvents.id, id)
+      if (removido) await recalcularHorarios(tx)
+      return removido
     })
   } catch {
     return { erro: "Não foi possível excluir o bloco." }
+  }
+  if (!linha) return { erro: "Bloco não encontrado." }
+
+  revalidarCronograma()
+  return { linha }
+}
+
+// Reinsere o bloco e recalcula os horários de novo — excluir já tinha
+// recalculado o cronograma sem ele; sem recalcular de novo aqui os minutos
+// ficariam inconsistentes depois de desfazer.
+export async function restaurarEvento(evento: Evento): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls(async (tx) => {
+      await restaurarLinha(tx, timelineEvents, evento)
+      await recalcularHorarios(tx)
+    })
+  } catch {
+    return { erro: "Não foi possível restaurar o bloco." }
   }
 
   revalidarCronograma()

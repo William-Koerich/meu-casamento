@@ -3,12 +3,18 @@
 import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
+import {
+  excluirComRetorno,
+  restaurarLinha,
+  type ResultadoExclusao,
+} from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
 import { gifts } from "@/db/schema"
 import { presenteSchema } from "@/lib/validators/gifts"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
+type Presente = typeof gifts.$inferSelect
 
 function revalidar() {
   revalidatePath("/app/presentes")
@@ -87,12 +93,25 @@ export async function alternarRecebido(
   return {}
 }
 
-export async function excluirPresente(id: string): Promise<ResultadoAction> {
+export async function excluirPresente(id: string): Promise<ResultadoExclusao<Presente>> {
   const { rls } = await createDrizzleSupabaseClient()
+  let linha: Presente | null
   try {
-    await rls((tx) => tx.delete(gifts).where(eq(gifts.id, id)))
+    linha = await rls((tx) => excluirComRetorno(tx, gifts, gifts.id, id))
   } catch {
     return { erro: "Não foi possível excluir o presente." }
+  }
+  if (!linha) return { erro: "Presente não encontrado." }
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarPresente(presente: Presente): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, gifts, presente))
+  } catch {
+    return { erro: "Não foi possível restaurar o presente." }
   }
 
   revalidar()

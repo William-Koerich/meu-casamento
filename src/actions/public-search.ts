@@ -1,6 +1,7 @@
 "use server"
 
 import { buscarConvidadosPublico, getGuestPorCodigo } from "@/db/queries/public-site"
+import { dentroDoLimite } from "@/lib/rate-limit"
 
 export type BuscaConvidadoResultado =
   | {
@@ -12,11 +13,14 @@ export type BuscaConvidadoResultado =
       candidatos: Awaited<ReturnType<typeof buscarConvidadosPublico>>
     }
   | { tipo: "nenhum" }
+  | { tipo: "limite" }
 
 export async function buscarConvidadoPublico(
   weddingId: string,
   termo: string
 ): Promise<BuscaConvidadoResultado> {
+  if (!(await dentroDoLimite("buscar-convidado", 20, 60))) return { tipo: "limite" }
+
   const termoLimpo = termo.trim()
   if (!termoLimpo) return { tipo: "nenhum" }
 
@@ -31,5 +35,6 @@ export async function buscarConvidadoPublico(
 }
 
 export async function buscarConvidadoPorCodigo(codigo: string) {
+  if (!(await dentroDoLimite("buscar-convidado-codigo", 20, 60))) return null
   return getGuestPorCodigo(codigo.toUpperCase())
 }
