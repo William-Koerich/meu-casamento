@@ -119,19 +119,6 @@ export const tipoDocumentoEnum = pgEnum("tipo_documento", [
   "outro",
 ])
 
-// "historia"/"nav_rsvp"/"nav_presentes"/"nav_local" são as seções já
-// existentes da página pública (agora reordenáveis/ocultáveis); "foto",
-// "galeria" e "texto" são conteúdo livre que a dona monta como quiser.
-export const blockTipoEnum = pgEnum("block_tipo", [
-  "historia",
-  "nav_rsvp",
-  "nav_presentes",
-  "nav_local",
-  "foto",
-  "galeria",
-  "texto",
-])
-
 // Paleta fixa de post-it (8 cores) em vez de hex livre — mesmo espírito dos
 // outros enums de domínio: um conjunto pequeno e conhecido de opções, fácil
 // de mapear pra classes Tailwind (ver CLASSES_POR_COR em note-card.tsx).

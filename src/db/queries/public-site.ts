@@ -1,8 +1,8 @@
-import { and, asc, eq, sql } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { cache } from "react"
 
 import { createDrizzleSupabaseClient } from "@/db/rls"
-import { gifts, guests, pageBlocks, weddings } from "@/db/schema"
+import { gifts, guests, weddings } from "@/db/schema"
 
 // Os `columns` abaixo espelham exatamente os GRANTs de coluna dados a `anon`
 // na migration 0001 (ver CLAUDE.md > "Grants de coluna para anon") — pedir
@@ -87,24 +87,6 @@ export async function getGiftsPublicos(weddingId: string) {
 }
 
 export type GiftPublico = Awaited<ReturnType<typeof getGiftsPublicos>>[number]
-
-export type BlockPublico = Awaited<ReturnType<typeof getBlocosPublicos>>[number]
-
-/**
- * Blocos visíveis da página pública, na ordem escolhida pela dona. Sem
- * bloco nenhum (casamento nunca visitou o construtor), o chamador cai de
- * volta pro layout fixo antigo — ver PaginaPublicaCasal.
- */
-export async function getBlocosPublicos(weddingId: string) {
-  const { rls } = await createDrizzleSupabaseClient()
-  return rls((tx) =>
-    tx.query.pageBlocks.findMany({
-      where: and(eq(pageBlocks.weddingId, weddingId), eq(pageBlocks.visivel, true)),
-      orderBy: asc(pageBlocks.ordem),
-      columns: { id: true, tipo: true, config: true },
-    })
-  )
-}
 
 export type ResultadoBuscaConvidado = { id: string; nome: string; codigoRsvp: string }
 

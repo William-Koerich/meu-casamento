@@ -6,7 +6,7 @@ import {
   atualizarFundoPaginaMarkdown,
   atualizarModoPaginaMarkdown,
   atualizarPaginaMarkdown,
-} from "@/actions/page-blocks"
+} from "@/actions/site-publico"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -136,7 +136,7 @@ export function MarkdownEditorView({
       </div>
       <p className="text-muted-foreground text-sm">
         {ativo
-          ? "A página pública está usando o conteúdo abaixo em vez do construtor por blocos."
+          ? "A página pública está usando o conteúdo abaixo."
           : "Escreva e salve à vontade — nada aparece em /c/" +
             slug +
             " até você ativar o Markdown acima."}

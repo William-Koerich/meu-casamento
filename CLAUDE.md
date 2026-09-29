@@ -728,6 +728,9 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
       sem login.
 - [x] **Fase 24 — Presente em cota**: vários convidados dividem um presente
       caro até juntar a meta, com barra de progresso pública.
+- [x] **Fase 25 — Remoção do construtor por blocos**: página pública passou
+      a ter só o modo Markdown (Fase 21); o construtor por blocos (Fase 10)
+      foi removido por completo, código e tabela.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1894,6 +1897,63 @@ reserva (`reservarPresente`) trava o item inteiro pra 1 pessoa só.
   o checkbox de "recebido" na contribuição individual funciona. Dado de
   teste removido depois (exclusão em cascata confirmada: zero contribuições
   órfãs restantes).
+
+## Fase 25 — Remoção do construtor por blocos
+
+Pedido explícito da dona: só o modo Markdown (Fase 21) pra montar a página
+pública — o construtor por blocos (Fase 10) saiu de vez, "vai ficar melhor
+e mais bonito" ter um jeito só. Antes de mexer, verifiquei o dado de
+produção pra não perder conteúdo de verdade: os 2 casamentos reais em
+produção (`mariana-e-rafael`, demo, e o casamento real da própria dona)
+só tinham blocos padrão/de teste (história vazia, um bloco de texto
+"Teste", foto e galeria ocultas) — nada que valesse migrar pra Markdown
+antes de apagar.
+
+- **Achado no meio da verificação: o site público real da dona já estava
+  quebrado em produção antes desta fase** — `paginaMarkdownAtiva` já
+  estava `true` na conta dela (ativou o modo Markdown em algum teste
+  anterior) mas `paginaMarkdown` estava vazio. Como `/c/[slug]` renderizava
+  `PaginaMarkdownPublica` sempre que `paginaMarkdownAtiva` era `true`,
+  **sem checar se havia conteúdo**, qualquer visitante real da página dela
+  via só a mensagem de placeholder do editor ("Escreva o conteúdo da
+  página em Markdown...") em vez de qualquer coisa útil. Corrigido de
+  brinde: `/c/[slug]/page.tsx` agora só entra no modo Markdown quando
+  `paginaMarkdownAtiva && paginaMarkdown.trim()` — Markdown ativado sem
+  texto nenhum cai no layout fixo (hero + história + os 3 cards de
+  navegação), nunca mostra página em branco pro público.
+- **Remoção completa, não só escondida da UI**: seguindo a convenção do
+  projeto de não deixar código morto pra trás, saiu tudo relacionado ao
+  construtor por blocos — tabela `page_blocks` e o enum `block_tipo`
+  (migration `0019`, `DROP TABLE ... CASCADE` + `DROP TYPE`, aplicada em
+  produção), `src/db/schema/page-blocks.ts`, `src/db/queries/page-blocks.ts`,
+  `src/lib/validators/page-blocks.ts`, `getBlocosPublicos`/`BlockPublico`
+  de `public-site.ts`, `BLOCK_TIPO_LABELS`/`BLOCK_TIPOS_ADICIONAVEIS`/
+  `BlockTipo` de `labels.ts`, e os componentes `site-publico-view.tsx`,
+  `block-row.tsx`, `foto-block-dialog.tsx`, `galeria-block-dialog.tsx`,
+  `texto-block-dialog.tsx` (editor) e `public-block.tsx` (renderização
+  pública).
+- **`src/actions/page-blocks.ts` virou `src/actions/site-publico.ts`**: o
+  arquivo misturava as ações do construtor por blocos com as 3 do modo
+  Markdown (`atualizarModoPaginaMarkdown`/`atualizarPaginaMarkdown`/
+  `atualizarFundoPaginaMarkdown`, Fase 21) — só as 3 do Markdown
+  sobreviveram, então o arquivo ganhou um nome que reflete o que sobrou em
+  vez de continuar se chamando "page-blocks" sem ter blocos.
+- **`/app/site-publico` perdeu as abas**: antes tinha `Tabs` com "Blocos"/
+  "Markdown"; agora é só o editor de Markdown direto, sem escolha nenhuma
+  — o switch "Usar o Markdown na página pública" (liga/desliga o conteúdo
+  custom vs. o layout fixo) continua existindo, é uma decisão diferente
+  (publicar ou não o que foi escrito) da que foi removida (qual motor usar
+  pra montar a página).
+- **Bucket de Storage `blocos` não foi tocado**: já era usado de forma
+  genérica pelo editor de Markdown desde a Fase 21 (imagem inserida no
+  texto, imagem de fundo) — só a tabela e o código do construtor por
+  blocos em si saíram, o bucket continua com o mesmo nome e função.
+- **Verificado com `next build && next start` (produção local) + Puppeteer**,
+  mesmo método da Fase 22: `/c/mariana-e-rafael` e a página pública real da
+  dona renderizam o layout fixo (hero, contagem, história quando existe, 3
+  cards de navegação) sem erro de console; `/app/site-publico` logada como
+  a conta demo mostra só o editor de Markdown, sem "Blocos" nem "Adicionar
+  bloco" em lugar nenhum da tela.
 
 ## Como rodar localmente
 

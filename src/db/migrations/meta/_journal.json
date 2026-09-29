@@ -134,6 +134,13 @@
       "when": 1790712767511,
       "tag": "0018_sturdy_molten_man",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790715159566,
+      "tag": "0019_remove_page_blocks",
+      "breakpoints": true
     }
   ]
 }
