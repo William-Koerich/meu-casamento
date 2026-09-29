@@ -9,6 +9,11 @@ export async function getGifts(weddingId: string) {
     tx.query.gifts.findMany({
       where: eq(gifts.weddingId, weddingId),
       orderBy: desc(gifts.createdAt),
+      with: {
+        contribuicoes: {
+          orderBy: (contribuicao, { desc }) => desc(contribuicao.createdAt),
+        },
+      },
     })
   )
 }

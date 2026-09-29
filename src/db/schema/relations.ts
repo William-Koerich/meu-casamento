@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm"
 
 import { budgetCategories, budgetItems, payments } from "@/db/schema/budget"
 import { documents } from "@/db/schema/documents"
+import { giftContributions } from "@/db/schema/gift-contributions"
 import { gifts } from "@/db/schema/gifts"
 import { guests } from "@/db/schema/guests"
 import { honeymoon } from "@/db/schema/honeymoon"
@@ -30,9 +31,23 @@ export const weddingsRelations = relations(weddings, ({ many, one }) => ({
   inspirations: many(inspirations),
   songs: many(songs),
   gifts: many(gifts),
+  giftContributions: many(giftContributions),
   trousseauItems: many(trousseauItems),
   documents: many(documents),
   honeymoon: many(honeymoon),
+}))
+
+export const giftsRelations = relations(gifts, ({ one, many }) => ({
+  wedding: one(weddings, { fields: [gifts.weddingId], references: [weddings.id] }),
+  contribuicoes: many(giftContributions),
+}))
+
+export const giftContributionsRelations = relations(giftContributions, ({ one }) => ({
+  wedding: one(weddings, {
+    fields: [giftContributions.weddingId],
+    references: [weddings.id],
+  }),
+  gift: one(gifts, { fields: [giftContributions.giftId], references: [gifts.id] }),
 }))
 
 export const weddingMembersRelations = relations(weddingMembers, ({ one }) => ({

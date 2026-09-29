@@ -16,3 +16,11 @@ export const reservarPresenteSchema = z.object({
 })
 
 export type ReservarPresenteInput = z.infer<typeof reservarPresenteSchema>
+
+export const contribuirPresenteSchema = z.object({
+  nome: z.string().trim().min(2, "Informe seu nome."),
+  email: z.string().trim().min(1, "Informe seu e-mail.").email("E-mail inválido."),
+  valor: z.number().positive("Informe um valor maior que zero."),
+})
+
+export type ContribuirPresenteInput = z.infer<typeof contribuirPresenteSchema>

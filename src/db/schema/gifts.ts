@@ -32,6 +32,13 @@ export const gifts = pgTable(
     reservadoPorEmail: text("reservado_por_email"),
     reservadoEm: timestamp("reservado_em", { withTimezone: true }),
     recebido: boolean("recebido").default(false).notNull(),
+    // Presente "em cota" (Fase 24): em vez de 1 pessoa reservar o item
+    // inteiro, vários convidados declaram quanto vão contribuir
+    // (`gift_contributions`) até juntar o valor de `preco` — pensado pra
+    // presentes caros tipo lua de mel. Continua sendo "declarado", não
+    // dinheiro de verdade passando pela plataforma — mesmo nível de
+    // confiança que a reserva normal já tinha (ver decisão no CLAUDE.md).
+    aceitaCotas: boolean("aceita_cotas").default(false).notNull(),
     createdAt: createdAt(),
   },
   (table) => [

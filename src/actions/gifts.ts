@@ -10,11 +10,12 @@ import {
 } from "@/db/delete-helpers"
 import { getMinhaWedding } from "@/db/queries/weddings"
 import { createDrizzleSupabaseClient } from "@/db/rls"
-import { gifts } from "@/db/schema"
+import { giftContributions, gifts } from "@/db/schema"
 import { presenteSchema } from "@/lib/validators/gifts"
 
 type ResultadoAction = { erro: string } | { erro?: undefined }
 type Presente = typeof gifts.$inferSelect
+type Contribuicao = typeof giftContributions.$inferSelect
 
 function revalidar() {
   revalidatePath("/app/presentes")
@@ -38,6 +39,7 @@ export async function criarPresente(input: unknown): Promise<ResultadoAction> {
         linkLoja: dados.data.linkLoja || null,
         chavePix: dados.data.chavePix || null,
         imagemUrl: dados.data.imagemUrl || null,
+        aceitaCotas: dados.data.aceitaCotas,
       })
     )
   } catch {
@@ -67,6 +69,7 @@ export async function atualizarPresente(
           linkLoja: dados.data.linkLoja || null,
           chavePix: dados.data.chavePix || null,
           imagemUrl: dados.data.imagemUrl || null,
+          aceitaCotas: dados.data.aceitaCotas,
         })
         .where(eq(gifts.id, id))
     )
@@ -93,6 +96,9 @@ export async function alternarRecebido(
   return {}
 }
 
+// Restaurar não traz de volta as contribuições apagadas em cascata
+// (`gift_contributions.giftId`, `onDelete: "cascade"`) — mesma ressalva já
+// documentada em `delete-helpers.ts` pra item de orçamento/pagamento.
 export async function excluirPresente(id: string): Promise<ResultadoExclusao<Presente>> {
   const { rls } = await createDrizzleSupabaseClient()
   let linha: Presente | null
@@ -112,6 +118,54 @@ export async function restaurarPresente(presente: Presente): Promise<ResultadoAc
     await rls((tx) => restaurarLinha(tx, gifts, presente))
   } catch {
     return { erro: "Não foi possível restaurar o presente." }
+  }
+
+  revalidar()
+  return {}
+}
+
+export async function alternarContribuicaoRecebida(
+  id: string,
+  recebido: boolean
+): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) =>
+      tx.update(giftContributions).set({ recebido }).where(eq(giftContributions.id, id))
+    )
+  } catch {
+    return { erro: "Não foi possível atualizar." }
+  }
+
+  revalidar()
+  return {}
+}
+
+export async function excluirContribuicao(
+  id: string
+): Promise<ResultadoExclusao<Contribuicao>> {
+  const { rls } = await createDrizzleSupabaseClient()
+  let linha: Contribuicao | null
+  try {
+    linha = await rls((tx) =>
+      excluirComRetorno(tx, giftContributions, giftContributions.id, id)
+    )
+  } catch {
+    return { erro: "Não foi possível excluir a contribuição." }
+  }
+  if (!linha) return { erro: "Contribuição não encontrada." }
+  revalidar()
+  return { linha }
+}
+
+export async function restaurarContribuicao(
+  contribuicao: Contribuicao
+): Promise<ResultadoAction> {
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls((tx) => restaurarLinha(tx, giftContributions, contribuicao))
+  } catch {
+    return { erro: "Não foi possível restaurar a contribuição." }
   }
 
   revalidar()

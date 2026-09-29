@@ -3,10 +3,11 @@
 import { eq } from "drizzle-orm"
 
 import { createDrizzleSupabaseClient } from "@/db/rls"
-import { gifts, guestPhotos, guests } from "@/db/schema"
+import { giftContributions, gifts, guestPhotos, guests } from "@/db/schema"
 import { dentroDoLimite, MENSAGEM_LIMITE_EXCEDIDO } from "@/lib/rate-limit"
 import {
   confirmarPresencaSchema,
+  contribuirPresenteSchema,
   reservarPresenteSchema,
 } from "@/lib/validators/public-rsvp"
 
@@ -75,6 +76,47 @@ export async function reservarPresente(
       }
   } catch {
     return { erro: "Não foi possível reservar. Tente novamente." }
+  }
+
+  return {}
+}
+
+export async function contribuirPresente(
+  giftId: string,
+  input: unknown
+): Promise<ResultadoAction> {
+  if (!(await dentroDoLimite("contribuir-presente", 10, 60))) {
+    return { erro: MENSAGEM_LIMITE_EXCEDIDO }
+  }
+
+  const dados = contribuirPresenteSchema.safeParse(input)
+  if (!dados.success) return { erro: "Preencha os campos obrigatórios." }
+
+  const { rls } = await createDrizzleSupabaseClient()
+  try {
+    await rls(async (tx) => {
+      const [presente] = await tx
+        .select({ weddingId: gifts.weddingId, aceitaCotas: gifts.aceitaCotas })
+        .from(gifts)
+        .where(eq(gifts.id, giftId))
+      if (!presente) throw new Error("Presente não encontrado.")
+      if (!presente.aceitaCotas) throw new Error("Esse presente não aceita cotas.")
+
+      // Sem `.returning()` de propósito: "gift_contributions" não tem
+      // policy de SELECT pra anon (só INSERT), mesma pegadinha de RLS já
+      // documentada pra `guest_photos` (Fase 11) — devolver a linha
+      // inserida exigiria uma policy de SELECT que não deve existir aqui
+      // (evita expor e-mail de outros convidados).
+      await tx.insert(giftContributions).values({
+        weddingId: presente.weddingId,
+        giftId,
+        nome: dados.data.nome,
+        email: dados.data.email,
+        valor: String(dados.data.valor),
+      })
+    })
+  } catch {
+    return { erro: "Não foi possível registrar sua contribuição. Tente novamente." }
   }
 
   return {}

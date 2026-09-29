@@ -53,8 +53,8 @@ export const getWeddingPublicaPorSlug = cache(async function getWeddingPublicaPo
 
 export async function getGiftsPublicos(weddingId: string) {
   const { rls } = await createDrizzleSupabaseClient()
-  return rls((tx) =>
-    tx.query.gifts.findMany({
+  const [listaPresentes, totais] = await rls(async (tx) => {
+    const presentes = await tx.query.gifts.findMany({
       where: eq(gifts.weddingId, weddingId),
       columns: {
         id: true,
@@ -66,10 +66,27 @@ export async function getGiftsPublicos(weddingId: string) {
         chavePix: true,
         reservadoPorNome: true,
         recebido: true,
+        aceitaCotas: true,
       },
     })
-  )
+    // Total já contribuído por presente de cota — função `security definer`
+    // (migration 0018), não uma policy de SELECT em `gift_contributions`
+    // (que não existe pra `anon` de propósito, evita expor e-mail de
+    // convidado). Uma chamada só pro casamento inteiro, não por presente.
+    const contribuicoes = await tx.execute<{ gift_id: string; total: string }>(
+      sql`select * from public.total_contribuido_presentes(${weddingId})`
+    )
+    return [presentes, contribuicoes] as const
+  })
+
+  const totalPorPresente = new Map(totais.map((linha) => [linha.gift_id, linha.total]))
+  return listaPresentes.map((presente) => ({
+    ...presente,
+    totalContribuido: totalPorPresente.get(presente.id) ?? "0",
+  }))
 }
+
+export type GiftPublico = Awaited<ReturnType<typeof getGiftsPublicos>>[number]
 
 export type BlockPublico = Awaited<ReturnType<typeof getBlocosPublicos>>[number]
 

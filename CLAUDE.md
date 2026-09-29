@@ -726,6 +726,8 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
 - [x] **Fase 23 — Desfazer exclusão + proteção contra abuso**: toast de
       "Desfazer" em toda exclusão do app; limite de taxa nas rotas públicas
       sem login.
+- [x] **Fase 24 — Presente em cota**: vários convidados dividem um presente
+      caro até juntar a meta, com barra de progresso pública.
 
 ## Fase 10 — Construtor de blocos da página pública
 
@@ -1826,6 +1828,72 @@ RETURNING contagem` — atômico, sem ler-e-regravar em dois passos (evitaria
   compilação a frio do Next) viravam no-op em vez de nova requisição. Não
   é um bug do rate limit em si, só um limite de como testar clique-rápido
   contra um servidor de desenvolvimento lento.
+
+## Fase 24 — Presente em cota
+
+Pedido veio de uma pesquisa comparando o app com concorrentes (Zola,
+iCasei, Casar.com) a pedido da dona ("o que eu preciso melhorar/adicionar
+comparado a outros sites de casamento?") — presente em dinheiro dividido
+entre vários convidados ("cota") apareceu como o maior gap: hoje o
+presente só tinha uma "chave Pix (para cota)" no formulário, mas nenhuma
+lógica real de dividir — era só um texto mostrado pro convidado, e a
+reserva (`reservarPresente`) trava o item inteiro pra 1 pessoa só.
+
+- **Decisão consciente de escopo, pra não virar um projeto de pagamentos**:
+  isso **não processa dinheiro de verdade** — não é Stripe Connect, não é
+  Pix via API, não é split payment. Cada convidado só **declara** "vou
+  contribuir com X", exatamente como a reserva normal já fazia (que também
+  nunca confirmou pagamento nenhum — só registra nome/e-mail). A dona
+  continua recebendo o Pix direto na própria chave e confirmando
+  manualmente que o dinheiro chegou (`recebido`, no presente inteiro e
+  agora também por contribuição individual). Perseguir uma versão com
+  dinheiro de verdade exigiria integrar um gateway de pagamento com split
+  (KYC, conciliação, compliance) — trabalho de outra ordem de grandeza,
+  fora do que foi pedido.
+- **`gifts.aceitaCotas`** (boolean): liga o modo cota por presente — quando
+  `true`, `preco` vira a meta a ser atingida (validado no formulário: sem
+  meta, não dá pra ligar cota) e a reserva de item inteiro
+  (`reservadoPorNome`/`reservadoPorEmail`) fica sem uso pra esse presente.
+  Os dois modos convivem: presentes normais continuam reserváveis por 1
+  pessoa como sempre, cada presente escolhe o próprio modo.
+- **Tabela nova `gift_contributions`**, não um array JSONB: cada
+  contribuição precisa da própria RLS (convidado só consegue **inserir**,
+  nunca ler as dos outros) e de um `id` próprio pra dar pra excluir uma
+  errada/spam individualmente — um array dentro de `gifts` não permitiria
+  RLS por item. `weddingId` denormalizado na tabela (não só `giftId`),
+  mesmo padrão que `payments` já usa com `budgetItemId`/`weddingId` — deixa
+  reaproveitar `standardWeddingPolicies` sem subquery até `gifts` pra achar
+  o dono.
+- **Sem policy de SELECT pra `anon`** em `gift_contributions` (só INSERT) —
+  mesmo padrão de `guest_photos` (Fase 11): convidado nunca lê de volta,
+  evita expor e-mail de outros convidados. O total arrecadado que aparece
+  pro público (barra de progresso) vem de uma função `security definer`
+  nova, `total_contribuido_presentes(wedding_id)` (migration `0018`, mesmo
+  padrão de `buscar_convidados_publico` da Fase 8) — soma agregada sem
+  nenhuma linha individual passando pela resposta. Uma chamada só por
+  visita à página (todos os presentes do casamento de uma vez), não uma
+  por presente.
+- **Progresso mostrado é "declarado", não "confirmado"**: a barra pública
+  soma todas as contribuições, recebidas ou não — mostrar só o
+  confirmado deixaria o progresso sempre defasado do que os convidados já
+  disseram que iam mandar, e a maioria das ferramentas de "vaquinha" mostra
+  o comprometido, não só o que já caiu na conta. `recebido` por
+  contribuição é só pra dona conferir contra o próprio extrato/Pix, não
+  afeta o que o público vê.
+- **Excluir um presente apaga as contribuições em cascata**
+  (`onDelete: "cascade"`) — reaproveitando o "desfazer" da Fase 23,
+  restaurar o presente **não** traz as contribuições de volta (mesma
+  ressalva já registrada em `delete-helpers.ts` pra item de orçamento
+  cascateando pagamento). Excluir uma contribuição isolada, por outro
+  lado, já usa o mesmo `excluirComRetorno`/`restaurarLinha` genérico —
+  reaproveitamento direto da infraestrutura da Fase 23, sem nada novo.
+- **Verificado com Puppeteer contra produção**: presente de teste criado
+  com meta de R$1.000; contribuição pública de R$300 registrada; página
+  pública mostra "R$ 300,00 de R$ 1.000,00 arrecadados" sem expor o e-mail
+  de quem contribuiu; painel da dona mostra "Fulano de Tal — R$ 300,00" e
+  o checkbox de "recebido" na contribuição individual funciona. Dado de
+  teste removido depois (exclusão em cascata confirmada: zero contribuições
+  órfãs restantes).
 
 ## Como rodar localmente
 

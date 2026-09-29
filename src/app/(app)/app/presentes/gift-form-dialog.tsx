@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import type { Gift } from "@/db/queries/gifts"
 import { caminhoArquivoStorage } from "@/lib/storage-path"
@@ -51,6 +52,7 @@ export function GiftFormDialog({ weddingId, gift, trigger }: GiftFormDialogProps
       linkLoja: gift?.linkLoja ?? "",
       chavePix: gift?.chavePix ?? "",
       imagemUrl: gift?.imagemUrl ?? "",
+      aceitaCotas: gift?.aceitaCotas ?? false,
     },
   })
 
@@ -163,11 +165,29 @@ export function GiftFormDialog({ weddingId, gift, trigger }: GiftFormDialogProps
               name="chavePix"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Chave Pix (para cota)</FormLabel>
+                  <FormLabel>Chave Pix</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="aceitaCotas"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between gap-3 rounded-md border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Aceitar cota (vários convidados dividem)</FormLabel>
+                    <p className="text-muted-foreground text-xs">
+                      Em vez de 1 pessoa reservar o item inteiro, cada convidado declara
+                      quanto vai contribuir, até juntar o valor do Preço.
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
                 </FormItem>
               )}
             />
