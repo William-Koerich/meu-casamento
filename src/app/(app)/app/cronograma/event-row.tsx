@@ -20,18 +20,14 @@ import {
 } from "@/components/ui/alert-dialog"
 import type { Evento } from "@/db/queries/timeline"
 import { formatHora } from "@/lib/format"
+import { somarMinutos } from "@/lib/time"
 import { cn } from "@/lib/utils"
 
 import { EventFormDialog } from "./event-form-dialog"
 
-export function EventRow({
-  evento,
-  ehPrimeiro,
-}: {
-  evento: Evento
-  ehPrimeiro: boolean
-}) {
+export function EventRow({ evento }: { evento: Evento }) {
   const [pendente, iniciarTransicao] = useTransition()
+  const fim = somarMinutos(evento.horario, evento.duracaoMinutos)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: evento.id,
@@ -55,8 +51,8 @@ export function EventRow({
       >
         <GripVertical className="size-4" />
       </button>
-      <span className="w-14 shrink-0 text-sm font-medium">
-        {formatHora(evento.horario)}
+      <span className="w-28 shrink-0 text-sm font-medium">
+        {formatHora(evento.horario)} – {formatHora(fim)}
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm">{evento.titulo}</p>
@@ -68,7 +64,6 @@ export function EventRow({
       </div>
       <EventFormDialog
         evento={evento}
-        ehPrimeiro={ehPrimeiro}
         trigger={
           <button
             type="button"

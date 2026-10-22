@@ -23,20 +23,6 @@ import { somarMinutos } from "@/lib/time"
 import { EventFormDialog } from "./event-form-dialog"
 import { EventRow } from "./event-row"
 
-function recalcularLocalmente(eventos: Evento[]): Evento[] {
-  if (eventos.length === 0) return eventos
-  let horarioAtual = eventos[0].horario
-  return eventos.map((evento, indice) => {
-    if (indice === 0) {
-      horarioAtual = evento.horario
-      return evento
-    }
-    const comHorario = { ...evento, horario: horarioAtual }
-    horarioAtual = somarMinutos(horarioAtual, evento.duracaoMinutos)
-    return comHorario
-  })
-}
-
 export function TimelineView({ eventos: eventosIniciais }: { eventos: Evento[] }) {
   const [eventos, setEventos] = useState(eventosIniciais)
   const sensors = useSensors(
@@ -53,15 +39,23 @@ export function TimelineView({ eventos: eventosIniciais }: { eventos: Evento[] }
 
     const indiceAntigo = eventos.findIndex((e) => e.id === active.id)
     const indiceNovo = eventos.findIndex((e) => e.id === over.id)
-    const nova = recalcularLocalmente(arrayMove(eventos, indiceAntigo, indiceNovo))
+    const nova = arrayMove(eventos, indiceAntigo, indiceNovo)
     setEventos(nova)
     reordenarEventos(nova.map((e) => e.id))
   }
 
+  const ultimo = eventos.at(-1)
+  const horarioSugerido = ultimo
+    ? somarMinutos(ultimo.horario, ultimo.duracaoMinutos)
+    : undefined
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <EventFormDialog trigger={<Button>Novo bloco</Button>} />
+        <EventFormDialog
+          horarioSugerido={horarioSugerido}
+          trigger={<Button>Novo bloco</Button>}
+        />
       </div>
       {eventos.length === 0 ? (
         <p className="text-muted-foreground py-12 text-center text-sm">
@@ -75,8 +69,8 @@ export function TimelineView({ eventos: eventosIniciais }: { eventos: Evento[] }
                 items={eventos.map((e) => e.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {eventos.map((evento, indice) => (
-                  <EventRow key={evento.id} evento={evento} ehPrimeiro={indice === 0} />
+                {eventos.map((evento) => (
+                  <EventRow key={evento.id} evento={evento} />
                 ))}
               </SortableContext>
             </DndContext>

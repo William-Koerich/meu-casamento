@@ -311,14 +311,22 @@ NULL` (sem coluna extra): é o campo do último passo, e só depois dele
   outro `print:hidden`, sem duplicar a célula. O PDF respeita os filtros
   ativos na tela (busca, grupo, lado, status) — imprimir só "confirmados",
   por exemplo, é só filtrar antes de clicar em "Exportar PDF".
-- **Cronograma — horário calculado, não digitado**: só o primeiro bloco tem
-  horário editável; os demais são `dataCasamento_do_primeiro + soma das
-durações anteriores`, recalculado e regravado em todas as linhas
-  (`recalcularHorarios` em `src/actions/timeline.ts`) a cada criação, edição
-  de duração ou reordenação por drag (dnd-kit sortable). O componente de
-  lista mantém uma cópia local só para refletir o novo horário na hora,
-  sincronizada com os props via `useEffect` sempre que o Server Component
-  revalida.
+- **Cronograma — horário sempre editável por bloco, revertendo a decisão
+  original** (ver "Pós-lançamento" abaixo pro relato que motivou a troca):
+  cada bloco tem seu próprio `horario`, digitado livremente no formulário
+  — nada recalcula mais a partir da duração dos blocos anteriores. `ordem`
+  (drag, dnd-kit sortable) continua sendo quem manda na posição da lista;
+  `horario` é só um campo exibido ao lado, sem nenhuma relação forçada com
+  a posição. Isso também resolve de graça o caso de dois blocos
+  acontecendo ao mesmo tempo (ex. making of da noiva e chegada dos
+  padrinhos em locais diferentes) — basta dar o mesmo horário aos dois e
+  usar o arrastar pra decidir qual aparece primeiro na lista. Criar um
+  bloco novo ainda sugere um horário de início (fim do último bloco da
+  lista, calculado no client com `somarMinutos`), só que agora é uma
+  sugestão editável no formulário, nunca um valor imposto depois de salvo.
+  `EventRow` passou a mostrar o intervalo (`15:00 – 16:00`, calculado só
+  pra exibição) em vez de só o início, pra deixar sobreposições visíveis
+  de cara.
 - **Buckets privados (`inspiracoes`, `documentos`) exigem signed URL**: como
   não são públicos, toda leitura de imagem/arquivo passa por
   `src/actions/storage.ts` (`obterUrlAssinada`/`obterUrlsAssinadas`, esta
@@ -676,6 +684,25 @@ start`), rede achatada a 1,5s de latência (`Network.emulateNetworkConditions`
   360px (tamanho comum de celular) em `/app`, `/app/fornecedores`,
   `/app/orcamento` e `/app/site-publico` — `scrollWidth` bate exatamente
   com `clientWidth` nas 4 rotas depois da correção.
+- **Decisão original do cronograma (Fase 7) revertida depois de uso real**:
+  "só o primeiro bloco tem horário editável, os demais são calculados
+  somando as durações" parecia razoável na hora de implementar, mas
+  quebrou no primeiro uso de verdade — a dona criou "Making off da noiva"
+  às 15:00 com 60 min de duração, editou o próximo bloco pra "Chegada dos
+  padrinhos" às 16:45 (os dois em locais diferentes, acontecendo em
+  paralelo com outras coisas do dia) e o app silenciosamente trocou pra
+  16:00 (15:00 + 60 min), ignorando o horário que ela tinha acabado de
+  digitar — porque só o 1º bloco aceitava edição de horário, o resto
+  sempre recalculava. De quebra, a tela de edição nem mostrava o campo de
+  horário pra blocos que não fossem o primeiro, então não tinha como nem
+  tentar corrigir pela própria tela. Causa raiz maior que o bug em si: um
+  cronograma de casamento de verdade não é uma sequência linear só — tem
+  coisas em paralelo (making of da noiva e arrumação dos padrinhos, por
+  exemplo), que o modelo "soma de durações" não consegue representar de
+  jeito nenhum. Corrigido removendo o cálculo automático por completo (ver
+  decisão revisada em "Cronograma" acima) — cada bloco guarda seu próprio
+  horário digitado, sem nenhum recálculo em cascata, e dois blocos podem
+  ter o mesmo horário sem problema.
 
 - [x] **Fase 1 — Fundação**: Next 15 + TS strict + Tailwind v4 + shadcn/ui,
       clientes Supabase (browser/server/middleware), Drizzle configurado,

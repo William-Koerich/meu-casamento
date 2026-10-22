@@ -6,7 +6,7 @@ export const eventoSchema = z.object({
   responsavel: z.string().trim().optional(),
   local: z.string().trim().optional(),
   duracaoMinutos: z.number().int().min(5, "Informe ao menos 5 minutos."),
-  horario: z.string().optional(),
+  horario: z.string().min(1, "Informe o horário."),
 })
 
 export type EventoInput = z.infer<typeof eventoSchema>

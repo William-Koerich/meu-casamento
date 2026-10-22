@@ -28,13 +28,13 @@ import { eventoSchema, type EventoInput } from "@/lib/validators/timeline"
 
 type EventFormDialogProps = {
   evento?: Evento
-  ehPrimeiro?: boolean
+  horarioSugerido?: string
   trigger: React.ReactNode
 }
 
 export function EventFormDialog({
   evento,
-  ehPrimeiro = false,
+  horarioSugerido,
   trigger,
 }: EventFormDialogProps) {
   const [aberto, setAberto] = useState(false)
@@ -49,7 +49,7 @@ export function EventFormDialog({
       responsavel: evento?.responsavel ?? "",
       local: evento?.local ?? "",
       duracaoMinutos: evento?.duracaoMinutos ?? 30,
-      horario: evento?.horario?.slice(0, 5) ?? "08:00",
+      horario: evento?.horario?.slice(0, 5) ?? horarioSugerido?.slice(0, 5) ?? "08:00",
     },
   })
 
@@ -57,7 +57,7 @@ export function EventFormDialog({
     setErro(null)
     iniciarTransicao(async () => {
       const resultado = evento
-        ? await atualizarEvento(evento.id, dados, ehPrimeiro)
+        ? await atualizarEvento(evento.id, dados)
         : await criarEvento(dados)
 
       if (resultado?.erro) {
@@ -92,21 +92,19 @@ export function EventFormDialog({
               )}
             />
             <div className="grid grid-cols-2 gap-4">
-              {(ehPrimeiro || !evento) && (
-                <FormField
-                  control={form.control}
-                  name="horario"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Horário de início</FormLabel>
-                      <FormControl>
-                        <Input type="time" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                control={form.control}
+                name="horario"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Horário</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="duracaoMinutos"
